@@ -5,6 +5,12 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+### .env ###
+src/main/resources/application-env.properties
+
+### src/test/resources ###
+src/test/resources/**
+
 ### STS ###
 .apt_generated
 .classpath
@@ -26,6 +32,10 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
+# src/main/resources/sql 폴더 전체 무시
+src/main/resources/sql/
+
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -35,3 +45,16 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### yml ###
+src/main/resources/*.yml
+
+### DS_Store 제거(애플에서 정의한 파일 포맷) ###
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
+
+# QueryDSL generated classes
+/src/main/generated/
+**/Q*.java
