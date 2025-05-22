@@ -19,6 +19,4 @@ public class BaseEntity {
     @LastModifiedDate
     private LocalDateTime modifiedDate;
 
-    // 삭제 시점
-    private boolean isDeleted = false;
 }
