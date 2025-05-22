@@ -67,3 +67,17 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+processResources.dependsOn('copySecret')
+tasks.register('copySecret', Copy) {
+	from 'live-config'
+	include '*.yml', 'application-env.properties'
+	into 'src/main/resources'
+}
+
+processTestResources.dependsOn('copySecretForTest')
+tasks.register('copySecretForTest', Copy) {
+	from 'live-config'
+	include '*.yml', 'application-env.properties'
+	into 'src/test/resources'
+}
