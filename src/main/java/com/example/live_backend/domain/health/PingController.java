@@ -1,4 +1,4 @@
-package com.example.live_backend.global;
+package com.example.live_backend.domain.health;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

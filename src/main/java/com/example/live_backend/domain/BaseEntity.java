@@ -1,4 +1,4 @@
-package com.example.live_backend.common;
+package com.example.live_backend.domain;
 import java.time.LocalDateTime;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;

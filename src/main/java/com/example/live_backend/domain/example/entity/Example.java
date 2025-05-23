@@ -1,7 +1,7 @@
-package com.example.live_backend.example.entity;
+package com.example.live_backend.domain.example.entity;
 
-import com.example.live_backend.common.BaseEntity;
-import com.example.live_backend.example.dto.request.ExampleRequestDto;
+import com.example.live_backend.domain.BaseEntity;
+import com.example.live_backend.domain.example.dto.request.ExampleRequestDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,7 +1,7 @@
-package com.example.live_backend.common.exception;
+package com.example.live_backend.domain.common.exception;
 
-import com.example.live_backend.common.response.Message;
-import com.example.live_backend.common.response.ResponseHandler;
+import com.example.live_backend.domain.common.response.Message;
+import com.example.live_backend.domain.common.response.ResponseHandler;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

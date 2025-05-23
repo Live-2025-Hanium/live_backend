@@ -1,4 +1,4 @@
-package com.example.live_backend.global;
+package com.example.live_backend.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

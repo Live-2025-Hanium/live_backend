@@ -1,4 +1,4 @@
-package com.example.live_backend.common.response;
+package com.example.live_backend.domain.common.response;
 
 import java.time.LocalDateTime;
 

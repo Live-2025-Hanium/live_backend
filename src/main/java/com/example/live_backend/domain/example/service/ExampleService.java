@@ -1,11 +1,11 @@
-package com.example.live_backend.example.service;
+package com.example.live_backend.domain.example.service;
 
-import com.example.live_backend.example.dto.request.ExampleRequestDto;
-import com.example.live_backend.example.dto.response.ExampleResponseDto;
-import com.example.live_backend.example.entity.Example;
-import com.example.live_backend.example.repository.ExampleRepository;
-import com.example.live_backend.common.exception.CustomException;
-import com.example.live_backend.common.exception.ErrorCode;
+import com.example.live_backend.domain.example.dto.request.ExampleRequestDto;
+import com.example.live_backend.domain.example.dto.response.ExampleResponseDto;
+import com.example.live_backend.domain.example.entity.Example;
+import com.example.live_backend.domain.example.repository.ExampleRepository;
+import com.example.live_backend.domain.common.exception.CustomException;
+import com.example.live_backend.domain.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

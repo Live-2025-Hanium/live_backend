@@ -1,4 +1,4 @@
-package com.example.live_backend.example.dto.request;
+package com.example.live_backend.domain.example.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

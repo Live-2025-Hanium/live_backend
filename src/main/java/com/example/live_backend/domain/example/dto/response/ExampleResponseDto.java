@@ -1,6 +1,6 @@
-package com.example.live_backend.example.dto.response;
+package com.example.live_backend.domain.example.dto.response;
 
-import com.example.live_backend.example.entity.Example;
+import com.example.live_backend.domain.example.entity.Example;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
