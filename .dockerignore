@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+.gitattributes
+.gitmodules
+
+# Build directories
+build/
+.gradle/
+out/
+
+# IDE
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+
+# OS
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
+
+# Documentation
+README.md
+*.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Logs
+logs/
+*.log
+
+# Test resources
+src/test/resources/**
+
+# Temporary files
+*.tmp
+*.temp
+
+# Application properties (handled by live-config)
+src/main/resources/*.yml
+src/main/resources/*.properties 
