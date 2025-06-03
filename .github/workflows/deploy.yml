@@ -80,13 +80,11 @@ jobs:
 
       - name: Prepare deployment package
         run: |
-          mkdir deploy
-          cp live-backend.tar deploy/
-          cp -r scripts deploy/
-          cp docker-compose.yml deploy/
-          cp appspec.yml deploy/
-          cd deploy
-          zip -r ../app.zip ./*
+          zip -r app.zip \
+            live-backend.tar \
+            scripts \
+            docker-compose.yml \
+            appspec.yml
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
