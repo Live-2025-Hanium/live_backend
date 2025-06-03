@@ -2,9 +2,9 @@ name: Spring Boot Gradle CI/CD
 
 on:
   push:
-    branches: [ "develop", "test/ci" ]  # ✅ test/ci 브랜치도 배포 트리거
+    branches: [ "develop", "test/ci" ]
   pull_request:
-    branches: [ "develop", "test/ci" ]  # ✅ PR 시에도 작동
+    branches: [ "develop", "test/ci" ]
 
 env:
   PROJECT_NAME: live-backend
@@ -15,7 +15,7 @@ env:
 
 permissions:
   contents: read
-  pull-requests: write  # ✅ PR 댓글용 권한
+  pull-requests: write
 
 jobs:
   deploy:
@@ -27,7 +27,7 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-          token: ${{ secrets.CONFIG_REPO_PAT }}  # pado0711의 PAT
+          token: ${{ secrets.CONFIG_REPO_PAT }}
 
       - name: Update live-config submodule to latest develop
         run: |
@@ -69,8 +69,14 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
 
-      - name: Build with Gradle (skip tests)
+      - name: Build JAR (skip tests)
         run: ./gradlew clean build -x test
+
+      - name: Build Docker image
+        run: docker build -t live-backend:latest .
+
+      - name: Save Docker image to tar file
+        run: docker save live-backend:latest -o live-backend.tar
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -81,6 +87,7 @@ jobs:
 
       - name: Upload artifact to S3
         run: |
+          zip -r app.zip . -x "*.git*" "*/.git/*"
           aws deploy push \
             --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
             --ignore-hidden-files \

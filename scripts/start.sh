@@ -5,6 +5,15 @@ echo "Starting Live Backend application..."
 # 작업 디렉토리 이동
 cd /home/ubuntu/app || exit 1
 
+# 미리 빌드된 이미지 tar 파일이 있으면 로드
+if [ -f live-backend.tar ]; then
+  echo "🛠 Loading Docker image from tar..."
+  docker load < live-backend.tar
+else
+  echo "⚠️ Docker image tar (live-backend.tar) not found!"
+  exit 1
+fi
+
 # Docker Compose로 애플리케이션 시작 (build생략)
 docker compose up -d
 
