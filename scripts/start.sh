@@ -2,6 +2,9 @@
 
 echo "Starting Live Backend application..."
 
+# 작업 디렉토리 이동
+cd /home/ubuntu/app || exit 1
+
 # Docker Compose로 애플리케이션 시작
 docker compose up -d --build
 
@@ -20,8 +23,8 @@ done
 
 if ! curl -f http://localhost:8080/ping >/dev/null 2>&1; then
     echo "❌ Application failed to start within 90 seconds"
-    echo "Check logs with: docker-compose logs -f"
+    echo "Check logs with: docker compose logs -f"
     exit 1
 fi
 
-echo "🚀 Application deployment completed successfully!" 
+echo "🚀 Application deployment completed successfully!"

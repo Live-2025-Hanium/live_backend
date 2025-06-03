@@ -2,6 +2,9 @@
 
 echo "Stopping Live Backend application..."
 
+# 작업 디렉토리 이동
+cd /home/ubuntu/app || exit 1
+
 # Docker Compose로 애플리케이션 중지
 docker compose down
 
