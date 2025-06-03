@@ -1,3 +1,4 @@
 [submodule "live-config"]
 	path = live-config
 	url = https://github.com/Live-2025-Hanium/live-config.git
+    branch = develop
