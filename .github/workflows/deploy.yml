@@ -9,7 +9,7 @@ on:
 env:
   PROJECT_NAME: live-backend
   AWS_REGION: ap-northeast-2
-  S3_BUCKET_NAME: lively-s3bucket
+  S3_BUCKET_NAME: lively-s3-bucket
   CODE_DEPLOY_APPLICATION_NAME: live-codedeploy
   CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: live-codedeploy-group
 
