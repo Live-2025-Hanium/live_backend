@@ -27,6 +27,7 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+          token: ${{ secrets.CONFIG_REPO_PAT }}  # pado0711의 PAT
 
       - name: Update live-config submodule to latest develop
         run: |
