@@ -6,8 +6,8 @@ WORKDIR /app
 # curl 설치 (헬스체크용)
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# 미리 빌드된 JAR 파일 복사
-COPY build/libs/app.jar app.jar
+# 미리 빌드된 JAR 파일 복사 (정확한 이름으로)
+COPY build/libs/live_backend-0.0.1-SNAPSHOT.jar app.jar
 
 # 로그 디렉토리 생성
 RUN mkdir -p /app/logs
