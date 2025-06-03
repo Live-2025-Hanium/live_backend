@@ -1,0 +1,95 @@
+name: Spring Boot Gradle CI/CD
+
+on:
+  push:
+    branches: [ "develop", "test/ci" ]  # ✅ test/ci 브랜치도 배포 트리거
+  pull_request:
+    branches: [ "develop", "test/ci" ]  # ✅ PR 시에도 작동
+
+env:
+  PROJECT_NAME: live-backend
+  AWS_REGION: ap-northeast-2
+  S3_BUCKET_NAME: lively-s3bucket
+  CODE_DEPLOY_APPLICATION_NAME: live-codedeploy
+  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: live-codedeploy-group
+
+permissions:
+  contents: read
+  pull-requests: write  # ✅ PR 댓글용 권한
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code with submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Update live-config submodule to latest develop
+        run: |
+          cd live-config
+          git checkout develop
+          git pull origin develop
+          cd ..
+
+      - name: Get live-config commit hash
+        id: get_config_commit
+        run: |
+          cd live-config
+          echo "config_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Comment live-config commit hash on PR
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ✅ **Live Config 적용 커밋**
+            - 커밋 해시: `${{ steps.get_config_commit.outputs.config_commit }}`
+            - 브랜치: `develop`
+            - [변경 내용 보기](https://github.com/Live-2025-Hanium/live-config/commit/${{ steps.get_config_commit.outputs.config_commit }})
+
+      - name: 📁 Copy config ymls
+        run: |
+          mkdir -p ./src/main/resources
+          cp live-config/application-dev.yml ./src/main/resources/
+          cp live-config/common.yml ./src/main/resources/
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle (skip tests)
+        run: ./gradlew clean build -x test
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload artifact to S3
+        run: |
+          aws deploy push \
+            --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
+            --ignore-hidden-files \
+            --s3-location s3://${{ env.S3_BUCKET_NAME }}/${{ github.sha }}.zip \
+            --source .
+
+      - name: Deploy to EC2 via CodeDeploy
+        run: |
+          aws deploy create-deployment \
+            --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --deployment-group-name ${{ env.CODE_DEPLOY_DEPLOYMENT_GROUP_NAME }} \
+            --s3-location bucket=${{ env.S3_BUCKET_NAME }},key=${{ github.sha }}.zip,bundleType=zip
