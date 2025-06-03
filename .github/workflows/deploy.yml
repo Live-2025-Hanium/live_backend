@@ -87,11 +87,12 @@ jobs:
 
       - name: 📦 Prepare deployment package (ZIP)
         run: |
-          zip -r app.zip \
-            live-backend.tar \
-            scripts \
-            docker-compose.yml \
-            appspec.yml
+          mkdir -p deploy-package
+          cp live-backend.tar docker-compose.yml appspec.yml deploy-package/
+          cp -r scripts deploy-package/
+          cd deploy-package
+          zip -r ../app.zip .
+          cd ..
 
       - name: ☁️ Upload artifact to S3
         run: |
