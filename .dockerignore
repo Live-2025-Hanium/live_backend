@@ -5,7 +5,7 @@
 .gitmodules
 
 # Build directories
-build/
+#build/
 .gradle/
 out/
 
