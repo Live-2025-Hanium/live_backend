@@ -22,27 +22,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code with submodules
+      - name: ✅ Checkout source code (with submodules)
         uses: actions/checkout@v3
         with:
           submodules: recursive
           fetch-depth: 0
           token: ${{ secrets.CONFIG_REPO_PAT }}
 
-      - name: Update live-config submodule to latest develop
+      - name: 🔄 Update `live-config` to latest develop
         run: |
           cd live-config
           git checkout develop
           git pull origin develop
           cd ..
 
-      - name: Get live-config commit hash
+      - name: 🔍 Get `live-config` commit hash
         id: get_config_commit
         run: |
           cd live-config
           echo "config_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Comment live-config commit hash on PR
+      - name: 💬 Comment `live-config` commit hash on PR
         if: github.event_name == 'pull_request'
         uses: peter-evans/create-or-update-comment@v3
         with:
@@ -60,25 +60,32 @@ jobs:
           cp live-config/application-dev.yml ./src/main/resources/
           cp live-config/common.yml ./src/main/resources/
 
-      - name: Set up JDK 21
+      - name: ☕ Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Grant execute permission to gradlew
+      - name: ✅ Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build JAR (skip tests)
+      - name: ⚙️ Build JAR (skip tests)
         run: ./gradlew clean build -x test
 
-      - name: Build Docker image
+      - name: 🐳 Build Docker image
         run: docker build -t live-backend:latest .
 
-      - name: Save Docker image to tar file
+      - name: 📦 Save Docker image as tar
         run: docker save live-backend:latest -o live-backend.tar
 
-      - name: Prepare deployment package
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 📦 Prepare deployment package (ZIP)
         run: |
           zip -r app.zip \
             live-backend.tar \
@@ -86,14 +93,7 @@ jobs:
             docker-compose.yml \
             appspec.yml
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Upload artifact to S3
+      - name: ☁️ Upload artifact to S3
         run: |
           aws deploy push \
             --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
@@ -101,7 +101,7 @@ jobs:
             --s3-location s3://${{ env.S3_BUCKET_NAME }}/${{ github.sha }}.zip \
             --source app.zip
 
-      - name: Deploy to EC2 via CodeDeploy
+      - name: 🚀 Deploy to EC2 via CodeDeploy
         run: |
           aws deploy create-deployment \
             --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
