@@ -86,7 +86,7 @@ jobs:
           cp docker-compose.yml deploy/
           cp appspec.yml deploy/
           cd deploy
-          zip -r ../app.zip .
+          zip -r ../app.zip ./*
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
