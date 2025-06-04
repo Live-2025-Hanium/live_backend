@@ -29,20 +29,20 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.CONFIG_REPO_PAT }}
 
-      - name: 🔄 Update `live-config` to latest develop
+      - name: 🔄 Update live-config to latest develop
         run: |
           cd live-config
           git checkout develop
           git pull origin develop
           cd ..
 
-      - name: 🔍 Get `live-config` commit hash
+      - name: 🔍 Get live-config commit hash
         id: get_config_commit
         run: |
           cd live-config
           echo "config_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
-      - name: 💬 Comment `live-config` commit hash on PR
+      - name: 💬 Comment live-config commit hash on PR
         if: github.event_name == 'pull_request'
         uses: peter-evans/create-or-update-comment@v3
         with:
@@ -91,18 +91,18 @@ jobs:
       - name: 📦 Prepare deployment package (ZIP)
         run: |
           mkdir deploy
-          cp appspec.yml docker-compose.yml live-backend.tar ./deploy/
-          cp scripts/*.sh ./deploy/
-          zip -r -qq -j app.zip ./deploy
+          cp appspec.yml docker-compose.yml live-backend.tar deploy/
+          cp -r scripts deploy/
+          zip -r -qq app.zip deploy/
 
       - name: 🔍 Check ZIP contents
         run: unzip -l app.zip
 
-      - name: ☁️ Upload app.zip to S3
+      - name: ☁️ Upload to S3
         run: |
           aws s3 cp app.zip s3://${{ env.S3_BUCKET_NAME }}/${{ github.sha }}.zip
 
-      - name: 🚀 Deploy to EC2 via CodeDeploy
+      - name: 🚀 Create deployment
         run: |
           aws deploy create-deployment \
             --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
