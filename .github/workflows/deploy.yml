@@ -90,11 +90,10 @@ jobs:
 
       - name: 📦 Prepare deployment package (ZIP)
         run: |
-          zip -r app.zip \
-            appspec.yml \
-            docker-compose.yml \
-            live-backend.tar \
-            scripts/*
+          mkdir deploy
+          cp appspec.yml docker-compose.yml live-backend.tar ./deploy/
+          cp scripts/*.sh ./deploy/
+          zip -r -qq -j app.zip ./deploy
 
       - name: 🔍 Check ZIP contents
         run: unzip -l app.zip
