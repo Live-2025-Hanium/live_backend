@@ -98,18 +98,14 @@ jobs:
       - name: 🔍 Check ZIP contents
         run: unzip -l app.zip
 
-      - name: ☁️ Upload artifact to S3
+      - name: ☁️ Upload app.zip to S3
         run: |
-          aws deploy push \
-            --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
-            --ignore-hidden-files \
-            --s3-location s3://${{ env.S3_BUCKET_NAME }}/${{ github.sha }}.zip \
-            --source app.zip
+          aws s3 cp app.zip s3://${{ env.S3_BUCKET_NAME }}/${{ github.sha }}.zip
 
       - name: 🚀 Deploy to EC2 via CodeDeploy
         run: |
           aws deploy create-deployment \
             --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
-            --deployment-config-name CodeDeployDefault.AllAtOnce \
             --deployment-group-name ${{ env.CODE_DEPLOY_DEPLOYMENT_GROUP_NAME }} \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
             --s3-location bucket=${{ env.S3_BUCKET_NAME }},key=${{ github.sha }}.zip,bundleType=zip
