@@ -1,50 +1,24 @@
-# Build stage
-FROM eclipse-temurin:21-jdk AS build
-
-WORKDIR /app
-
-# Copy gradle wrapper and build files
-COPY gradle gradle
-COPY gradlew .
-COPY gradlew.bat .
-COPY build.gradle .
-COPY settings.gradle .
-
-# Copy live-config submodule
-COPY live-config live-config
-
-# Copy source code
-COPY src src
-
-# Make gradlew executable
-RUN chmod +x ./gradlew
-
-# Build the application
-RUN ./gradlew build -x test
-
-# Runtime stage
+# 단일 스테이지, 빌드 없이 바로 실행
 FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-# Install curl for healthcheck
+# curl 설치 (헬스체크용)
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Copy built jar from build stage
-COPY --from=build /app/build/libs/*.jar app.jar
+# 미리 빌드된 JAR 파일 복사 (정확한 이름으로)
+COPY build/libs/live_backend-0.0.1-SNAPSHOT.jar app.jar
 
-# Create logs directory
+# 로그 디렉토리 생성
 RUN mkdir -p /app/logs
 
-# Set timezone
+# 환경 설정
 ENV TZ=Asia/Seoul
 
-# Expose port
 EXPOSE 8080
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=40s \
   CMD curl -f http://localhost:8080/ping || exit 1
 
-# Run the application
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"] 
+# 앱 실행
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

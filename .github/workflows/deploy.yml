@@ -1,0 +1,111 @@
+name: Spring Boot Gradle CI/CD
+
+on:
+  push:
+    branches: [ "develop", "test/ci" ]
+  pull_request:
+    branches: [ "develop", "test/ci" ]
+
+env:
+  PROJECT_NAME: live-backend
+  AWS_REGION: ap-northeast-2
+  S3_BUCKET_NAME: lively-s3-bucket
+  CODE_DEPLOY_APPLICATION_NAME: live-codedeploy
+  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: live-codedeploy-group
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ✅ Checkout source code (with submodules)
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          token: ${{ secrets.CONFIG_REPO_PAT }}
+
+      - name: 🔄 Update live-config to latest develop
+        run: |
+          cd live-config
+          git checkout develop
+          git pull origin develop
+          cd ..
+
+      - name: 🔍 Get live-config commit hash
+        id: get_config_commit
+        run: |
+          cd live-config
+          echo "config_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: 💬 Comment live-config commit hash on PR
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ✅ **Live Config 적용 커밋**
+            - 커밋 해시: `${{ steps.get_config_commit.outputs.config_commit }}`
+            - 브랜치: `develop`
+            - [변경 내용 보기](https://github.com/Live-2025-Hanium/live-config/commit/${{ steps.get_config_commit.outputs.config_commit }})
+
+      - name: 📁 Copy config ymls
+        run: |
+          mkdir -p ./src/main/resources
+          cp live-config/application-dev.yml ./src/main/resources/
+          cp live-config/common.yml ./src/main/resources/
+
+      - name: ☕ Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: ✅ Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: ⚙️ Build JAR (skip tests)
+        run: ./gradlew clean build -x test
+
+      - name: 🐳 Build Docker image
+        run: docker build -t live-backend:latest .
+
+      - name: 📦 Save Docker image as tar
+        run: docker save live-backend:latest -o live-backend.tar
+
+      - name: 🛠 Make script files executable
+        run: chmod +x scripts/*.sh
+
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 📦 Prepare deployment package (ZIP)
+        run: |
+          mkdir deploy
+          cp appspec.yml docker-compose.yml live-backend.tar deploy/
+          cp -r scripts deploy/
+          zip -r -qq app.zip deploy/
+
+      - name: 🔍 Check ZIP contents
+        run: unzip -l app.zip
+
+      - name: ☁️ Upload to S3
+        run: |
+          aws s3 cp app.zip s3://${{ env.S3_BUCKET_NAME }}/${{ github.sha }}.zip
+
+      - name: 🚀 Create deployment
+        run: |
+          aws deploy create-deployment \
+            --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
+            --deployment-group-name ${{ env.CODE_DEPLOY_DEPLOYMENT_GROUP_NAME }} \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --s3-location bucket=${{ env.S3_BUCKET_NAME }},key=${{ github.sha }}.zip,bundleType=zip
