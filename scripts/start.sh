@@ -15,7 +15,7 @@ else
 fi
 
 # Docker Compose로 애플리케이션 시작 (build 생략)
-docker compose up -d
+docker-compose up -d
 
 # 애플리케이션이 정상적으로 시작될 때까지 대기
 echo "애플리케이션 시작 대기 중..."
@@ -32,7 +32,7 @@ done
 
 if ! curl -f http://localhost:8080/ping >/dev/null 2>&1; then
     echo "❌ 90초 내에 애플리케이션 시작에 실패했습니다"
-    echo "로그 확인: docker compose logs -f"
+    echo "로그 확인: docker-compose logs -f"
     exit 1
 fi
 
