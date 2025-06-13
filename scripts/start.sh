@@ -3,7 +3,7 @@
 echo "Live Backend 애플리케이션 시작 중..."
 
 # 작업 디렉토리 이동
-cd /home/ubuntu/app || exit 1
+cd /home/ec2-user/app || exit 1
 
 # 미리 빌드된 이미지 tar 파일이 있으면 로드
 if [ -f live-backend.tar ]; then
