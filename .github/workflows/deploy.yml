@@ -27,6 +27,31 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    # MySQL과 Redis 서비스 추가
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testdb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -uroot -proot"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: 📋 배포 사유 출력
         run: |
@@ -57,6 +82,9 @@ jobs:
           mkdir -p ./src/main/resources
           cp live-config/application-dev.yml ./src/main/resources/
           cp live-config/common.yml ./src/main/resources/
+          mkdir -p ./src/test/resources
+          cp live-config/application-test.yml ./src/test/resources/
+          cp live-config/common.yml ./src/test/resources/
 
       - name: ☕ JDK 21 설정
         uses: actions/setup-java@v3
@@ -67,8 +95,20 @@ jobs:
       - name: ✅ gradlew 실행 권한 부여
         run: chmod +x ./gradlew
 
+      - name: 🔍 MySQL 서비스 연결 대기
+        run: |
+          echo "MySQL 서비스 시작 대기 중..."
+          for i in {1..30}; do
+            if mysqladmin ping -h127.0.0.1 -P3306 -uroot -proot --silent; then
+              echo "✅ MySQL 연결 성공!"
+              break
+            fi
+            echo "MySQL 연결 대기 중... ($i/30)"
+            sleep 2
+          done
+
       - name: ⚙️ JAR 파일 빌드 (테스트 포함)
-        run: ./gradlew clean build
+        run: ./gradlew clean build -Pprofile=test
 
       - name: 🐳 Docker 이미지 빌드
         run: docker build -t live-backend:latest .
