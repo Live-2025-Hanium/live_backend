@@ -1,10 +1,16 @@
-name: Spring Boot Gradle CI/CD
+name: Spring Boot Gradle CI/CD 배포
 
 on:
   push:
     branches: [ "develop", "test/ci" ]
-  pull_request:
-    branches: [ "develop", "test/ci" ]
+  repository_dispatch:
+    types: [config-updated]  # live-config에서 트리거
+  workflow_dispatch:  # 수동 트리거
+    inputs:
+      reason:
+        description: '배포 사유'
+        required: false
+        default: '수동 배포'
 
 env:
   PROJECT_NAME: live-backend
@@ -15,94 +21,89 @@ env:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
+  # develop 브랜치 push 또는 config 업데이트 시 실행
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ✅ Checkout source code (with submodules)
+      - name: 📋 배포 사유 출력
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "🔄 Config 업데이트로 인한 자동 배포"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "🖱️ 수동 배포: ${{ github.event.inputs.reason }}"
+          else
+            echo "📝 코드 변경으로 인한 자동 배포"
+          fi
+
+      - name: ✅ 소스코드 체크아웃 (서브모듈 포함)
         uses: actions/checkout@v3
         with:
           submodules: recursive
           fetch-depth: 0
           token: ${{ secrets.CONFIG_REPO_PAT }}
 
-      - name: 🔄 Update live-config to latest develop
+      - name: 🔄 live-config를 최신 develop으로 업데이트
         run: |
           cd live-config
           git checkout develop
           git pull origin develop
           cd ..
 
-      - name: 🔍 Get live-config commit hash
-        id: get_config_commit
-        run: |
-          cd live-config
-          echo "config_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
-      - name: 💬 Comment live-config commit hash on PR
-        if: github.event_name == 'pull_request'
-        uses: peter-evans/create-or-update-comment@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ✅ **Live Config 적용 커밋**
-            - 커밋 해시: `${{ steps.get_config_commit.outputs.config_commit }}`
-            - 브랜치: `develop`
-            - [변경 내용 보기](https://github.com/Live-2025-Hanium/live-config/commit/${{ steps.get_config_commit.outputs.config_commit }})
-
-      - name: 📁 Copy config ymls
+      - name: 📁 설정 yml 파일들 복사
         run: |
           mkdir -p ./src/main/resources
           cp live-config/application-dev.yml ./src/main/resources/
           cp live-config/common.yml ./src/main/resources/
 
-      - name: ☕ Set up JDK 21
+      - name: ☕ JDK 21 설정
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: ✅ Make gradlew executable
+      - name: ✅ gradlew 실행 권한 부여
         run: chmod +x ./gradlew
 
-      - name: ⚙️ Build JAR (skip tests)
-        run: ./gradlew clean build -x test
+      - name: ⚙️ JAR 파일 빌드 (테스트 포함)
+        run: ./gradlew clean build
 
-      - name: 🐳 Build Docker image
+      - name: 🐳 Docker 이미지 빌드
         run: docker build -t live-backend:latest .
 
-      - name: 📦 Save Docker image as tar
+      - name: 📦 Docker 이미지를 tar 파일로 저장
         run: docker save live-backend:latest -o live-backend.tar
 
-      - name: 🛠 Make script files executable
+      - name: 🛠 스크립트 파일들에 실행 권한 부여
         run: chmod +x scripts/*.sh
 
-      - name: 🔐 Configure AWS credentials
+      - name: 🔐 AWS 자격 증명 설정
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: 📦 Prepare deployment package (ZIP)
+      - name: 📦 배포 패키지 준비 (ZIP 파일 생성)
         run: |
           mkdir deploy
-          cp appspec.yml docker-compose.yml live-backend.tar deploy/
+          cp appspec.yml deploy/
+          cp docker-compose.blue.yml deploy/
+          cp docker-compose.green.yml deploy/
+          cp live-backend.tar deploy/
           cp -r scripts deploy/
           zip -r -qq app.zip deploy/
 
-      - name: 🔍 Check ZIP contents
+      - name: 🔍 ZIP 파일 내용 확인
         run: unzip -l app.zip
 
-      - name: ☁️ Upload to S3
+      - name: ☁️ S3에 업로드
         run: |
           aws s3 cp app.zip s3://${{ env.S3_BUCKET_NAME }}/${{ github.sha }}.zip
 
-      - name: 🚀 Create deployment
+      - name: 🚀 CodeDeploy 배포 생성
         run: |
           aws deploy create-deployment \
             --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \

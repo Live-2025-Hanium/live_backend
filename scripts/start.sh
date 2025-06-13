@@ -1,39 +1,39 @@
 #!/bin/bash
 
-echo "Starting Live Backend application..."
+echo "Live Backend 애플리케이션 시작 중..."
 
 # 작업 디렉토리 이동
 cd /home/ubuntu/app || exit 1
 
 # 미리 빌드된 이미지 tar 파일이 있으면 로드
 if [ -f live-backend.tar ]; then
-  echo "🛠 Loading Docker image from tar..."
+  echo "🛠 tar 파일에서 Docker 이미지 로드 중..."
   docker load < live-backend.tar
 else
-  echo "⚠️ Docker image tar (live-backend.tar) not found!"
+  echo "⚠️ Docker 이미지 tar 파일 (live-backend.tar)을 찾을 수 없습니다!"
   exit 1
 fi
 
-# Docker Compose로 애플리케이션 시작 (build생략)
+# Docker Compose로 애플리케이션 시작 (build 생략)
 docker compose up -d
 
 # 애플리케이션이 정상적으로 시작될 때까지 대기
-echo "Waiting for application to start..."
+echo "애플리케이션 시작 대기 중..."
 for i in {1..30}; do
     if curl -f http://localhost:8080/ping >/dev/null 2>&1; then
-        echo "✅ Application started successfully on port 8080"
-        echo "🌐 Application is accessible at: http://localhost:8080"
+        echo "✅ 애플리케이션이 8080 포트에서 성공적으로 시작되었습니다"
+        echo "🌐 애플리케이션 접속 URL: http://localhost:8080"
         echo "📋 Swagger UI: http://localhost:8080/swagger-ui.html"
         break
     fi
-    echo "Waiting... ($i/30)"
+    echo "대기 중... ($i/30)"
     sleep 3
 done
 
 if ! curl -f http://localhost:8080/ping >/dev/null 2>&1; then
-    echo "❌ Application failed to start within 90 seconds"
-    echo "Check logs with: docker compose logs -f"
+    echo "❌ 90초 내에 애플리케이션 시작에 실패했습니다"
+    echo "로그 확인: docker compose logs -f"
     exit 1
 fi
 
-echo "🚀 Application deployment completed successfully!"
+echo "🚀 애플리케이션 배포가 성공적으로 완료되었습니다!"
