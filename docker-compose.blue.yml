@@ -3,7 +3,7 @@ services:
     image: live-backend:latest
     container_name: live-backend-blue
     ports:
-      - "8081:8080"
+      - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - TZ=Asia/Seoul
