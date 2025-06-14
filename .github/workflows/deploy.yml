@@ -70,11 +70,11 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.CONFIG_REPO_PAT }}
 
-      - name: 🔄 live-config를 최신 develop으로 업데이트
+      - name: 🔄 live-config를 최신 Master로 업데이트
         run: |
           cd live-config
-          git checkout develop
-          git pull origin develop
+          git checkout Master
+          git pull origin Master
           cd ..
 
       - name: 📁 설정 yml 파일들 복사
