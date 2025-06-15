@@ -56,7 +56,7 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .servers(Arrays.asList(
                         new Server().url("http://localhost:" + serverPort).description("Local 서버")
-                        //new Server().url("https://live-hanium.app").description("Lively API 서버")
+                        ,new Server().url("https://live-hanium.app").description("Lively API 서버")
                 ))
                 .info(new Info()
                         .title(API_TITLE)

@@ -11,5 +11,4 @@ public class LiveBackendApplication {
 		SpringApplication.run(LiveBackendApplication.class, args);
 		System.out.println("Live Backend is running!");
 	}
-
 }
