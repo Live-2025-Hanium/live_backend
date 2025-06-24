@@ -18,7 +18,10 @@ public enum ErrorCode {
     INVALID_LOGIN_INFO(BAD_REQUEST, "아이디 또는 비밀번호가 일치하지 않습니다."),
 
     /* ------------------ 400 BAD_REQUEST : 인증 관련 오류 ------------------ */
-    DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다.")
+    DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),
+
+    /* ------------------ 404 NOT_FOUND : 리소스 없음 ------------------ */
+    USER_NOT_FOUND(NOT_FOUND, "존재하지 않는 사용자입니다.")
     ;
 
     private final HttpStatus httpStatus;

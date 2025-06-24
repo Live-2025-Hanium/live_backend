@@ -19,7 +19,15 @@ public class GlobalExceptionHandler {
         log.warn("[handleCustomException] : {} \n message: {}", exception.getErrorCode(),
                 exception.getMessage());
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+
+        // Determine the HTTP status based on the error code
+        HttpStatus status;
+        switch (exception.getErrorCode()) {
+            case USER_NOT_FOUND -> status = HttpStatus.NOT_FOUND;  // User not found
+            default -> status = HttpStatus.BAD_REQUEST;
+        }
+
+        return ResponseEntity.status(status)
                 .body(ResponseHandler.errorResponse(exception.getMessage(), exception.getErrorCode().name()));
     }
 
