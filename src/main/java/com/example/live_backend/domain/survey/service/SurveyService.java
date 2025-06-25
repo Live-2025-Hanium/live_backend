@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,84 +32,100 @@ public class SurveyService {
     private static final int MIN_ANSWER_NUMBER = 1;
     private static final int MAX_ANSWER_NUMBER = 5;
 
-    /**
-     * 설문 응답 제출
-     */
+
     @Transactional
     public SurveySubmissionResponseDto submitSurvey(SurveySubmissionDto request) {
-
         Long currentUserId = userUtil.getCurrentUserId();
         log.info("설문 응답 제출 시작 - 인증된 사용자 ID: {}", currentUserId);
 
-        validateSurveyAnswers(request.getAnswers());
+        List<SurveySubmissionDto.SurveyAnswerDto> answers = request.getAnswers();
+        validateAnswerCount(answers);
+        validateQuestionNumberRange(answers);
+        validateAnswerNumberRange(answers);
+        validateDuplicateQuestions(answers);
+        validateMissingQuestions(answers);
 
         SurveyResponse surveyResponse = SurveyResponse.builder()
-                .userId(currentUserId)
-                .build();
+            .userId(currentUserId)
+            .build();
 
-        for (SurveySubmissionDto.SurveyAnswerDto answerDto : request.getAnswers()) {
+        for (var dto : answers) {
             SurveyAnswer answer = SurveyAnswer.builder()
-                    .questionNumber(answerDto.getQuestionNumber())
-                    .answerNumber(answerDto.getAnswerNumber())
-                    .build();
-            
+                .questionNumber(dto.getQuestionNumber())
+                .answerNumber(dto.getAnswerNumber())
+                .build();
             surveyResponse.addAnswer(answer);
         }
 
-        SurveyResponse savedResponse = surveyResponseRepository.save(surveyResponse);
-        
-        log.info("설문 응답 제출 완료 - 응답 ID: {}, 사용자 ID: {}", savedResponse.getId(), currentUserId);
-        
+        SurveyResponse saved = surveyResponseRepository.save(surveyResponse);
+        log.info("설문 응답 제출 완료 - 응답 ID: {}, 사용자 ID: {}", saved.getId(), currentUserId);
+
         return SurveySubmissionResponseDto.builder()
-                .responseId(savedResponse.getId())
-                .submittedAt(savedResponse.getCreatedAt())
-                .totalAnswers(savedResponse.getAnswers().size())
-                .build();
+            .responseId(saved.getId())
+            .submittedAt(saved.getCreatedAt())
+            .totalAnswers(saved.getAnswers().size())
+            .build();
     }
 
-     /**
-      * 설문 답변 데이터 유효성 검증
-      */
-     private void validateSurveyAnswers(List<SurveySubmissionDto.SurveyAnswerDto> answers) {
-         // 답변 개수 검증
-         if (answers.size() != TOTAL_QUESTIONS) {
-             throw new CustomException(ErrorCode.INVALID_INPUT, 
-                     String.format("설문 문제는 총 %d개입니다. 현재 답변 개수: %d", TOTAL_QUESTIONS, answers.size()));
-         }
-         
-         // 문제 번호 중복 및 범위 검증
-         Set<Integer> questionNumbers = new HashSet<>();
-         
-         for (SurveySubmissionDto.SurveyAnswerDto answer : answers) {
-             // 문제 번호 범위 검증
-             if (answer.getQuestionNumber() < 1 || answer.getQuestionNumber() > TOTAL_QUESTIONS) {
-                 throw new CustomException(ErrorCode.INVALID_INPUT, 
-                         String.format("문제 번호는 1-%d 범위여야 합니다. 입력된 값: %d", TOTAL_QUESTIONS, answer.getQuestionNumber()));
-             }
-             
-             // 답변 번호 범위 검증
-             if (answer.getAnswerNumber() < MIN_ANSWER_NUMBER || answer.getAnswerNumber() > MAX_ANSWER_NUMBER) {
-                 throw new CustomException(ErrorCode.INVALID_INPUT, 
-                         String.format("답변 번호는 %d-%d 범위여야 합니다. 입력된 값: %d", MIN_ANSWER_NUMBER, MAX_ANSWER_NUMBER, answer.getAnswerNumber()));
-             }
-             
-             // 문제 번호 중복 검증
-             if (!questionNumbers.add(answer.getQuestionNumber())) {
-                 throw new CustomException(ErrorCode.INVALID_INPUT, 
-                         String.format("문제 번호 %d가 중복되었습니다.", answer.getQuestionNumber()));
-             }
-         }
-         
-         // 모든 문제에 답변했는지 검증
-         for (int i = 1; i <= TOTAL_QUESTIONS; i++) {
-             if (!questionNumbers.contains(i)) {
-                 throw new CustomException(ErrorCode.INVALID_INPUT, 
-                         String.format("문제 %d번에 대한 답변이 누락되었습니다.", i));
-             }
-         }
-     }
-     
+    private void validateAnswerCount(List<SurveySubmissionDto.SurveyAnswerDto> answers) {
+        if (answers.size() != TOTAL_QUESTIONS) {
+            throw new CustomException(
+                ErrorCode.INVALID_INPUT,
+                String.format("설문 문제는 총 %d개입니다. 현재 답변 개수: %d", TOTAL_QUESTIONS, answers.size())
+            );
+        }
+    }
 
+    private void validateQuestionNumberRange(List<SurveySubmissionDto.SurveyAnswerDto> answers) {
+        for (var dto : answers) {
+            int q = dto.getQuestionNumber();
+            if (q < 1 || q > TOTAL_QUESTIONS) {
+                throw new CustomException(
+                    ErrorCode.INVALID_INPUT,
+                    String.format("문제 번호는 1-%d 범위여야 합니다. 입력된 값: %d", TOTAL_QUESTIONS, q)
+                );
+            }
+        }
+    }
+
+    private void validateAnswerNumberRange(List<SurveySubmissionDto.SurveyAnswerDto> answers) {
+        for (var dto : answers) {
+            int a = dto.getAnswerNumber();
+            if (a < MIN_ANSWER_NUMBER || a > MAX_ANSWER_NUMBER) {
+                throw new CustomException(
+                    ErrorCode.INVALID_INPUT,
+                    String.format("답변 번호는 %d-%d 범위여야 합니다. 입력된 값: %d",
+                        MIN_ANSWER_NUMBER, MAX_ANSWER_NUMBER, a)
+                );
+            }
+        }
+    }
+
+    private void validateDuplicateQuestions(List<SurveySubmissionDto.SurveyAnswerDto> answers) {
+        Set<Integer> seen = new HashSet<>();
+        for (var dto : answers) {
+            if (!seen.add(dto.getQuestionNumber())) {
+                throw new CustomException(
+                    ErrorCode.INVALID_INPUT,
+                    String.format("문제 번호 %d가 중복되었습니다.", dto.getQuestionNumber())
+                );
+            }
+        }
+    }
+
+    private void validateMissingQuestions(List<SurveySubmissionDto.SurveyAnswerDto> answers) {
+        Set<Integer> seen = answers.stream()
+            .map(SurveySubmissionDto.SurveyAnswerDto::getQuestionNumber)
+            .collect(Collectors.toSet());
+        for (int i = 1; i <= TOTAL_QUESTIONS; i++) {
+            if (!seen.contains(i)) {
+                throw new CustomException(
+                    ErrorCode.INVALID_INPUT,
+                    String.format("문제 %d번에 대한 답변이 누락되었습니다.", i)
+                );
+            }
+        }
+    }
      
      /**
       * 특정 사용자의 설문 응답 목록 조회 (관리자용)
