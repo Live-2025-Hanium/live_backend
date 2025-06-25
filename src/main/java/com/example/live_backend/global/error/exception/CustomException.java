@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.common.exception;
+package com.example.live_backend.global.error.exception;
 
 import lombok.Getter;
 
