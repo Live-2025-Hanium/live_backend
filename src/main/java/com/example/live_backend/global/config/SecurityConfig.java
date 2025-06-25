@@ -35,6 +35,7 @@ public class SecurityConfig {
                 
                 .anyRequest().permitAll()
             )
+            // TODO: JWT 구현 후 제거 예정
             // HTTP Basic 인증 활성화 (Swagger 테스트용)
             .httpBasic(httpBasic -> httpBasic.realmName("Mock Authentication"))
             .build();
