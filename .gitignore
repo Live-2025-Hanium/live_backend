@@ -56,5 +56,4 @@ src/main/resources/*.yml
 **/._.DS_Store
 
 # QueryDSL generated classes
-/src/main/generated/
-**/Q*.java
+src/main/generated/**/Q*.java

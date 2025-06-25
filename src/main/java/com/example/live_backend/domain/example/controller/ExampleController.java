@@ -3,7 +3,7 @@ package com.example.live_backend.domain.example.controller;
 import com.example.live_backend.domain.example.dto.request.ExampleRequestDto;
 import com.example.live_backend.domain.example.dto.response.ExampleResponseDto;
 import com.example.live_backend.domain.example.service.ExampleService;
-import com.example.live_backend.domain.common.response.ResponseHandler;
+import com.example.live_backend.global.error.response.ResponseHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
