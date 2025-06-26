@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.common.response;
+package com.example.live_backend.global.error.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
