@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -52,7 +53,17 @@ class SurveyServiceTest {
             new SurveySubmissionDto.SurveyAnswerDto(2, 2),
             new SurveySubmissionDto.SurveyAnswerDto(3, 4),
             new SurveySubmissionDto.SurveyAnswerDto(4, 1),
-            new SurveySubmissionDto.SurveyAnswerDto(5, 5)
+            new SurveySubmissionDto.SurveyAnswerDto(5, 5),
+            new SurveySubmissionDto.SurveyAnswerDto(6, 1),
+            new SurveySubmissionDto.SurveyAnswerDto(7, 2),
+            new SurveySubmissionDto.SurveyAnswerDto(8, 3),
+            new SurveySubmissionDto.SurveyAnswerDto(9, 4),
+            new SurveySubmissionDto.SurveyAnswerDto(10, 5),
+            new SurveySubmissionDto.SurveyAnswerDto(11, 1),
+            new SurveySubmissionDto.SurveyAnswerDto(12, 2),
+            new SurveySubmissionDto.SurveyAnswerDto(13, 3),
+            new SurveySubmissionDto.SurveyAnswerDto(14, 4),
+            new SurveySubmissionDto.SurveyAnswerDto(15, 5)
         );
         validRequest = new SurveySubmissionDto(answers);
 
@@ -94,7 +105,7 @@ class SurveyServiceTest {
             // Then
             assertThat(result).isNotNull();
             assertThat(result.getResponseId()).isEqualTo(100L);
-            assertThat(result.getTotalAnswers()).isEqualTo(5);
+            assertThat(result.getTotalAnswers()).isEqualTo(15);
             assertThat(result.getSubmittedAt()).isNotNull();
 
             verify(userUtil).getCurrentUserId();
@@ -105,7 +116,7 @@ class SurveyServiceTest {
         @DisplayName("설문 제출 - 답변 개수 부족 시 예외")
         void submitSurvey_InsufficientAnswers_ThrowsException() {
             // Given
-            List<SurveySubmissionDto.SurveyAnswerDto> insufficient = validRequest.getAnswers().subList(0, 4);
+            List<SurveySubmissionDto.SurveyAnswerDto> insufficient = validRequest.getAnswers().subList(0, 14);
             SurveySubmissionDto req = new SurveySubmissionDto(insufficient);
 
             // When & Then
@@ -113,7 +124,7 @@ class SurveyServiceTest {
 
             assertThat(t)
                 .isInstanceOf(CustomException.class)
-                .hasMessageContaining("설문 문제는 총 5개입니다. 현재 답변 개수: 4");
+                .hasMessageContaining("설문 문제는 총 15개입니다. 현재 답변 개수: 14");
             assertThat(((CustomException) t).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_INPUT);
         }
@@ -127,7 +138,17 @@ class SurveyServiceTest {
                 new SurveySubmissionDto.SurveyAnswerDto(1, 2),
                 new SurveySubmissionDto.SurveyAnswerDto(3, 4),
                 new SurveySubmissionDto.SurveyAnswerDto(4, 1),
-                new SurveySubmissionDto.SurveyAnswerDto(5, 5)
+                new SurveySubmissionDto.SurveyAnswerDto(5, 5),
+                new SurveySubmissionDto.SurveyAnswerDto(6, 1),
+                new SurveySubmissionDto.SurveyAnswerDto(7, 2),
+                new SurveySubmissionDto.SurveyAnswerDto(8, 3),
+                new SurveySubmissionDto.SurveyAnswerDto(9, 4),
+                new SurveySubmissionDto.SurveyAnswerDto(10, 5),
+                new SurveySubmissionDto.SurveyAnswerDto(11, 1),
+                new SurveySubmissionDto.SurveyAnswerDto(12, 2),
+                new SurveySubmissionDto.SurveyAnswerDto(13, 3),
+                new SurveySubmissionDto.SurveyAnswerDto(14, 4),
+                new SurveySubmissionDto.SurveyAnswerDto(15, 5)
             );
             SurveySubmissionDto req = new SurveySubmissionDto(dup);
 
@@ -142,14 +163,25 @@ class SurveyServiceTest {
         }
 
         @Test
-        @DisplayName("설문 제출 - 문제 누락 시 예외")
-        void submitSurvey_MissingQuestion_ThrowsException() {
-            // Given
+        @DisplayName("설문 제출 - 문제 번호 범위 초과 시 예외 (16번)")
+        void submitSurvey_QuestionNumberOutOfRange_ThrowsException() {
+            // Given - 2번 문제를 빼고 16번을 추가하여 15개 답변 유지
             List<SurveySubmissionDto.SurveyAnswerDto> missing = Arrays.asList(
                 new SurveySubmissionDto.SurveyAnswerDto(1, 3),
                 new SurveySubmissionDto.SurveyAnswerDto(3, 4),
                 new SurveySubmissionDto.SurveyAnswerDto(4, 1),
-                new SurveySubmissionDto.SurveyAnswerDto(5, 5)
+                new SurveySubmissionDto.SurveyAnswerDto(5, 5),
+                new SurveySubmissionDto.SurveyAnswerDto(6, 1),
+                new SurveySubmissionDto.SurveyAnswerDto(7, 2),
+                new SurveySubmissionDto.SurveyAnswerDto(8, 3),
+                new SurveySubmissionDto.SurveyAnswerDto(9, 4),
+                new SurveySubmissionDto.SurveyAnswerDto(10, 5),
+                new SurveySubmissionDto.SurveyAnswerDto(11, 1),
+                new SurveySubmissionDto.SurveyAnswerDto(12, 2),
+                new SurveySubmissionDto.SurveyAnswerDto(13, 3),
+                new SurveySubmissionDto.SurveyAnswerDto(14, 4),
+                new SurveySubmissionDto.SurveyAnswerDto(15, 5),
+                new SurveySubmissionDto.SurveyAnswerDto(16, 1)
             );
             SurveySubmissionDto req = new SurveySubmissionDto(missing);
 
@@ -158,7 +190,7 @@ class SurveyServiceTest {
 
             assertThat(t)
                 .isInstanceOf(CustomException.class)
-                .hasMessageContaining("설문 문제는 총 5개입니다. 현재 답변 개수: 4");
+                .hasMessageContaining("문제 번호는 1-15 범위여야 합니다. 입력된 값: 16");
             assertThat(((CustomException) t).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_INPUT);
         }
@@ -172,7 +204,17 @@ class SurveyServiceTest {
                 new SurveySubmissionDto.SurveyAnswerDto(2, 2),
                 new SurveySubmissionDto.SurveyAnswerDto(3, 4),
                 new SurveySubmissionDto.SurveyAnswerDto(4, 1),
-                new SurveySubmissionDto.SurveyAnswerDto(6, 5)
+                new SurveySubmissionDto.SurveyAnswerDto(5, 5),
+                new SurveySubmissionDto.SurveyAnswerDto(6, 1),
+                new SurveySubmissionDto.SurveyAnswerDto(7, 2),
+                new SurveySubmissionDto.SurveyAnswerDto(8, 3),
+                new SurveySubmissionDto.SurveyAnswerDto(9, 4),
+                new SurveySubmissionDto.SurveyAnswerDto(10, 5),
+                new SurveySubmissionDto.SurveyAnswerDto(11, 1),
+                new SurveySubmissionDto.SurveyAnswerDto(12, 2),
+                new SurveySubmissionDto.SurveyAnswerDto(13, 3),
+                new SurveySubmissionDto.SurveyAnswerDto(14, 4),
+                new SurveySubmissionDto.SurveyAnswerDto(16, 5)
             );
             SurveySubmissionDto req = new SurveySubmissionDto(outOfRange);
 
@@ -181,7 +223,7 @@ class SurveyServiceTest {
 
             assertThat(t)
                 .isInstanceOf(CustomException.class)
-                .hasMessageContaining("문제 번호는 1-5 범위여야 합니다. 입력된 값: 6");
+                .hasMessageContaining("문제 번호는 1-15 범위여야 합니다. 입력된 값: 16");
             assertThat(((CustomException) t).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_INPUT);
         }
@@ -195,7 +237,17 @@ class SurveyServiceTest {
                 new SurveySubmissionDto.SurveyAnswerDto(2, 2),
                 new SurveySubmissionDto.SurveyAnswerDto(3, 4),
                 new SurveySubmissionDto.SurveyAnswerDto(4, 1),
-                new SurveySubmissionDto.SurveyAnswerDto(5, 6)
+                new SurveySubmissionDto.SurveyAnswerDto(5, 5),
+                new SurveySubmissionDto.SurveyAnswerDto(6, 1),
+                new SurveySubmissionDto.SurveyAnswerDto(7, 2),
+                new SurveySubmissionDto.SurveyAnswerDto(8, 3),
+                new SurveySubmissionDto.SurveyAnswerDto(9, 4),
+                new SurveySubmissionDto.SurveyAnswerDto(10, 5),
+                new SurveySubmissionDto.SurveyAnswerDto(11, 1),
+                new SurveySubmissionDto.SurveyAnswerDto(12, 2),
+                new SurveySubmissionDto.SurveyAnswerDto(13, 3),
+                new SurveySubmissionDto.SurveyAnswerDto(14, 4),
+                new SurveySubmissionDto.SurveyAnswerDto(15, 16)
             );
             SurveySubmissionDto req = new SurveySubmissionDto(badAnswer);
 
@@ -204,7 +256,7 @@ class SurveyServiceTest {
 
             assertThat(t)
                 .isInstanceOf(CustomException.class)
-                .hasMessageContaining("답변 번호는 1-5 범위여야 합니다. 입력된 값: 6");
+                .hasMessageContaining("답변 번호는 1-15 범위여야 합니다. 입력된 값: 16");
             assertThat(((CustomException) t).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_INPUT);
         }
@@ -245,33 +297,47 @@ class SurveyServiceTest {
             List<SurveyResponse> mockList = List.of(mockSurveyResponse);
             given(surveyResponseRepository.findByUserIdOrderByCreatedAtDesc(MOCK_USER_ID))
                 .willReturn(mockList);
+            given(surveyResponseRepository.countByUserId(MOCK_USER_ID))
+                .willReturn(1L);
 
             // When
-            List<SurveyResponseListDto> result =
+            SurveyResponseListDto.UserSurveyResponseListDto result =
                 surveyService.getUserSurveyResponses(MOCK_USER_ID);
+
+            // Then
+            assertThat(result.getUserId()).isEqualTo(MOCK_USER_ID);
+            assertThat(result.getTotalResponseCount()).isEqualTo(1L);
+            assertThat(result.getResponses()).hasSize(1);
+            assertThat(result.getResponses().get(0).getUserId()).isEqualTo(MOCK_USER_ID);
+        assertThat(result.getResponses().get(0).getAnswers()).hasSize(15);
+
+            verify(surveyResponseRepository)
+                .findByUserIdOrderByCreatedAtDesc(MOCK_USER_ID);
+            verify(surveyResponseRepository)
+                .countByUserId(MOCK_USER_ID);
+        }
+
+        @Test
+        @DisplayName("기간별 설문 응답 조회 - 성공")
+        void getSurveyResponsesByPeriod_Success() {
+            // Given
+            List<SurveyResponse> mockList = List.of(mockSurveyResponse);
+            given(surveyResponseRepository.findByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .willReturn(mockList);
+
+            // When
+            List<SurveyResponseListDto> result = surveyService.getSurveyResponsesByPeriod(
+                LocalDateTime.now().toLocalDate().minusDays(1),
+                LocalDateTime.now().toLocalDate()
+            );
 
             // Then
             assertThat(result).hasSize(1);
             assertThat(result.get(0).getUserId()).isEqualTo(MOCK_USER_ID);
-            assertThat(result.get(0).getAnswers()).hasSize(5);
+        assertThat(result.get(0).getAnswers()).hasSize(15);
 
             verify(surveyResponseRepository)
-                .findByUserIdOrderByCreatedAtDesc(MOCK_USER_ID);
-        }
-
-        @Test
-        @DisplayName("사용자 설문 응답 횟수 조회 - 성공")
-        void getUserSurveyCount_Success() {
-            // Given
-            given(surveyResponseRepository.countByUserId(MOCK_USER_ID))
-                .willReturn(3L);
-
-            // When
-            Long count = surveyService.getUserSurveyCount(MOCK_USER_ID);
-
-            // Then
-            assertThat(count).isEqualTo(3L);
-            verify(surveyResponseRepository).countByUserId(MOCK_USER_ID);
+                .findByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class));
         }
     }
 
