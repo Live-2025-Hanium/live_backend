@@ -29,7 +29,7 @@ public class SurveyController {
 
     @PostMapping("/submit")
     @Operation(summary = "설문 응답 제출 ",
-               description = "설문 응답을 제출 합니다. 5문제에 대한 설문을 모두 작성한 뒤 응답 제출을 합니다. ")
+               description = "설문 응답을 제출 합니다. 15문제에 대한 설문을 모두 작성한 뒤 응답 제출을 합니다. ")
     public ResponseHandler<SurveySubmissionResponseDto> submitSurvey(
             @Valid @RequestBody SurveySubmissionDto request) {
         

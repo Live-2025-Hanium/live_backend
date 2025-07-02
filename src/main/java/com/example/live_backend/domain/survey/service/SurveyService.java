@@ -29,9 +29,9 @@ public class SurveyService {
     private final SurveyResponseRepository surveyResponseRepository;
     private final UserUtil userUtil;
     
-    private static final int TOTAL_QUESTIONS = 5;
+    private static final int TOTAL_QUESTIONS = 15;
     private static final int MIN_ANSWER_NUMBER = 1;
-    private static final int MAX_ANSWER_NUMBER = 5;
+    private static final int MAX_ANSWER_NUMBER = 15;
 
 
     @Transactional
