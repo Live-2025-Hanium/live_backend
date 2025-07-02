@@ -39,4 +39,20 @@ public class SurveyResponseListDto {
         @Schema(description = "선택한 답변 번호", example = "3")
         private Integer answerNumber;
     }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UserSurveyResponseListDto {
+        
+        @Schema(description = "사용자 ID", example = "456")
+        private Long userId;
+
+        @Schema(description = "총 응답 횟수", example = "3")
+        private Long totalResponseCount;
+
+        @Schema(description = "설문 응답 목록")
+        private List<SurveyResponseListDto> responses;
+    }
 } 

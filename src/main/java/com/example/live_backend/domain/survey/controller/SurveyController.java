@@ -44,16 +44,16 @@ public class SurveyController {
  아래는 admin용 api 입니다.
  */
     @GetMapping("/admin/users/{userId}/responses")
-    @Operation(summary = "사용자별 설문 응답 조회", description = "특정 사용자의 설문 응답 목록을 조회합니다. (관리자용)")
-    public ResponseHandler<List<SurveyResponseListDto>> getUserSurveyResponses(
+    @Operation(summary = "사용자별 설문 응답 조회", description = "특정 사용자의 설문 응답 목록과 총 응답 횟수를 조회합니다. (관리자용)")
+    public ResponseHandler<SurveyResponseListDto.UserSurveyResponseListDto> getUserSurveyResponses(
             @Parameter(description = "사용자 ID", example = "1")
             @PathVariable Long userId) {
         
         log.info("사용자별 설문 응답 조회 요청 - 사용자 ID: {}", userId);
         
-        List<SurveyResponseListDto> responses = surveyService.getUserSurveyResponses(userId);
+        SurveyResponseListDto.UserSurveyResponseListDto response = surveyService.getUserSurveyResponses(userId);
         
-        return ResponseHandler.response(responses);
+        return ResponseHandler.response(response);
     }
 
     @GetMapping("/admin/responses")
@@ -69,18 +69,5 @@ public class SurveyController {
         List<SurveyResponseListDto> responses = surveyService.getSurveyResponsesByPeriod(startDate, endDate);
         
         return ResponseHandler.response(responses);
-    }
-
-    @GetMapping("/admin/users/{userId}/count")
-    @Operation(summary = "사용자 설문 응답 횟수 조회", description = "특정 사용자의 설문 응답 횟수를 조회합니다. (관리자용)")
-    public ResponseHandler<Long> getUserSurveyCount(
-            @Parameter(description = "사용자 ID", example = "1")
-            @PathVariable Long userId) {
-        
-        log.info("사용자 설문 응답 횟수 조회 요청 - 사용자 ID: {}", userId);
-        
-        Long count = surveyService.getUserSurveyCount(userId);
-        
-        return ResponseHandler.response(count);
     }
 } 

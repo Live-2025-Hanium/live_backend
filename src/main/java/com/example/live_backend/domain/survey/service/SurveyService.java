@@ -131,14 +131,21 @@ public class SurveyService {
       * 특정 사용자의 설문 응답 목록 조회 (관리자용)
       */
      @Transactional(readOnly = true)
-     public List<SurveyResponseListDto> getUserSurveyResponses(Long userId) {
+     public SurveyResponseListDto.UserSurveyResponseListDto getUserSurveyResponses(Long userId) {
          log.info("사용자 설문 응답 조회 - 사용자 ID: {}", userId);
          
          List<SurveyResponse> responses = surveyResponseRepository.findByUserIdOrderByCreatedAtDesc(userId);
+         Long totalCount = surveyResponseRepository.countByUserId(userId);
          
-         return responses.stream()
+         List<SurveyResponseListDto> responseDtos = responses.stream()
                  .map(this::convertToResponseListDto)
                  .toList();
+         
+         return SurveyResponseListDto.UserSurveyResponseListDto.builder()
+                 .userId(userId)
+                 .totalResponseCount(totalCount)
+                 .responses(responseDtos)
+                 .build();
      }
      
      /**
@@ -153,14 +160,6 @@ public class SurveyService {
          return responses.stream()
                  .map(this::convertToResponseListDto)
              .toList();
-     }
-     
-     /**
-      * 사용자의 설문 응답 횟수 조회
-      */
-     @Transactional(readOnly = true)
-     public Long getUserSurveyCount(Long userId) {
-         return surveyResponseRepository.countByUserId(userId);
      }
      
      private SurveyResponseListDto convertToResponseListDto(SurveyResponse response) {
