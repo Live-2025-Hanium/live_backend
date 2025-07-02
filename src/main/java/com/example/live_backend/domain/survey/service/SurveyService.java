@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -152,10 +153,13 @@ public class SurveyService {
       * 특정 기간 내 모든 설문 응답 조회 (관리자용)
       */
      @Transactional(readOnly = true)
-     public List<SurveyResponseListDto> getSurveyResponsesByPeriod(LocalDateTime startDate, LocalDateTime endDate) {
+     public List<SurveyResponseListDto> getSurveyResponsesByPeriod(LocalDate startDate, LocalDate endDate) {
          log.info("기간별 설문 응답 조회 - 시작: {}, 종료: {}", startDate, endDate);
          
-         List<SurveyResponse> responses = surveyResponseRepository.findByCreatedAtBetween(startDate, endDate);
+         LocalDateTime startDateTime = startDate.atStartOfDay();
+         LocalDateTime endDateTime = endDate.atTime(23, 59, 59, 999999999);
+         
+         List<SurveyResponse> responses = surveyResponseRepository.findByCreatedAtBetween(startDateTime, endDateTime);
          
          return responses.stream()
                  .map(this::convertToResponseListDto)

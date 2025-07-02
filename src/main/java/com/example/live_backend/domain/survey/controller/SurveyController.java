@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -59,10 +60,10 @@ public class SurveyController {
     @GetMapping("/admin/responses")
     @Operation(summary = "기간별 설문 응답 조회", description = "특정 기간의 모든 설문 응답을 조회합니다. (관리자용)")
     public ResponseHandler<List<SurveyResponseListDto>> getSurveyResponsesByPeriod(
-            @Parameter(description = "시작 일시", example = "2024-01-01T00:00:00")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @Parameter(description = "종료 일시", example = "2024-01-31T23:59:59")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @Parameter(description = "시작 날짜", example = "2024-01-01")
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @Parameter(description = "종료 날짜", example = "2024-01-31")
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         
         log.info("기간별 설문 응답 조회 요청 - 시작: {}, 종료: {}", startDate, endDate);
         
