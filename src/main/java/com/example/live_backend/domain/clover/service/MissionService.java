@@ -1,6 +1,7 @@
 package com.example.live_backend.domain.clover.service;
 
 import com.example.live_backend.domain.clover.dto.CloverMissionListResponseDto;
+import com.example.live_backend.domain.clover.dto.CloverMissionResponseDto;
 import com.example.live_backend.domain.clover.entity.MissionUser;
 import com.example.live_backend.domain.clover.repository.CloverMissionRepository;
 import com.example.live_backend.domain.memeber.util.UserUtil;
@@ -56,5 +57,26 @@ public class MissionService {
                 .missionId(missionUser.getId())
                 .title(missionUser.getTitle())
                 .build();
+    }
+
+    @Transactional
+    public CloverMissionResponseDto getCloverMission(Long missionId) {
+
+        Long currentUserId = userUtil.getCurrentUserId();
+        log.info("클로버 미션 조회 시작 - 인증된 사용자 ID: {}", currentUserId);
+
+        MissionUser cloverMissionById = cloverMissionRepository.findCloverMissionById(missionId);
+
+        CloverMissionResponseDto response = CloverMissionResponseDto.builder()
+                .missionId(cloverMissionById.getId())
+                .title(cloverMissionById.getTitle())
+                .description(cloverMissionById.getDescription())
+                .difficulty(cloverMissionById.getMissionDefault().getDifficulty())
+                .build();
+
+        log.info("클로버 미션 조회 완료 - 클로버 미션 ID: {}", missionId);
+
+        return response;
+
     }
 }
