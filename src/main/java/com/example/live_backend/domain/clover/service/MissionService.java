@@ -71,7 +71,7 @@ public class MissionService {
                 .missionId(cloverMissionById.getId())
                 .title(cloverMissionById.getTitle())
                 .description(cloverMissionById.getDescription())
-                .category(String.valueOf(cloverMissionById.getMissionDefault().getCategory()))
+                .category(cloverMissionById.getMissionDefault().getCategory())
                 .difficulty(cloverMissionById.getMissionDefault().getDifficulty())
                 .build();
 

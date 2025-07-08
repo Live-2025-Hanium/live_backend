@@ -23,7 +23,7 @@ public class CloverMissionResponseDto {
     private String description;
 
     @Schema(description = "미션 카테고리", example = "EASY")
-    private String category;
+    private MissionDefault.Category category;
 
     @Schema(description = "미션 난이도", example = "EASY")
     private MissionDefault.Difficulty difficulty;

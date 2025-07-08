@@ -108,7 +108,7 @@ class MissionServiceTest {
 
         ReflectionTestUtils.setField(testUser, "id", userId);
 
-        // 상세 조회를 위해 MissionDefault 객체도 구체적으로 생성
+        // 상세 조회를 위해 MissionDefault 객체 생성
         MissionDefault missionDefault = MissionDefault.builder()
                 .title("친구에게 칭찬 한마디 건네기")
                 .description("작은 칭찬으로 친구의 하루를 특별하게 만들어주세요.")
@@ -132,5 +132,7 @@ class MissionServiceTest {
         assertThat(responseDto.getMissionId()).isEqualTo(missionId);
         assertThat(responseDto.getTitle()).isEqualTo("친구에게 칭찬 한마디 건네기");
         assertThat(responseDto.getDescription()).isEqualTo("작은 칭찬으로 친구의 하루를 특별하게 만들어주세요.");
+        assertThat(responseDto.getCategory()).isEqualTo(MissionDefault.Category.RELATIONSHIP);
+        assertThat(responseDto.getDifficulty()).isEqualTo(MissionDefault.Difficulty.EASY);
     }
 }
