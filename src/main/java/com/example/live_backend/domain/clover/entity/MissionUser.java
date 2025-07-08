@@ -42,4 +42,13 @@ public class MissionUser extends BaseEntity {
     // 연관관계 매핑
     @OneToMany(mappedBy = "mission", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<MissionRecord> records = new ArrayList<>();
+
+    @Builder
+    public MissionUser(User user, MissionDefault missionDefault, String title, String description, LocalDateTime scheduledAt) {
+        this.user = user;
+        this.missionDefault = missionDefault;
+        this.title = title;
+        this.description = description;
+        this.scheduledAt = scheduledAt;
+    }
 }
