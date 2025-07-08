@@ -23,4 +23,10 @@ public interface CloverMissionRepository extends JpaRepository<MissionUser,Long>
             @Param("userId") Long userId,
             @Param("today") LocalDateTime today
     );
+
+    /**
+     * 특정 클로버 미션-ID의 클로버 미션 찾기
+     */
+    @Query("SELECT mu FROM MissionUser mu WHERE mu.id = :missionId")
+    MissionUser findCloverMissionById(Long missionId);
 }
