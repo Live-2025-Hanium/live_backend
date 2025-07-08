@@ -28,7 +28,7 @@ public class PrincipalDetails implements UserDetails {
 
 	@Override
 	public String getPassword() {
-		return "mock-password";  // Mock 비밀번호
+		return "{noop}mock-password";  // Mock 비밀번호
 	}
 
 	@Override

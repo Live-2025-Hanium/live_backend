@@ -29,13 +29,12 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI openAPI() {
-        SecurityScheme bearerAuthScheme = new SecurityScheme()
-                .type(SecurityScheme.Type.HTTP)
-                .scheme("bearer")
-                .bearerFormat("JWT");
+        SecurityScheme basicAuthScheme = new SecurityScheme()
+            .type(SecurityScheme.Type.HTTP)
+            .scheme("basic");
 
         SecurityRequirement securityRequirement = new SecurityRequirement()
-                .addList("bearerAuth");
+            .addList("basicAuth");
 
         // 페이지네이션 파라미터 설정
         Parameter page = new Parameter()
@@ -72,7 +71,7 @@ public class SwaggerConfig {
                 )
                 .components(
                     new Components()
-                        .addSecuritySchemes("bearerAuth", bearerAuthScheme)
+                        .addSecuritySchemes("basicAuth", basicAuthScheme)
                         .addParameters("page", page)
                         .addParameters("size", size)
                 )
