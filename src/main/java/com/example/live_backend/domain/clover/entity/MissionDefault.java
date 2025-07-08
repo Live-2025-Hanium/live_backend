@@ -4,6 +4,7 @@ import com.example.live_backend.domain.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -67,5 +68,13 @@ public class MissionDefault extends BaseEntity {
         Difficulty(int level) {
             this.level = level;
         }
+    }
+
+    @Builder
+    public MissionDefault(String title, String description, Category category, Difficulty difficulty) {
+        this.title = title;
+        this.description = description;
+        this.category = category;
+        this.difficulty = difficulty;
     }
 }

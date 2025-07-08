@@ -1,6 +1,8 @@
 package com.example.live_backend.domain.clover.service;
 
 import com.example.live_backend.domain.clover.dto.CloverMissionListResponseDto;
+import com.example.live_backend.domain.clover.dto.CloverMissionResponseDto;
+import com.example.live_backend.domain.clover.entity.MissionDefault;
 import com.example.live_backend.domain.clover.entity.MissionUser;
 import com.example.live_backend.domain.clover.repository.CloverMissionRepository;
 import com.example.live_backend.domain.example.entity.User;
@@ -35,7 +37,7 @@ class MissionServiceTest {
     private MissionService missionService;
 
     @Test
-    @DisplayName("오늘의 클로버 미션 목록 조회 성공")
+    @DisplayName("클로버 미션 목록 조회 성공")
     void getCloverMissionList_Success() {
 
         // given
@@ -48,10 +50,12 @@ class MissionServiceTest {
 
         ReflectionTestUtils.setField(testUser, "id", userId);
 
+        MissionDefault mockMissionDefault = MissionDefault.builder().build();
+
         // Mock MissionUser 객체 생성
-        MissionUser missionUser1 = createMockMissionUser(101L, "친구에게 칭찬 한마디 건네기", testUser);
-        MissionUser missionUser2 = createMockMissionUser(102L, "출근길에 하늘 사진 찍기", testUser);
-        MissionUser missionUser3 = createMockMissionUser(103L, "부모님께 안부 인사 전하기", testUser);
+        MissionUser missionUser1 = createMockMissionUser(101L, "친구에게 칭찬 한마디 건네기", testUser, mockMissionDefault);
+        MissionUser missionUser2 = createMockMissionUser(102L, "출근길에 하늘 사진 찍기", testUser, mockMissionDefault);
+        MissionUser missionUser3 = createMockMissionUser(103L, "부모님께 안부 인사 전하기", testUser, mockMissionDefault);
 
         List<MissionUser> mockMissions = Arrays.asList(missionUser1, missionUser2, missionUser3);
 
@@ -83,12 +87,50 @@ class MissionServiceTest {
     /**
      * 테스트용 MissionUser 객체를 생성하는 헬퍼 메소드
      */
-    private MissionUser createMockMissionUser(Long missionId, String title, User user) {
-        MissionUser missionUser = new MissionUser(user, null, title, null, null);
+    private MissionUser createMockMissionUser(Long missionId, String title, User user, MissionDefault missionDefault) {
+        MissionUser missionUser = new MissionUser(user, missionDefault, title, "작은 칭찬으로 친구의 하루를 특별하게 만들어주세요.", null);
         // ReflectionTestUtils 를 사용해 private 필드에 값을 설정
         ReflectionTestUtils.setField(missionUser, "id", missionId);
         ReflectionTestUtils.setField(missionUser, "title", title);
         ReflectionTestUtils.setField(missionUser, "user", user); // 연관관계 설정
         return missionUser;
+    }
+
+    @Test
+    @DisplayName("1개의 클로버 미션 상세 조회 성공")
+    void getCloverMissionDetail_Success() {
+        // given
+        Long userId = 1L;
+        Long missionId = 101L;
+
+        User testUser = User.builder()
+                .nickname("테스트유저").build();
+
+        ReflectionTestUtils.setField(testUser, "id", userId);
+
+        // 상세 조회를 위해 MissionDefault 객체도 구체적으로 생성
+        MissionDefault missionDefault = MissionDefault.builder()
+                .title("친구에게 칭찬 한마디 건네기")
+                .description("작은 칭찬으로 친구의 하루를 특별하게 만들어주세요.")
+                .category(MissionDefault.Category.RELATIONSHIP)
+                .difficulty(MissionDefault.Difficulty.EASY)
+                .build();
+        ReflectionTestUtils.setField(missionDefault, "id", 1L);
+
+        // 테스트 대상 MissionUser 객체 생성
+        MissionUser mockMission = createMockMissionUser(missionId, "친구에게 칭찬 한마디 건네기", testUser, missionDefault);
+
+        // Mock 객체 동작 정의
+        when(cloverMissionRepository.findCloverMissionById(missionId)).thenReturn(mockMission);
+
+        // when
+        // 서비스의 상세 조회 메소드 호출
+        CloverMissionResponseDto responseDto = missionService.getCloverMission(missionId);
+
+        // then
+        assertThat(responseDto).isNotNull();
+        assertThat(responseDto.getMissionId()).isEqualTo(missionId);
+        assertThat(responseDto.getTitle()).isEqualTo("친구에게 칭찬 한마디 건네기");
+        assertThat(responseDto.getDescription()).isEqualTo("작은 칭찬으로 친구의 하루를 특별하게 만들어주세요.");
     }
 }
