@@ -27,7 +27,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # MySQL과 Redis 서비스 추가
+    # MySQL 서비스만 유지 (Redis 제거)
     services:
       mysql:
         image: mysql:latest
@@ -38,16 +38,6 @@ jobs:
           - 3306:3306
         options: >-
           --health-cmd "mysqladmin ping -h localhost -uroot -proot"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
