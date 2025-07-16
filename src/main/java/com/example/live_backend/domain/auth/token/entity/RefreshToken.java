@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.auth.token;
+package com.example.live_backend.domain.auth.token.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

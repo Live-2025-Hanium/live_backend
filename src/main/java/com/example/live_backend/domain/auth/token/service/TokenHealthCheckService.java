@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.auth.token;
+package com.example.live_backend.domain.auth.token.service;
 
 import lombok.RequiredArgsConstructor;
 

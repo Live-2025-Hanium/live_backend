@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.auth.token;
+package com.example.live_backend.domain.auth.token.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.live_backend.domain.auth.AuthToken;
 import com.example.live_backend.domain.auth.AuthTokenGenerator;
 import com.example.live_backend.domain.auth.jwt.JwtUtil;
+import com.example.live_backend.domain.auth.token.entity.RefreshToken;
+import com.example.live_backend.domain.auth.token.repository.RefreshTokenRepository;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 
