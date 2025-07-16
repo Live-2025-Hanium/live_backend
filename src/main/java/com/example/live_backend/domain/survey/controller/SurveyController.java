@@ -25,50 +25,50 @@ import java.util.List;
 @Slf4j
 public class SurveyController {
 
-    private final SurveyService surveyService;
+	private final SurveyService surveyService;
 
-    @PostMapping("/submit")
-    @Operation(summary = "설문 응답 제출 ",
-               description = "설문 응답을 제출 합니다. 15문제에 대한 설문을 모두 작성한 뒤 응답 제출을 합니다. ")
-    public ResponseHandler<SurveySubmissionResponseDto> submitSurvey(
-            @Valid @RequestBody SurveySubmissionDto request) {
-        
-        log.info("설문 응답 제출 요청 - 답변 수: {}", request.getAnswers().size());
-        
-        SurveySubmissionResponseDto response = surveyService.submitSurvey(request);
-        
-        return ResponseHandler.response(response);
-    }
+	@PostMapping("/submit")
+	@Operation(summary = "설문 응답 제출 ",
+		description = "설문 응답을 제출 합니다. 15문제에 대한 설문을 모두 작성한 뒤 응답 제출을 합니다. ")
+	public ResponseHandler<SurveySubmissionResponseDto> submitSurvey(
+		@Valid @RequestBody SurveySubmissionDto request) {
+
+		log.info("설문 응답 제출 요청 - 답변 수: {}", request.getAnswers().size());
+
+		SurveySubmissionResponseDto response = surveyService.submitSurvey(request);
+
+		return ResponseHandler.success(response);
+	}
 
 
- /*
- 아래는 admin용 api 입니다.
- */
-    @GetMapping("/admin/users/{userId}/responses")
-    @Operation(summary = "사용자별 설문 응답 조회", description = "특정 사용자의 설문 응답 목록과 총 응답 횟수를 조회합니다. (관리자용)")
-    public ResponseHandler<SurveyResponseListDto.UserSurveyResponseListDto> getUserSurveyResponses(
-            @Parameter(description = "사용자 ID", example = "1")
-            @PathVariable Long userId) {
-        
-        log.info("사용자별 설문 응답 조회 요청 - 사용자 ID: {}", userId);
-        
-        SurveyResponseListDto.UserSurveyResponseListDto response = surveyService.getUserSurveyResponses(userId);
-        
-        return ResponseHandler.response(response);
-    }
+	/*
+	아래는 admin용 api 입니다.
+	*/
+	@GetMapping("/admin/users/{userId}/responses")
+	@Operation(summary = "사용자별 설문 응답 조회", description = "특정 사용자의 설문 응답 목록과 총 응답 횟수를 조회합니다. (관리자용)")
+	public ResponseHandler<SurveyResponseListDto.UserSurveyResponseListDto> getUserSurveyResponses(
+		@Parameter(description = "사용자 ID", example = "1")
+		@PathVariable Long userId) {
 
-    @GetMapping("/admin/responses")
-    @Operation(summary = "기간별 설문 응답 조회", description = "특정 기간의 모든 설문 응답을 조회합니다. (관리자용)")
-    public ResponseHandler<List<SurveyResponseListDto>> getSurveyResponsesByPeriod(
-            @Parameter(description = "시작 날짜", example = "2024-01-01")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @Parameter(description = "종료 날짜", example = "2024-01-31")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        
-        log.info("기간별 설문 응답 조회 요청 - 시작: {}, 종료: {}", startDate, endDate);
-        
-        List<SurveyResponseListDto> responses = surveyService.getSurveyResponsesByPeriod(startDate, endDate);
-        
-        return ResponseHandler.response(responses);
-    }
-} 
+		log.info("사용자별 설문 응답 조회 요청 - 사용자 ID: {}", userId);
+
+		SurveyResponseListDto.UserSurveyResponseListDto response = surveyService.getUserSurveyResponses(userId);
+
+		return ResponseHandler.success(response);
+	}
+
+	@GetMapping("/admin/responses")
+	@Operation(summary = "기간별 설문 응답 조회", description = "특정 기간의 모든 설문 응답을 조회합니다. (관리자용)")
+	public ResponseHandler<List<SurveyResponseListDto>> getSurveyResponsesByPeriod(
+		@Parameter(description = "시작 날짜", example = "2024-01-01")
+		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+		@Parameter(description = "종료 날짜", example = "2024-01-31")
+		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+		log.info("기간별 설문 응답 조회 요청 - 시작: {}, 종료: {}", startDate, endDate);
+
+		List<SurveyResponseListDto> responses = surveyService.getSurveyResponsesByPeriod(startDate, endDate);
+
+		return ResponseHandler.success(responses);
+	}
+}

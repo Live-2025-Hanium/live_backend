@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 
+@Deprecated
 @Service
 @RequiredArgsConstructor
 public class UserService {

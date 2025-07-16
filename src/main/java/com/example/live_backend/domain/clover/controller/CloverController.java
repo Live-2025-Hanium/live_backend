@@ -17,31 +17,31 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class CloverController {
 
-    private final MissionService missionService;
+	private final MissionService missionService;
 
-    @GetMapping
-    @Operation(summary = "클로버 미션 리스트 조회 ",
-            description = "클로버 미션 리스트를 조회합니다.")
-    public ResponseHandler<CloverMissionListResponseDto> getCloverMissionList() {
+	@GetMapping
+	@Operation(summary = "클로버 미션 리스트 조회 ",
+		description = "클로버 미션 리스트를 조회합니다.")
+	public ResponseHandler<CloverMissionListResponseDto> getCloverMissionList() {
 
-        log.info("클로버 미션 리스트(3개) 조회 API 호출");
+		log.info("클로버 미션 리스트(3개) 조회 API 호출");
 
-        CloverMissionListResponseDto response = missionService.getCloverMissionList();
+		CloverMissionListResponseDto response = missionService.getCloverMissionList();
 
-        log.info("클로버 미션 리스트 조회 완료 - 총 {}개 미션", response.getMissions().size());
+		log.info("클로버 미션 리스트 조회 완료 - 총 {}개 미션", response.getMissions().size());
 
-        return ResponseHandler.response(response);
-    }
+		return ResponseHandler.success(response);
+	}
 
-    @GetMapping("/{missionId}")
-    @Operation(summary = "클로버 미션(1개) 상세 조회 ",
-            description = "클로버 미션 1개의 상세 정보를 조회합니다.")
-    public ResponseHandler<CloverMissionResponseDto> getCloverMission(@PathVariable Long missionId) {
+	@GetMapping("/{missionId}")
+	@Operation(summary = "클로버 미션(1개) 상세 조회 ",
+		description = "클로버 미션 1개의 상세 정보를 조회합니다.")
+	public ResponseHandler<CloverMissionResponseDto> getCloverMission(@PathVariable Long missionId) {
 
-        log.info("클로버 미션 상세 조회 API 호출");
+		log.info("클로버 미션 상세 조회 API 호출");
 
-        CloverMissionResponseDto response = missionService.getCloverMission(missionId);
+		CloverMissionResponseDto response = missionService.getCloverMission(missionId);
 
-        return ResponseHandler.response(response);
-    }
+		return ResponseHandler.success(response);
+	}
 }
