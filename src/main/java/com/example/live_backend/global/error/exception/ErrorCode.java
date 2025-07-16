@@ -20,6 +20,10 @@ public enum ErrorCode {
 
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),
+	EXPIRED_TOKEN(UNAUTHORIZED, "토큰이 만료되었습니다."),
+	INVALID_TOKEN_CATEGORY(UNAUTHORIZED, "유효하지 않은 토큰 유형입니다."),
+	INVALID_TOKEN(UNAUTHORIZED, "유효하지 않은 토큰입니다."),
+	MISSING_TOKEN(UNAUTHORIZED, "토큰이 없습니다."),
 
 	/* ------------------ 404 NOT_FOUND: 리소스 없음 ------------------ */
 	USER_NOT_FOUND(NOT_FOUND, "존재하지 않는 사용자입니다."),
