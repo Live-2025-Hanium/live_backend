@@ -2,7 +2,6 @@ package com.example.live_backend.domain.mission.service;
 
 import com.example.live_backend.domain.mission.dto.CloverMissionListResponseDto;
 import com.example.live_backend.domain.mission.dto.CloverMissionResponseDto;
-import com.example.live_backend.domain.mission.entity.MissionUser;
 import com.example.live_backend.domain.mission.repository.CloverMissionRepository;
 import com.example.live_backend.domain.memeber.util.UserUtil;
 import lombok.RequiredArgsConstructor;
@@ -71,8 +70,8 @@ public class MissionService {
                 .missionId(cloverMissionById.getId())
                 .title(cloverMissionById.getTitle())
                 .description(cloverMissionById.getDescription())
-                .category(cloverMissionById.getMissionDefault().getCategory())
-                .difficulty(cloverMissionById.getMissionDefault().getDifficulty())
+                .category(cloverMissionById.getMissionClover().getCategory())
+                .difficulty(cloverMissionById.getMissionClover().getDifficulty())
                 .build();
 
         log.info("클로버 미션 조회 완료 - 클로버 미션 ID: {}", missionId);

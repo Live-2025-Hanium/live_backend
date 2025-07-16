@@ -2,8 +2,7 @@ package com.example.live_backend.domain.mission.service;
 
 import com.example.live_backend.domain.mission.dto.CloverMissionListResponseDto;
 import com.example.live_backend.domain.mission.dto.CloverMissionResponseDto;
-import com.example.live_backend.domain.mission.entity.MissionDefault;
-import com.example.live_backend.domain.mission.entity.MissionUser;
+import com.example.live_backend.domain.mission.entity.MissionClover;
 import com.example.live_backend.domain.mission.repository.CloverMissionRepository;
 import com.example.live_backend.domain.example.entity.User;
 import com.example.live_backend.domain.memeber.util.UserUtil;
@@ -50,12 +49,12 @@ class MissionServiceTest {
 
         ReflectionTestUtils.setField(testUser, "id", userId);
 
-        MissionDefault mockMissionDefault = MissionDefault.builder().build();
+        MissionClover mockMissionClover = MissionClover.builder().build();
 
         // Mock MissionUser 객체 생성
-        MissionUser missionUser1 = createMockMissionUser(101L, "친구에게 칭찬 한마디 건네기", testUser, mockMissionDefault);
-        MissionUser missionUser2 = createMockMissionUser(102L, "출근길에 하늘 사진 찍기", testUser, mockMissionDefault);
-        MissionUser missionUser3 = createMockMissionUser(103L, "부모님께 안부 인사 전하기", testUser, mockMissionDefault);
+        MissionUser missionUser1 = createMockMissionUser(101L, "친구에게 칭찬 한마디 건네기", testUser, mockMissionClover);
+        MissionUser missionUser2 = createMockMissionUser(102L, "출근길에 하늘 사진 찍기", testUser, mockMissionClover);
+        MissionUser missionUser3 = createMockMissionUser(103L, "부모님께 안부 인사 전하기", testUser, mockMissionClover);
 
         List<MissionUser> mockMissions = Arrays.asList(missionUser1, missionUser2, missionUser3);
 
@@ -87,8 +86,8 @@ class MissionServiceTest {
     /**
      * 테스트용 MissionUser 객체를 생성하는 헬퍼 메소드
      */
-    private MissionUser createMockMissionUser(Long missionId, String title, User user, MissionDefault missionDefault) {
-        MissionUser missionUser = new MissionUser(user, missionDefault, title, "작은 칭찬으로 친구의 하루를 특별하게 만들어주세요.", null);
+    private MissionUser createMockMissionUser(Long missionId, String title, User user, MissionClover missionClover) {
+        MissionUser missionUser = new MissionUser(user, missionClover, title, "작은 칭찬으로 친구의 하루를 특별하게 만들어주세요.", null);
         // ReflectionTestUtils 를 사용해 private 필드에 값을 설정
         ReflectionTestUtils.setField(missionUser, "id", missionId);
         ReflectionTestUtils.setField(missionUser, "title", title);
@@ -109,16 +108,16 @@ class MissionServiceTest {
         ReflectionTestUtils.setField(testUser, "id", userId);
 
         // 상세 조회를 위해 MissionDefault 객체 생성
-        MissionDefault missionDefault = MissionDefault.builder()
+        MissionClover missionClover = MissionClover.builder()
                 .title("친구에게 칭찬 한마디 건네기")
                 .description("작은 칭찬으로 친구의 하루를 특별하게 만들어주세요.")
-                .category(MissionDefault.Category.RELATIONSHIP)
-                .difficulty(MissionDefault.Difficulty.EASY)
+                .category(MissionClover.Category.RELATIONSHIP)
+                .difficulty(MissionClover.Difficulty.EASY)
                 .build();
-        ReflectionTestUtils.setField(missionDefault, "id", 1L);
+        ReflectionTestUtils.setField(missionClover, "id", 1L);
 
         // 테스트 대상 MissionUser 객체 생성
-        MissionUser mockMission = createMockMissionUser(missionId, "친구에게 칭찬 한마디 건네기", testUser, missionDefault);
+        MissionUser mockMission = createMockMissionUser(missionId, "친구에게 칭찬 한마디 건네기", testUser, missionClover);
 
         // Mock 객체 동작 정의
         when(cloverMissionRepository.findCloverMissionById(missionId)).thenReturn(mockMission);
@@ -132,7 +131,7 @@ class MissionServiceTest {
         assertThat(responseDto.getMissionId()).isEqualTo(missionId);
         assertThat(responseDto.getTitle()).isEqualTo("친구에게 칭찬 한마디 건네기");
         assertThat(responseDto.getDescription()).isEqualTo("작은 칭찬으로 친구의 하루를 특별하게 만들어주세요.");
-        assertThat(responseDto.getCategory()).isEqualTo(MissionDefault.Category.RELATIONSHIP);
-        assertThat(responseDto.getDifficulty()).isEqualTo(MissionDefault.Difficulty.EASY);
+        assertThat(responseDto.getCategory()).isEqualTo(MissionClover.Category.RELATIONSHIP);
+        assertThat(responseDto.getDifficulty()).isEqualTo(MissionClover.Difficulty.EASY);
     }
 }
