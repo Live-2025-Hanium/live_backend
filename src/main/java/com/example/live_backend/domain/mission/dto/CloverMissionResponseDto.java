@@ -1,6 +1,6 @@
-package com.example.live_backend.domain.clover.dto;
+package com.example.live_backend.domain.mission.dto;
 
-import com.example.live_backend.domain.clover.entity.MissionDefault;
+import com.example.live_backend.domain.mission.entity.MissionDefault;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.clover.entity;
+package com.example.live_backend.domain.mission.entity;
 
 import com.example.live_backend.domain.BaseEntity;
 import com.example.live_backend.domain.example.entity.User;

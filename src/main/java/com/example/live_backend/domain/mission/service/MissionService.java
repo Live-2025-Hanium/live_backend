@@ -1,9 +1,9 @@
-package com.example.live_backend.domain.clover.service;
+package com.example.live_backend.domain.mission.service;
 
-import com.example.live_backend.domain.clover.dto.CloverMissionListResponseDto;
-import com.example.live_backend.domain.clover.dto.CloverMissionResponseDto;
-import com.example.live_backend.domain.clover.entity.MissionUser;
-import com.example.live_backend.domain.clover.repository.CloverMissionRepository;
+import com.example.live_backend.domain.mission.dto.CloverMissionListResponseDto;
+import com.example.live_backend.domain.mission.dto.CloverMissionResponseDto;
+import com.example.live_backend.domain.mission.entity.MissionUser;
+import com.example.live_backend.domain.mission.repository.CloverMissionRepository;
 import com.example.live_backend.domain.memeber.util.UserUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

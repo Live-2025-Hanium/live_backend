@@ -1,6 +1,6 @@
-package com.example.live_backend.domain.clover.repository;
+package com.example.live_backend.domain.mission.repository;
 
-import com.example.live_backend.domain.clover.entity.MissionUser;
+import com.example.live_backend.domain.mission.entity.MissionUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

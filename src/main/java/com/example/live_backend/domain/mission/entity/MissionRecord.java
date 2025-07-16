@@ -1,11 +1,9 @@
-package com.example.live_backend.domain.clover.entity;
+package com.example.live_backend.domain.mission.entity;
 
 import com.example.live_backend.domain.BaseEntity;
 import com.example.live_backend.domain.example.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "mission_records")

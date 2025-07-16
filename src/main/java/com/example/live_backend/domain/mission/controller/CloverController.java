@@ -1,8 +1,8 @@
-package com.example.live_backend.domain.clover.controller;
+package com.example.live_backend.domain.mission.controller;
 
-import com.example.live_backend.domain.clover.dto.CloverMissionListResponseDto;
-import com.example.live_backend.domain.clover.dto.CloverMissionResponseDto;
-import com.example.live_backend.domain.clover.service.MissionService;
+import com.example.live_backend.domain.mission.dto.CloverMissionListResponseDto;
+import com.example.live_backend.domain.mission.dto.CloverMissionResponseDto;
+import com.example.live_backend.domain.mission.service.MissionService;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
