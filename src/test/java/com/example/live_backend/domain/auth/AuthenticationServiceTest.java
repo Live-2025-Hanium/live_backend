@@ -32,13 +32,12 @@ class AuthenticationServiceTest {
 
     @BeforeEach
     void setUp() {
-        // 테스트 전에 SecurityContext 클리어
+        // 테스트 전에 SecurityContext 클리어한다.
         SecurityContextHolder.clearContext();
     }
 
     @AfterEach
     void tearDown() {
-        // 테스트 후에 SecurityContext 클리어
         SecurityContextHolder.clearContext();
     }
 

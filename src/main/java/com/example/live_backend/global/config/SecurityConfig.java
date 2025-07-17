@@ -1,7 +1,5 @@
 package com.example.live_backend.global.config;
 
-import java.util.Arrays;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,9 +10,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.example.live_backend.domain.auth.jwt.JwtFilter;
 
@@ -24,17 +19,9 @@ import com.example.live_backend.domain.auth.jwt.JwtFilter;
 public class SecurityConfig {
 
 	private final JwtFilter jwtFilter;
-	private final String frontendUrl;
-	private final String backendUrl;
 
-	public SecurityConfig(
-		JwtFilter jwtFilter,
-		@Value("${app.frontend.base-url}") String frontendUrl,
-		@Value("${app.backend.base-url}") String backendUrl
-	) {
+	public SecurityConfig(JwtFilter jwtFilter) {
 		this.jwtFilter = jwtFilter;
-		this.frontendUrl = frontendUrl;
-		this.backendUrl = backendUrl;
 	}
 
 	/**
@@ -51,7 +38,7 @@ public class SecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.formLogin(AbstractHttpConfigurer::disable)
 			.httpBasic(AbstractHttpConfigurer::disable)
-			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			.cors(AbstractHttpConfigurer::disable) // Flutter 앱에서는 CORS 불필요
 			.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
 			.sessionManagement(mgmt ->
 				mgmt.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
@@ -70,7 +57,7 @@ public class SecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.formLogin(AbstractHttpConfigurer::disable)
 			.httpBasic(AbstractHttpConfigurer::disable)
-			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			.cors(AbstractHttpConfigurer::disable) // Flutter 앱에서는 CORS 불필요
 			.sessionManagement(mgmt ->
 				mgmt.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 			)
@@ -87,23 +74,6 @@ public class SecurityConfig {
 		return http.build();
 	}
 
-	/**
-	 * 공통 CORS 설정
-	 */
-	private CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration cfg = new CorsConfiguration();
-		cfg.setAllowedOrigins(Arrays.asList(frontendUrl, backendUrl));
-		cfg.setAllowedMethods(Arrays.asList(
-			"GET","POST","PUT","DELETE","PATCH","OPTIONS","HEAD"
-		));
-		cfg.setAllowedHeaders(Arrays.asList(
-			"Authorization","Content-Type","Accept","Origin"
-		));
-		cfg.setAllowCredentials(true);
-		cfg.setMaxAge(3600L);
-		cfg.setExposedHeaders(Arrays.asList("Authorization","Set-Cookie"));
-		UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
-		src.registerCorsConfiguration("/**", cfg);
-		return src;
-	}
+	// Flutter 앱에서는 CORS 설정이 불필요합니다.
+	// 웹 브라우저가 아닌 네이티브 앱이므로 브라우저의 동일 출처 정책에 영향받지 않습니다!
 }

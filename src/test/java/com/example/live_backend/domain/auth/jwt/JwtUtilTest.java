@@ -226,8 +226,7 @@ class JwtUtilTest {
             // Then
             assertThat(jwtUtil.getCategory(accessToken)).isEqualTo("access_token");
             assertThat(jwtUtil.getCategory(refreshToken)).isEqualTo("refresh_token");
-            
-            // 다른 클레임들은 동일해야 함
+
             assertThat(jwtUtil.getUserId(accessToken)).isEqualTo(jwtUtil.getUserId(refreshToken));
             assertThat(jwtUtil.getOauthId(accessToken)).isEqualTo(jwtUtil.getOauthId(refreshToken));
             assertThat(jwtUtil.getRole(accessToken)).isEqualTo(jwtUtil.getRole(refreshToken));

@@ -3,15 +3,18 @@ package com.example.live_backend.domain.auth.jwt;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.ExpiredJwtException;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -35,34 +38,37 @@ public class JwtFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
 		FilterChain chain) throws ServletException, IOException {
 
-		String header = req.getHeader("Authorization");
-		if (header == null || !header.startsWith("Bearer ")) {
+		String header = req.getHeader(JwtConstants.AUTHORIZATION_HEADER);
+		if (header == null || !header.startsWith(JwtConstants.BEARER_PREFIX)) {
 			chain.doFilter(req, res);
 			return;
 		}
-		String token = header.substring(7);
+		String token = header.substring(JwtConstants.BEARER_PREFIX_LENGTH);
 
 		try {
-			if (jwtUtil.isExpired(token)) {
+			TokenInfo tokenInfo = jwtUtil.validateAndExtract(token);
+
+			if (tokenInfo.isExpired()) {
 				sendError(res, ErrorCode.EXPIRED_TOKEN);
 				return;
 			}
-		} catch (ExpiredJwtException e) {
-			sendError(res, ErrorCode.EXPIRED_TOKEN);
+
+			if (!JwtConstants.ACCESS_TOKEN_CATEGORY.equals(tokenInfo.getCategory())) {
+				sendError(res, ErrorCode.INVALID_TOKEN_CATEGORY);
+				return;
+			}
+
+			Authentication auth = new UsernamePasswordAuthenticationToken(
+				tokenInfo.getUserId(),
+				null,
+				Collections.singleton((GrantedAuthority)() -> tokenInfo.getRole())
+			);
+			SecurityContextHolder.getContext().setAuthentication(auth);
+
+		} catch (Exception e) {
+			sendError(res, ErrorCode.INVALID_TOKEN);
 			return;
 		}
-
-		if (!"access_token".equals(jwtUtil.getCategory(token))) {
-			sendError(res, ErrorCode.INVALID_TOKEN_CATEGORY);
-			return;
-		}
-
-		Long userId = jwtUtil.getUserId(token);
-		String role = jwtUtil.getRole(token);
-		Authentication auth = new UsernamePasswordAuthenticationToken(
-			userId, null, Collections.singleton((GrantedAuthority) () -> role)
-		);
-		SecurityContextHolder.getContext().setAuthentication(auth);
 
 		chain.doFilter(req, res);
 	}
@@ -71,10 +77,10 @@ public class JwtFilter extends OncePerRequestFilter {
 		res.setCharacterEncoding("UTF-8");
 		res.setContentType("application/json; charset=UTF-8");
 		res.setStatus(errorCode.getHttpStatus().value());
-		
+
 		ResponseHandler<Object> errorResponse = ResponseHandler.error(errorCode);
 		String body = objectMapper.writeValueAsString(errorResponse);
-		
+
 		try (PrintWriter w = res.getWriter()) {
 			w.print(body);
 		}

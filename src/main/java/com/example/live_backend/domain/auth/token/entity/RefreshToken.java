@@ -12,6 +12,7 @@ public class RefreshToken {
 
 	@Id
 	private Long userId;
+
 	private String token;
 
 	public RefreshToken(Long userId, String token) {

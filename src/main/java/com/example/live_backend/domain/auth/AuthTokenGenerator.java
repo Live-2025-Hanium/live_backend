@@ -20,9 +20,11 @@ public class AuthTokenGenerator {
 
 	public AuthToken generate(Long userId, String oauthId, String role) {
 		String accessToken = jwtUtil.createJwt(
-			"access_token", userId, oauthId, role, accessTokenExpiration);
+			com.example.live_backend.domain.auth.jwt.JwtConstants.ACCESS_TOKEN_CATEGORY, 
+			userId, oauthId, role, accessTokenExpiration);
 		String refreshToken = jwtUtil.createJwt(
-			"refresh_token", userId, oauthId, role, refreshTokenExpiration);
+			com.example.live_backend.domain.auth.jwt.JwtConstants.REFRESH_TOKEN_CATEGORY, 
+			userId, oauthId, role, refreshTokenExpiration);
 		return new AuthToken(accessToken, refreshToken);
 	}
 }
