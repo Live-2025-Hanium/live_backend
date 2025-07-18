@@ -37,15 +37,15 @@ public class CloverMissionController {
 
 	}
 
-	@GetMapping("/{missionRecordId}")
+	@GetMapping("/{userMissionId}")
 	@Operation(summary = "클로버 미션(1개) 상세 조회 ",
 		description = "클로버 미션 1개의 상세 정보를 조회합니다.")
-	public ResponseHandler<CloverMissionResponseDto> getCloverMissionInfo(@PathVariable Long missionRecordId) {
+	public ResponseHandler<CloverMissionResponseDto> getCloverMissionInfo(@PathVariable Long userMissionId) {
 
 		try {
 			log.info("클로버 미션 상세 조회 API 호출");
 
-			CloverMissionResponseDto response = cloverMissionService.getCloverMissionInfo(missionRecordId);
+			CloverMissionResponseDto response = cloverMissionService.getCloverMissionInfo(userMissionId);
 
 			return ResponseHandler.success(response);
 		} catch (Exception e) {

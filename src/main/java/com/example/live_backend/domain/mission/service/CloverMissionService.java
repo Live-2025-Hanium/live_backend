@@ -56,13 +56,13 @@ public class CloverMissionService {
     }
 
     @Transactional(readOnly = true)
-    public CloverMissionResponseDto getCloverMissionInfo(Long missionRecordId) {
+    public CloverMissionResponseDto getCloverMissionInfo(Long userMissionId) {
 
         Long currentUserId = userUtil.getCurrentUserId();
         log.info("클로버 미션 조회 시작 - 인증된 사용자 ID: {}", currentUserId);
 
-        MissionRecord cloverMissionById = missionRecordRepository.findById(missionRecordId)
-                .orElseThrow(() -> new RuntimeException("해당 ID의 미션을 찾을 수 없습니다: " + missionRecordId));
+        MissionRecord cloverMissionById = missionRecordRepository.findById(userMissionId)
+                .orElseThrow(() -> new RuntimeException("해당 ID의 미션을 찾을 수 없습니다: " + userMissionId));
 
         CloverMissionResponseDto response = CloverMissionResponseDto.builder()
                 .missionRecordId(cloverMissionById.getId())
