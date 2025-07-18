@@ -21,6 +21,9 @@ public enum ErrorCode {
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),
 
+	/* ------------------ 403 FORBIDDEN : 권한 없음 ------------------ */
+	MISSION_FORBIDDEN(FORBIDDEN, "미션을 변경할 권한이 없습니다."),
+
 	/* ------------------ 404 NOT_FOUND: 리소스 없음 ------------------ */
 	USER_NOT_FOUND(NOT_FOUND, "존재하지 않는 사용자입니다."),
 	EXAMPLE_NOT_FOUND(NOT_FOUND, "존재하지 않는 예제입니다."),

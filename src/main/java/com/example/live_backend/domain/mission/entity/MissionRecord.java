@@ -65,4 +65,11 @@ public class MissionRecord extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "feedback_difficulty")
     private MissionDifficulty feedbackDifficulty;
+
+    /**
+     * 미션의 상태 변경 메서드
+     */
+    public void updateStatus(MissionStatus newStatus) {
+        this.missionStatus = newStatus;
+    }
 }

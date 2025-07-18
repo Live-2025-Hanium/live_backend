@@ -1,10 +1,13 @@
 package com.example.live_backend.domain.mission.service;
 
+import com.example.live_backend.domain.mission.Enum.MissionStatus;
 import com.example.live_backend.domain.mission.dto.CloverMissionListResponseDto;
 import com.example.live_backend.domain.mission.dto.CloverMissionResponseDto;
 import com.example.live_backend.domain.mission.entity.MissionRecord;
 import com.example.live_backend.domain.memeber.util.UserUtil;
 import com.example.live_backend.domain.mission.repository.MissionRecordRepository;
+import com.example.live_backend.global.error.exception.CustomException;
+import com.example.live_backend.global.error.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -73,5 +76,37 @@ public class CloverMissionService {
                 .build();
 
         return response;
+    }
+
+    @Transactional
+    public void startCloverMission(Long userMissionId) {
+        updateMissionStatus(userMissionId, MissionStatus.STARTED);
+    }
+
+    @Transactional
+    public void pauseCloverMission(Long userMissionId) {
+        updateMissionStatus(userMissionId, MissionStatus.PAUSED);
+    }
+
+    @Transactional
+    public void completeCloverMission(Long userMissionId) {
+        updateMissionStatus(userMissionId, MissionStatus.COMPLETED);
+    }
+
+    private void updateMissionStatus(Long userMissionId, MissionStatus status) {
+        Long currentUserId = userUtil.getCurrentUserId();
+        log.info("{} 미션 상태 변경 시작 - 사용자 ID: {}, 미션 ID: {}", status, currentUserId, userMissionId);
+
+        MissionRecord findByUserMissionId = missionRecordRepository.findByIdWithUser(userMissionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MISSION_NOT_FOUND));
+
+        if (!findByUserMissionId.getUser().getId().equals(currentUserId)) {
+            throw new CustomException(ErrorCode.MISSION_FORBIDDEN);
+        }
+
+        findByUserMissionId.updateStatus(status);
+        missionRecordRepository.save(findByUserMissionId);
+
+        log.info("미션 상태 변경 완료: {}", status);
     }
 }
