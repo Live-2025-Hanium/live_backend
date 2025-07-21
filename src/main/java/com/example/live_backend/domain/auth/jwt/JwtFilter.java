@@ -2,6 +2,7 @@ package com.example.live_backend.domain.auth.jwt;
 
 import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.global.error.response.ResponseHandler;
+import com.example.live_backend.global.security.PrincipalDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.FilterChain;
@@ -11,13 +12,11 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collections;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -35,9 +34,8 @@ public class JwtFilter extends OncePerRequestFilter {
 	}
 
 	@Override
-	protected void doFilterInternal(HttpServletRequest req,
-		HttpServletResponse res, FilterChain chain)
-		throws ServletException, IOException {
+	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
+		FilterChain chain) throws ServletException, IOException {
 
 		String header = req.getHeader(JwtConstants.AUTHORIZATION_HEADER);
 		if (header == null || !header.startsWith(JwtConstants.BEARER_PREFIX)) {
@@ -59,10 +57,18 @@ public class JwtFilter extends OncePerRequestFilter {
 				return;
 			}
 
-			Authentication auth = new UsernamePasswordAuthenticationToken(
+			PrincipalDetails principalDetails = new PrincipalDetails(
 				tokenInfo.getUserId(),
+				tokenInfo.getOauthId(),
+				tokenInfo.getRole(),
 				null,
-				Collections.singleton(new SimpleGrantedAuthority(tokenInfo.getRole()))
+				null
+			);
+
+			Authentication auth = new UsernamePasswordAuthenticationToken(
+				principalDetails,
+				null,
+				principalDetails.getAuthorities()
 			);
 			SecurityContextHolder.getContext().setAuthentication(auth);
 

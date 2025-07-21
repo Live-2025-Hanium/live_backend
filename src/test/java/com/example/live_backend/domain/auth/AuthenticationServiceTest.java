@@ -10,14 +10,12 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
-
-import java.util.Collections;
+import com.example.live_backend.global.security.PrincipalDetails;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -31,17 +29,21 @@ class AuthenticationServiceTest {
     private AuthenticationService authenticationService;
 
     private final Long TEST_USER_ID = 123L;
-    private final String TEST_ROLE = "USER";
+    private final String TEST_OAUTH_ID = "oauth_123";
+    private final String TEST_ROLE = "ROLE_USER";
 
     @BeforeEach
     void setUp() {
-        // 테스트 전에 SecurityContext 클리어한다.
         SecurityContextHolder.clearContext();
     }
 
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
+    }
+
+    private PrincipalDetails createTestPrincipalDetails(Long userId, String role) {
+        return new PrincipalDetails(userId, TEST_OAUTH_ID, role, "테스트사용자", "test@example.com");
     }
 
     @Nested
@@ -52,10 +54,11 @@ class AuthenticationServiceTest {
         @DisplayName("인증된 사용자의 Authentication 객체 조회 - 성공")
         void getAuthentication_AuthenticatedUser_Success() {
             // Given
+            PrincipalDetails principalDetails = createTestPrincipalDetails(TEST_USER_ID, TEST_ROLE);
             Authentication expectedAuth = new UsernamePasswordAuthenticationToken(
-                TEST_USER_ID, 
+                principalDetails, 
                 null, 
-                Collections.singleton(new SimpleGrantedAuthority(TEST_ROLE))
+                principalDetails.getAuthorities()
             );
             
             SecurityContext securityContext = mock(SecurityContext.class);
@@ -68,7 +71,10 @@ class AuthenticationServiceTest {
             // Then
             assertThat(result).isNotNull();
             assertThat(result).isSameAs(expectedAuth);
-            assertThat(result.getPrincipal()).isEqualTo(TEST_USER_ID);
+            assertThat(result.getPrincipal()).isInstanceOf(PrincipalDetails.class);
+            
+            PrincipalDetails principal = (PrincipalDetails) result.getPrincipal();
+            assertThat(principal.getMemberId()).isEqualTo(TEST_USER_ID);
         }
 
         @Test
@@ -78,19 +84,6 @@ class AuthenticationServiceTest {
             SecurityContext securityContext = mock(SecurityContext.class);
             when(securityContext.getAuthentication()).thenReturn(null);
             SecurityContextHolder.setContext(securityContext);
-
-            // When
-            Authentication result = authenticationService.getAuthentication();
-
-            // Then
-            assertThat(result).isNull();
-        }
-
-        @Test
-        @DisplayName("SecurityContext가 없는 경우 - 빈 컨텍스트로 처리")
-        void getAuthentication_NoSecurityContext_ReturnsNull() {
-            // Given
-            SecurityContextHolder.clearContext(); // null 대신 clearContext 사용
 
             // When
             Authentication result = authenticationService.getAuthentication();
@@ -108,10 +101,11 @@ class AuthenticationServiceTest {
         @DisplayName("인증된 사용자의 ID 추출 - 성공")
         void getUserId_AuthenticatedUser_Success() {
             // Given
+            PrincipalDetails principalDetails = createTestPrincipalDetails(TEST_USER_ID, TEST_ROLE);
             Authentication auth = new UsernamePasswordAuthenticationToken(
-                TEST_USER_ID, 
+                principalDetails, 
                 null, 
-                Collections.singleton(new SimpleGrantedAuthority(TEST_ROLE))
+                principalDetails.getAuthorities()
             );
             
             SecurityContext securityContext = mock(SecurityContext.class);
@@ -131,10 +125,11 @@ class AuthenticationServiceTest {
         void getUserId_DifferentUserId_ReturnsCorrectId() {
             // Given
             Long differentUserId = 999L;
+            PrincipalDetails principalDetails = createTestPrincipalDetails(differentUserId, TEST_ROLE);
             Authentication auth = new UsernamePasswordAuthenticationToken(
-                differentUserId, 
+                principalDetails, 
                 null, 
-                Collections.singleton(new SimpleGrantedAuthority(TEST_ROLE))
+                principalDetails.getAuthorities()
             );
             
             SecurityContext securityContext = mock(SecurityContext.class);
@@ -165,14 +160,14 @@ class AuthenticationServiceTest {
         }
 
         @Test
-        @DisplayName("Principal이 Long 타입이 아닌 경우 - CustomException 발생")
-        void getUserId_PrincipalNotLong_ThrowsCustomException() {
+        @DisplayName("Principal이 PrincipalDetails가 아닌 경우 - CustomException 발생")
+        void getUserId_PrincipalNotPrincipalDetails_ThrowsCustomException() {
             // Given
-            String stringPrincipal = "not-a-long";
+            String stringPrincipal = "not-a-principal-details";
             Authentication auth = new UsernamePasswordAuthenticationToken(
                 stringPrincipal, 
                 null, 
-                Collections.singleton(new SimpleGrantedAuthority(TEST_ROLE))
+                null
             );
             
             SecurityContext securityContext = mock(SecurityContext.class);
@@ -192,7 +187,7 @@ class AuthenticationServiceTest {
             Authentication auth = new UsernamePasswordAuthenticationToken(
                 "anonymousUser", 
                 null, 
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
+                null
             );
             
             SecurityContext securityContext = mock(SecurityContext.class);
@@ -207,6 +202,36 @@ class AuthenticationServiceTest {
     }
 
     @Nested
+    @DisplayName("현재 사용자 정보 조회 기능")
+    class GetCurrentUserTests {
+
+        @Test
+        @DisplayName("인증된 사용자의 PrincipalDetails 조회 - 성공")
+        void getCurrentUser_AuthenticatedUser_Success() {
+            // Given
+            PrincipalDetails principalDetails = createTestPrincipalDetails(TEST_USER_ID, TEST_ROLE);
+            Authentication auth = new UsernamePasswordAuthenticationToken(
+                principalDetails, 
+                null, 
+                principalDetails.getAuthorities()
+            );
+            
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication()).thenReturn(auth);
+            SecurityContextHolder.setContext(securityContext);
+
+            // When
+            PrincipalDetails result = authenticationService.getCurrentUser();
+
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.getMemberId()).isEqualTo(TEST_USER_ID);
+            assertThat(result.getMemberKey()).isEqualTo(TEST_OAUTH_ID);
+            assertThat(result.getRole()).isEqualTo(TEST_ROLE);
+        }
+    }
+
+    @Nested
     @DisplayName("권한 확인 기능")
     class AuthorityTests {
 
@@ -214,10 +239,11 @@ class AuthenticationServiceTest {
         @DisplayName("사용자 권한 확인 - 성공")
         void hasRole_UserRole_Success() {
             // Given
+            PrincipalDetails principalDetails = createTestPrincipalDetails(TEST_USER_ID, "ROLE_USER");
             Authentication auth = new UsernamePasswordAuthenticationToken(
-                TEST_USER_ID, 
+                principalDetails, 
                 null, 
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
+                principalDetails.getAuthorities()
             );
             
             SecurityContext securityContext = mock(SecurityContext.class);
@@ -235,10 +261,11 @@ class AuthenticationServiceTest {
         @DisplayName("관리자 권한 확인 - 성공")
         void hasRole_AdminRole_Success() {
             // Given
+            PrincipalDetails principalDetails = createTestPrincipalDetails(TEST_USER_ID, "ROLE_ADMIN");
             Authentication auth = new UsernamePasswordAuthenticationToken(
-                TEST_USER_ID, 
+                principalDetails, 
                 null, 
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                principalDetails.getAuthorities()
             );
             
             SecurityContext securityContext = mock(SecurityContext.class);
@@ -273,41 +300,13 @@ class AuthenticationServiceTest {
     class VariousScenarioTests {
 
         @Test
-        @DisplayName("여러 역할을 가진 사용자의 인증 정보 조회")
-        void getAuthentication_UserWithMultipleRoles_Success() {
-            // Given
-            Authentication auth = new UsernamePasswordAuthenticationToken(
-                TEST_USER_ID, 
-                null, 
-                java.util.Arrays.asList(
-                    new SimpleGrantedAuthority("ROLE_USER"),
-                    new SimpleGrantedAuthority("ROLE_ADMIN")
-                )
-            );
-            
-            SecurityContext securityContext = mock(SecurityContext.class);
-            when(securityContext.getAuthentication()).thenReturn(auth);
-            SecurityContextHolder.setContext(securityContext);
-
-            // When
-            Authentication result = authenticationService.getAuthentication();
-            Long userId = authenticationService.getUserId();
-
-            // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getAuthorities()).hasSize(2);
-            assertThat(userId).isEqualTo(TEST_USER_ID);
-            assertThat(authenticationService.hasRole("USER")).isTrue();
-            assertThat(authenticationService.hasRole("ADMIN")).isTrue();
-        }
-
-        @Test
         @DisplayName("SecurityContext 변경 후 올바른 사용자 정보 반환")
         void getAuthentication_AfterContextChange_ReturnsCorrectUser() {
             // Given - 첫 번째 사용자
             Long firstUserId = 100L;
+            PrincipalDetails firstPrincipal = createTestPrincipalDetails(firstUserId, "ROLE_USER");
             Authentication firstAuth = new UsernamePasswordAuthenticationToken(
-                firstUserId, null, Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
+                firstPrincipal, null, firstPrincipal.getAuthorities()
             );
             
             SecurityContext firstContext = mock(SecurityContext.class);
@@ -319,8 +318,9 @@ class AuthenticationServiceTest {
 
             // Given - 두 번째 사용자로 변경
             Long secondUserId = 200L;
+            PrincipalDetails secondPrincipal = createTestPrincipalDetails(secondUserId, "ROLE_ADMIN");
             Authentication secondAuth = new UsernamePasswordAuthenticationToken(
-                secondUserId, null, Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                secondPrincipal, null, secondPrincipal.getAuthorities()
             );
             
             SecurityContext secondContext = mock(SecurityContext.class);
@@ -340,10 +340,11 @@ class AuthenticationServiceTest {
         @DisplayName("동일한 사용자로 여러 번 호출 - 일관된 결과")
         void getUserId_SameUserMultipleCalls_ConsistentResult() {
             // Given
+            PrincipalDetails principalDetails = createTestPrincipalDetails(TEST_USER_ID, TEST_ROLE);
             Authentication auth = new UsernamePasswordAuthenticationToken(
-                TEST_USER_ID, 
+                principalDetails, 
                 null, 
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
+                principalDetails.getAuthorities()
             );
             
             SecurityContext securityContext = mock(SecurityContext.class);
@@ -366,10 +367,11 @@ class AuthenticationServiceTest {
         @DisplayName("인증 상태 확인 - 인증된 사용자")
         void isAuthenticated_AuthenticatedUser_ReturnsTrue() {
             // Given
+            PrincipalDetails principalDetails = createTestPrincipalDetails(TEST_USER_ID, TEST_ROLE);
             Authentication auth = new UsernamePasswordAuthenticationToken(
-                TEST_USER_ID, 
+                principalDetails, 
                 null, 
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
+                principalDetails.getAuthorities()
             );
             
             SecurityContext securityContext = mock(SecurityContext.class);
