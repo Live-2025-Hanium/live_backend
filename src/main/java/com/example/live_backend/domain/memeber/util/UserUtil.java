@@ -9,101 +9,120 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
+import java.util.List;
 
+/**
+ * @deprecated AuthenticationService를 사용하세요.
+ * 이 클래스는 향후 버전에서 제거될 예정입니다.
+ */
+@Deprecated
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class UserUtil {
 
-    private final SecurityUtil securityUtil;
-    private final UserJPARepository userRepository;
+	private final UserJPARepository userRepository;
+	private final SecurityUtil securityUtil;
 
-    /**
-     * InMemoryUserDetailsManager와 연동된 Mock 사용자 DB 데이터 생성
-     * SecurityConfig에서 정의한 사용자 ID(1L, 2L)와 매칭
-     */
-    private void ensureMockUsersExist() {
-        // Mock User (ID: 1L) - ROLE_USER
-        if (!userRepository.existsById(1L)) {
-            log.info("Mock 일반 사용자(ID: 1L)를 생성합니다.");
-            
-            User mockUser = User.builder()
-                    .email("mockuser@example.com")
-                    .socialProvider(User.SocialProvider.KAKAO)
-                    .socialId("mock-user-1")
-                    .nickname("Mock사용자")
-                    .gender(User.Gender.OTHER)
-                    .birthdate(LocalDate.of(1990, 1, 1))
-                    .role(User.Role.MEMBER)
-                    .profileImage("https://example.com/mock-user.jpg")
-                    .cloverBalance(100)
-                    .deletedAt(null)
-                    .build();
+	/**
+	 * Mock 사용자 데이터가 없는 경우에만 생성합니다.
+	 * (이미 존재하는 경우 건너뜁니다.)
+	 * @deprecated 이 메서드는 제거될 예정입니다.
+	 */
+	@Deprecated
+	private void ensureMockUsersExist() {
+		long userCount = userRepository.count();
+		if (userCount == 0) {
+			log.info("Mock 사용자 데이터가 없어 생성합니다.");
 
-            userRepository.save(mockUser);
-        }
+			// Mock 사용자 생성
+			List<User> mockUsers = List.of(
+				User.builder()
+					.email("test1@example.com")
+					.socialProvider(User.SocialProvider.KAKAO)
+					.socialId("test-oauth-1")
+					.nickname("테스트사용자1")
+					.gender(User.Gender.OTHER)
+					.birthdate(java.time.LocalDate.of(1990, 1, 1))
+					.role(User.Role.MEMBER)
+					.cloverBalance(100)
+					.deletedAt(null)
+					.build(),
+				User.builder()
+					.email("test2@example.com")
+					.socialProvider(User.SocialProvider.GOOGLE)
+					.socialId("test-oauth-2")
+					.nickname("테스트사용자2")
+					.gender(User.Gender.OTHER)
+					.birthdate(java.time.LocalDate.of(1990, 1, 1))
+					.role(User.Role.MEMBER)
+					.cloverBalance(100)
+					.deletedAt(null)
+					.build(),
+				User.builder()
+					.email("admin@example.com")
+					.socialProvider(User.SocialProvider.GOOGLE)
+					.socialId("admin-oauth")
+					.nickname("관리자")
+					.gender(User.Gender.OTHER)
+					.birthdate(java.time.LocalDate.of(1985, 1, 1))
+					.role(User.Role.ADMIN)
+					.cloverBalance(500)
+					.deletedAt(null)
+					.build()
+			);
 
-        // Mock Admin (ID: 2L) - ROLE_ADMIN  
-        if (!userRepository.existsById(2L)) {
-            log.info("Mock 관리자 사용자(ID: 2L)를 생성합니다.");
-            
-            User mockAdmin = User.builder()
-                    .email("mockadmin@example.com")
-                    .socialProvider(User.SocialProvider.GOOGLE)
-                    .socialId("mock-admin-2")
-                    .nickname("Mock관리자")
-                    .gender(User.Gender.OTHER)
-                    .birthdate(LocalDate.of(1985, 1, 1))
-                    .role(User.Role.ADMIN)
-                    .profileImage("https://example.com/mock-admin.jpg")
-                    .cloverBalance(500)
-                    .deletedAt(null)
-                    .build();
+			userRepository.saveAll(mockUsers);
+			log.info("Mock 사용자 {}명이 생성되었습니다.", mockUsers.size());
+		}
+	}
 
-            userRepository.save(mockAdmin);
-        }
-    }
+	/**
+	 * 현재 인증된 사용자 정보를 반환합니다.
+	 * @deprecated AuthenticationService를 사용하세요.
+	 */
+	@Deprecated
+	public User getCurrentUser() {
+		ensureMockUsersExist();  // Mock 사용자 DB 데이터 확인/생성
 
-    /**
-     * 현재 Spring Security 인증된 사용자 정보를 조회
-     * InMemoryUserDetailsManager와 연동된 Mock 사용자 반환
-     */
-    public User getCurrentUser() {
-        ensureMockUsersExist();  // Mock 사용자 DB 데이터 확인/생성
+		Long currentUserId = securityUtil.getCurrentUserId();
 
-        Long currentUserId = securityUtil.getCurrentUserId();
-        
-        return userRepository.findById(currentUserId)
-                .orElseThrow(() -> {
-                    log.error("현재 인증된 사용자를 찾을 수 없습니다. userId: {}", currentUserId);
-                    return new CustomException(ErrorCode.USER_NOT_FOUND);
-                });
-    }
+		return userRepository.findById(currentUserId)
+			.orElseThrow(() -> {
+				log.error("현재 인증된 사용자를 찾을 수 없습니다. userId: {}", currentUserId);
+				return new CustomException(ErrorCode.USER_NOT_FOUND);
+			});
+	}
 
-    /**
-     * 현재 인증된 사용자의 ID를 반환
-     */
-    public Long getCurrentUserId() {
-        return securityUtil.getCurrentUserId();
-    }
+	/**
+	 * 현재 인증된 사용자의 ID를 반환합니다.
+	 * @deprecated AuthenticationService.getUserId()를 사용하세요.
+	 */
+	@Deprecated
+	public Long getCurrentUserId() {
+		return securityUtil.getCurrentUserId();
+	}
 
-    /**
-     * 현재 사용자가 관리자 권한을 가지고 있는지 확인
-     */
-    public boolean isCurrentUserAdmin() {
-        return securityUtil.hasRole("ADMIN");
-    }
+	/**
+	 * 현재 사용자가 관리자 권한을 가지고 있는지 확인합니다.
+	 * @deprecated AuthenticationService를 사용하세요.
+	 */
+	@Deprecated
+	public boolean isCurrentUserAdmin() {
+		return securityUtil.hasRole("ADMIN");
+	}
 
-    /**
-     * 특정 사용자 ID가 현재 인증된 사용자와 같은지 확인
-     */
-    public void validateUserAccess(Long userId) {
-        Long currentUserId = getCurrentUserId();
+	/**
+	 * 특정 사용자 ID가 현재 인증된 사용자와 같은지 확인합니다.
+	 * @deprecated AuthenticationService를 사용하세요.
+	 */
+	@Deprecated
+	public void validateUserAccess(Long userId) {
+		Long currentUserId = getCurrentUserId();
 
-        if (!currentUserId.equals(userId) && !isCurrentUserAdmin()) {
-            log.warn("권한 없는 사용자 데이터 접근 시도 - 현재 사용자: {}, 요청된 사용자: {}", currentUserId, userId);
-            throw new CustomException(ErrorCode.DENIED_UNAUTHORIZED_USER);
-        }
-    }
-} 
+		if (!currentUserId.equals(userId) && !isCurrentUserAdmin()) {
+			log.warn("권한 없는 사용자 데이터 접근 시도 - 현재 사용자: {}, 요청된 사용자: {}", currentUserId, userId);
+			throw new CustomException(ErrorCode.DENIED_UNAUTHORIZED_USER);
+		}
+	}
+}

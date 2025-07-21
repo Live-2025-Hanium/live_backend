@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -35,8 +35,9 @@ public class JwtFilter extends OncePerRequestFilter {
 	}
 
 	@Override
-	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
-		FilterChain chain) throws ServletException, IOException {
+	protected void doFilterInternal(HttpServletRequest req,
+		HttpServletResponse res, FilterChain chain)
+		throws ServletException, IOException {
 
 		String header = req.getHeader(JwtConstants.AUTHORIZATION_HEADER);
 		if (header == null || !header.startsWith(JwtConstants.BEARER_PREFIX)) {
@@ -61,7 +62,7 @@ public class JwtFilter extends OncePerRequestFilter {
 			Authentication auth = new UsernamePasswordAuthenticationToken(
 				tokenInfo.getUserId(),
 				null,
-				Collections.singleton((GrantedAuthority)() -> tokenInfo.getRole())
+				Collections.singleton(new SimpleGrantedAuthority(tokenInfo.getRole()))
 			);
 			SecurityContextHolder.getContext().setAuthentication(auth);
 
@@ -85,4 +86,4 @@ public class JwtFilter extends OncePerRequestFilter {
 			w.print(body);
 		}
 	}
-} 
+}

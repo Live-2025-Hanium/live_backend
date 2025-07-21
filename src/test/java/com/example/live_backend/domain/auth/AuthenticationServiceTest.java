@@ -14,6 +14,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import com.example.live_backend.global.error.exception.CustomException;
+import com.example.live_backend.global.error.exception.ErrorCode;
+
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.*;
@@ -148,8 +151,8 @@ class AuthenticationServiceTest {
         }
 
         @Test
-        @DisplayName("인증되지 않은 사용자의 ID 추출 - 예외 발생")
-        void getUserId_UnauthenticatedUser_ThrowsException() {
+        @DisplayName("인증되지 않은 사용자의 ID 추출 - CustomException 발생")
+        void getUserId_UnauthenticatedUser_ThrowsCustomException() {
             // Given
             SecurityContext securityContext = mock(SecurityContext.class);
             when(securityContext.getAuthentication()).thenReturn(null);
@@ -157,12 +160,13 @@ class AuthenticationServiceTest {
 
             // When & Then
             assertThatThrownBy(() -> authenticationService.getUserId())
-                .isInstanceOf(NullPointerException.class);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DENIED_UNAUTHORIZED_USER);
         }
 
         @Test
-        @DisplayName("Principal이 Long 타입이 아닌 경우 - ClassCastException 발생")
-        void getUserId_PrincipalNotLong_ThrowsClassCastException() {
+        @DisplayName("Principal이 Long 타입이 아닌 경우 - CustomException 발생")
+        void getUserId_PrincipalNotLong_ThrowsCustomException() {
             // Given
             String stringPrincipal = "not-a-long";
             Authentication auth = new UsernamePasswordAuthenticationToken(
@@ -177,7 +181,90 @@ class AuthenticationServiceTest {
 
             // When & Then
             assertThatThrownBy(() -> authenticationService.getUserId())
-                .isInstanceOf(ClassCastException.class);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_TOKEN);
+        }
+
+        @Test
+        @DisplayName("Principal이 anonymousUser인 경우 - CustomException 발생")
+        void getUserId_AnonymousUser_ThrowsCustomException() {
+            // Given
+            Authentication auth = new UsernamePasswordAuthenticationToken(
+                "anonymousUser", 
+                null, 
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
+            );
+            
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication()).thenReturn(auth);
+            SecurityContextHolder.setContext(securityContext);
+
+            // When & Then
+            assertThatThrownBy(() -> authenticationService.getUserId())
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DENIED_UNAUTHORIZED_USER);
+        }
+    }
+
+    @Nested
+    @DisplayName("권한 확인 기능")
+    class AuthorityTests {
+
+        @Test
+        @DisplayName("사용자 권한 확인 - 성공")
+        void hasRole_UserRole_Success() {
+            // Given
+            Authentication auth = new UsernamePasswordAuthenticationToken(
+                TEST_USER_ID, 
+                null, 
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
+            );
+            
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication()).thenReturn(auth);
+            SecurityContextHolder.setContext(securityContext);
+
+            // When & Then
+            assertThat(authenticationService.hasRole("USER")).isTrue();
+            assertThat(authenticationService.hasRole("ADMIN")).isFalse();
+            assertThat(authenticationService.isUser()).isTrue();
+            assertThat(authenticationService.isAdmin()).isFalse();
+        }
+
+        @Test
+        @DisplayName("관리자 권한 확인 - 성공")
+        void hasRole_AdminRole_Success() {
+            // Given
+            Authentication auth = new UsernamePasswordAuthenticationToken(
+                TEST_USER_ID, 
+                null, 
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN"))
+            );
+            
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication()).thenReturn(auth);
+            SecurityContextHolder.setContext(securityContext);
+
+            // When & Then
+            assertThat(authenticationService.hasRole("ADMIN")).isTrue();
+            assertThat(authenticationService.hasRole("USER")).isFalse();
+            assertThat(authenticationService.isAdmin()).isTrue();
+            assertThat(authenticationService.isUser()).isFalse();
+        }
+
+        @Test
+        @DisplayName("인증되지 않은 사용자 권한 확인 - false 반환")
+        void hasRole_UnauthenticatedUser_ReturnsFalse() {
+            // Given
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication()).thenReturn(null);
+            SecurityContextHolder.setContext(securityContext);
+
+            // When & Then
+            assertThat(authenticationService.hasRole("USER")).isFalse();
+            assertThat(authenticationService.hasRole("ADMIN")).isFalse();
+            assertThat(authenticationService.isUser()).isFalse();
+            assertThat(authenticationService.isAdmin()).isFalse();
         }
     }
 
@@ -193,8 +280,8 @@ class AuthenticationServiceTest {
                 TEST_USER_ID, 
                 null, 
                 java.util.Arrays.asList(
-                    new SimpleGrantedAuthority("USER"),
-                    new SimpleGrantedAuthority("ADMIN")
+                    new SimpleGrantedAuthority("ROLE_USER"),
+                    new SimpleGrantedAuthority("ROLE_ADMIN")
                 )
             );
             
@@ -210,6 +297,8 @@ class AuthenticationServiceTest {
             assertThat(result).isNotNull();
             assertThat(result.getAuthorities()).hasSize(2);
             assertThat(userId).isEqualTo(TEST_USER_ID);
+            assertThat(authenticationService.hasRole("USER")).isTrue();
+            assertThat(authenticationService.hasRole("ADMIN")).isTrue();
         }
 
         @Test
@@ -218,7 +307,7 @@ class AuthenticationServiceTest {
             // Given - 첫 번째 사용자
             Long firstUserId = 100L;
             Authentication firstAuth = new UsernamePasswordAuthenticationToken(
-                firstUserId, null, Collections.singleton(new SimpleGrantedAuthority("USER"))
+                firstUserId, null, Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
             );
             
             SecurityContext firstContext = mock(SecurityContext.class);
@@ -231,7 +320,7 @@ class AuthenticationServiceTest {
             // Given - 두 번째 사용자로 변경
             Long secondUserId = 200L;
             Authentication secondAuth = new UsernamePasswordAuthenticationToken(
-                secondUserId, null, Collections.singleton(new SimpleGrantedAuthority("ADMIN"))
+                secondUserId, null, Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN"))
             );
             
             SecurityContext secondContext = mock(SecurityContext.class);
@@ -254,7 +343,7 @@ class AuthenticationServiceTest {
             Authentication auth = new UsernamePasswordAuthenticationToken(
                 TEST_USER_ID, 
                 null, 
-                Collections.singleton(new SimpleGrantedAuthority(TEST_ROLE))
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
             );
             
             SecurityContext securityContext = mock(SecurityContext.class);
@@ -271,6 +360,36 @@ class AuthenticationServiceTest {
             assertThat(result2).isEqualTo(TEST_USER_ID);
             assertThat(result3).isEqualTo(TEST_USER_ID);
             assertThat(result1).isEqualTo(result2).isEqualTo(result3);
+        }
+
+        @Test
+        @DisplayName("인증 상태 확인 - 인증된 사용자")
+        void isAuthenticated_AuthenticatedUser_ReturnsTrue() {
+            // Given
+            Authentication auth = new UsernamePasswordAuthenticationToken(
+                TEST_USER_ID, 
+                null, 
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
+            );
+            
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication()).thenReturn(auth);
+            SecurityContextHolder.setContext(securityContext);
+
+            // When & Then
+            assertThat(authenticationService.isAuthenticated()).isTrue();
+        }
+
+        @Test
+        @DisplayName("인증 상태 확인 - 인증되지 않은 사용자")
+        void isAuthenticated_UnauthenticatedUser_ReturnsFalse() {
+            // Given
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication()).thenReturn(null);
+            SecurityContextHolder.setContext(securityContext);
+
+            // When & Then
+            assertThat(authenticationService.isAuthenticated()).isFalse();
         }
     }
 } 
