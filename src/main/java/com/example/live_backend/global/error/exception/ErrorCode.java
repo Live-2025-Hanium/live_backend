@@ -19,7 +19,7 @@ public enum ErrorCode {
 	VALIDATION_FAILED(BAD_REQUEST, "입력값 검증에 실패했습니다."),
 	MEMBER_NICKNAME_REQUIRED(BAD_REQUEST, "닉네임은 필수 입력값입니다."),
 	MEMBER_NICKNAME_INVALID(BAD_REQUEST, "닉네임은 2자 이상 20자 이하여야 합니다."),
-	MEMBER_BIRTHDATE_INVALID(BAD_REQUEST, "생년월일은 미래일 수 없습니다.");
+	MEMBER_BIRTHDATE_INVALID(BAD_REQUEST, "생년월일은 미래일 수 없습니다."),
 
 
 
