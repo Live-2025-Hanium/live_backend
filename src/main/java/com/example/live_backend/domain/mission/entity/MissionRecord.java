@@ -11,7 +11,6 @@ import lombok.*;
 import org.joda.time.DateTime;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "mission_records")
@@ -65,6 +64,25 @@ public class MissionRecord extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "feedback_difficulty")
     private MissionDifficulty feedbackDifficulty;
+
+    @Builder
+    public MissionRecord(User user, MissionType missionType, Long missionId, String missionTitle,
+                         String missionDescription, MissionCategory missionCategory,
+                         MissionDifficulty missionDifficulty, LocalDate assignedDate,
+                         MissionStatus missionStatus, DateTime completedAt, String feedbackComment, MissionDifficulty feedbackDifficulty) {
+        this.user = user;
+        this.missionType = missionType;
+        this.missionId = missionId;
+        this.missionTitle = missionTitle;
+        this.missionDescription = missionDescription;
+        this.missionCategory = missionCategory;
+        this.missionDifficulty = missionDifficulty;
+        this.assignedDate = assignedDate;
+        this.missionStatus = missionStatus;
+        this.completedAt = completedAt;
+        this.feedbackComment = feedbackComment;
+        this.feedbackDifficulty = feedbackDifficulty;
+    }
 
     /**
      * 미션의 상태 변경 메서드

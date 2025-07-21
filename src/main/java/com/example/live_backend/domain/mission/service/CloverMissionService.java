@@ -85,19 +85,19 @@ public class CloverMissionService {
     @Transactional
     public CloverMissionStatusResponseDto startCloverMission(Long userMissionId) {
 
-        // 1. 미션 조회 및 사용자 조회
+        // 미션 조회 및 사용자 조회
         MissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId);
 
-        // 2. 상태 변경 조건 검증
+        // 상태 변경 조건 검증
         if (missionRecord.getMissionStatus() != MissionStatus.ASSIGNED && missionRecord.getMissionStatus() != MissionStatus.PAUSED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
 
-        // 3. 상태 변경
+        // 상태 변경
         missionRecord.updateStatus(MissionStatus.STARTED);
         log.info("미션 상태 변경 완료: {}", MissionStatus.STARTED);
 
-        // 4. DTO 생성
+        // DTO 생성
         CloverMissionStatusResponseDto response = CloverMissionStatusResponseDto.builder()
                 .userMissionId(missionRecord.getId())
                 .missionTitle(missionRecord.getMissionTitle())
@@ -114,19 +114,19 @@ public class CloverMissionService {
     @Transactional
     public CloverMissionStatusResponseDto pauseCloverMission(Long userMissionId) {
 
-        // 1. 미션 조회 및 사용자 조회
+        // 미션 조회 및 사용자 조회
         MissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId);
 
-        // 2. 상태 변경 조건 검증
+        // 상태 변경 조건 검증
         if (missionRecord.getMissionStatus() != MissionStatus.STARTED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
 
-        // 3. 상태 변경
+        // 상태 변경
         missionRecord.updateStatus(MissionStatus.PAUSED);
         log.info("미션 상태 변경 완료: {}", MissionStatus.PAUSED);
 
-        // 4. DTO 생성
+        // DTO 생성
         CloverMissionStatusResponseDto response = CloverMissionStatusResponseDto.builder()
                 .userMissionId(missionRecord.getId())
                 .missionTitle(missionRecord.getMissionTitle())
@@ -143,19 +143,19 @@ public class CloverMissionService {
     @Transactional
     public CloverMissionStatusResponseDto completeCloverMission(Long userMissionId) {
 
-        // 1. 미션 조회 및 사용자 조회
+        // 미션 조회 및 사용자 조회
         MissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId);
 
-        // 2. 상태 변경 조건 검증
+        // 상태 변경 조건 검증
         if (missionRecord.getMissionStatus() != MissionStatus.STARTED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
 
-        // 3. 상태 변경
-        missionRecord.updateStatus(MissionStatus.PAUSED);
-        log.info("미션 상태 변경 완료: {}", MissionStatus.PAUSED);
+        // 상태 변경
+        missionRecord.updateStatus(MissionStatus.COMPLETED);
+        log.info("미션 상태 변경 완료: {}", MissionStatus.COMPLETED);
 
-        // 4. DTO 생성
+        // DTO 생성
         CloverMissionStatusResponseDto response = CloverMissionStatusResponseDto.builder()
                 .userMissionId(missionRecord.getId())
                 .missionTitle(missionRecord.getMissionTitle())
