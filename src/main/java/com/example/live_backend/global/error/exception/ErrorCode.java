@@ -17,6 +17,11 @@ public enum ErrorCode {
 	INVALID_LOGIN_INFO(BAD_REQUEST, "아이디 또는 비밀번호가 일치하지 않습니다."),
 	INVALID_INPUT(BAD_REQUEST, "잘못된 입력값입니다."),
 	VALIDATION_FAILED(BAD_REQUEST, "입력값 검증에 실패했습니다."),
+	MEMBER_NICKNAME_REQUIRED(BAD_REQUEST, "닉네임은 필수 입력값입니다."),
+	MEMBER_NICKNAME_INVALID(BAD_REQUEST, "닉네임은 2자 이상 20자 이하여야 합니다."),
+	MEMBER_BIRTHDATE_INVALID(BAD_REQUEST, "생년월일은 미래일 수 없습니다.");
+
+
 
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),
