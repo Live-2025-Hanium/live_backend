@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.memeber.entity.service;
+package com.example.live_backend.domain.memeber.service;
 
 
 import lombok.RequiredArgsConstructor;
