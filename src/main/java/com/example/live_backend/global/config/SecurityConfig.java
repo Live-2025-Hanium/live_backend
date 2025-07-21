@@ -1,51 +1,79 @@
 package com.example.live_backend.global.config;
 
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.example.live_backend.domain.auth.jwt.JwtFilter;
+
 
 @Configuration
-@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http
-            .csrf(csrf -> csrf.disable())
-            .formLogin(formLogin -> formLogin.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Swagger UI 관련 경로 모두 허용
-                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/api-docs/**").permitAll()
-                .requestMatchers("/swagger-resources/**", "/webjars/**", "/v3/api-docs.yaml").permitAll()
-                
-                // 헬스체크 및 정적 리소스 허용
-                .requestMatchers("/ping", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+	private final JwtFilter jwtFilter;
 
-                // 관리자 전용 API
-                .requestMatchers("/api/v1/surveys/admin/**").hasRole("ADMIN")
-                // 기타 API는 인증 필요
-                .requestMatchers("/api/**").authenticated()
-                
-                .anyRequest().permitAll()
-            )
-            // TODO: JWT 구현 후 제거 예정
-            // HTTP Basic 인증 활성화 (Swagger 테스트용)
-            .httpBasic(httpBasic -> httpBasic.realmName("Mock Authentication"))
-            .build();
-    }
+	public SecurityConfig(JwtFilter jwtFilter) {
+		this.jwtFilter = jwtFilter;
+	}
 
+	/**
+	 * 스웨거 및 정적 리소스 전용 체인
+	 */
+	@Bean
+	@Order(1)
+	public SecurityFilterChain staticResourcesChain(HttpSecurity http) throws Exception {
+		http
+			// 정적 리소스 매칭
+			.securityMatcher(
+				PathRequest.toStaticResources().atCommonLocations()
+			)
+			.csrf(AbstractHttpConfigurer::disable)
+			.formLogin(AbstractHttpConfigurer::disable)
+			.httpBasic(AbstractHttpConfigurer::disable)
+			.cors(AbstractHttpConfigurer::disable) // Flutter 앱에서는 CORS 불필요
+			.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+			.sessionManagement(mgmt ->
+				mgmt.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+			);
+		return http.build();
+	}
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails mockUser = new PrincipalDetails(1L, "ROLE_USER");
-        UserDetails mockAdmin = new PrincipalDetails(2L, "ROLE_ADMIN");
-        return new InMemoryUserDetailsManager(mockUser, mockAdmin);
-    }
-} 
+	/**
+	 * API 요청용 체인: JWT 필터 적용
+	 */
+	@Bean
+	@Order(2)
+	public SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
+		http
+			.securityMatcher("/api/**")
+			.csrf(AbstractHttpConfigurer::disable)
+			.formLogin(AbstractHttpConfigurer::disable)
+			.httpBasic(AbstractHttpConfigurer::disable)
+			.cors(AbstractHttpConfigurer::disable) // Flutter 앱에서는 CORS 불필요
+			.sessionManagement(mgmt ->
+				mgmt.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+			)
+			// JWT 필터 적용
+			.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+			// 엔드포인트별 접근 제어
+			.authorizeHttpRequests(auth -> auth
+				.requestMatchers(
+					"/api/auth/login",
+					"/api/auth/refresh"
+				).permitAll()
+				.anyRequest().authenticated()
+			);
+		return http.build();
+	}
+
+	// Flutter 앱에서는 CORS 설정이 불필요합니다.
+	// 웹 브라우저가 아닌 네이티브 앱이므로 브라우저의 동일 출처 정책에 영향받지 않습니다!
+}
