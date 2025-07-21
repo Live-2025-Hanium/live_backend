@@ -3,6 +3,7 @@ package com.example.live_backend.domain.mission.service;
 import com.example.live_backend.domain.mission.Enum.MissionStatus;
 import com.example.live_backend.domain.mission.dto.CloverMissionListResponseDto;
 import com.example.live_backend.domain.mission.dto.CloverMissionResponseDto;
+import com.example.live_backend.domain.mission.dto.CloverMissionStatusResponseDto;
 import com.example.live_backend.domain.mission.entity.MissionRecord;
 import com.example.live_backend.domain.memeber.util.UserUtil;
 import com.example.live_backend.domain.mission.repository.MissionRecordRepository;
@@ -78,24 +79,96 @@ public class CloverMissionService {
         return response;
     }
 
+    /**
+     * 미션 상태 변경 - Started (ASSIGNED Or PAUSED -> STARTED)
+     */
     @Transactional
-    public void startCloverMission(Long userMissionId) {
-        updateMissionStatus(userMissionId, MissionStatus.STARTED);
+    public CloverMissionStatusResponseDto startCloverMission(Long userMissionId) {
+
+        // 1. 미션 조회 및 사용자 조회
+        MissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId);
+
+        // 2. 상태 변경 조건 검증
+        if (missionRecord.getMissionStatus() != MissionStatus.ASSIGNED && missionRecord.getMissionStatus() != MissionStatus.PAUSED) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
+        }
+
+        // 3. 상태 변경
+        missionRecord.updateStatus(MissionStatus.STARTED);
+        log.info("미션 상태 변경 완료: {}", MissionStatus.STARTED);
+
+        // 4. DTO 생성
+        CloverMissionStatusResponseDto response = CloverMissionStatusResponseDto.builder()
+                .userMissionId(missionRecord.getId())
+                .missionTitle(missionRecord.getMissionTitle())
+                .missionStatus(missionRecord.getMissionStatus())
+                .assignedDate(missionRecord.getAssignedDate())
+                .build();
+
+        return response;
     }
 
+    /**
+     * 미션 상태 변경 - Paused (STARTED -> PAUSED)
+     */
     @Transactional
-    public void pauseCloverMission(Long userMissionId) {
-        updateMissionStatus(userMissionId, MissionStatus.PAUSED);
+    public CloverMissionStatusResponseDto pauseCloverMission(Long userMissionId) {
+
+        // 1. 미션 조회 및 사용자 조회
+        MissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId);
+
+        // 2. 상태 변경 조건 검증
+        if (missionRecord.getMissionStatus() != MissionStatus.STARTED) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
+        }
+
+        // 3. 상태 변경
+        missionRecord.updateStatus(MissionStatus.PAUSED);
+        log.info("미션 상태 변경 완료: {}", MissionStatus.PAUSED);
+
+        // 4. DTO 생성
+        CloverMissionStatusResponseDto response = CloverMissionStatusResponseDto.builder()
+                .userMissionId(missionRecord.getId())
+                .missionTitle(missionRecord.getMissionTitle())
+                .missionStatus(missionRecord.getMissionStatus())
+                .assignedDate(missionRecord.getAssignedDate())
+                .build();
+
+        return response;
     }
 
+    /**
+     * 미션 상태 변경 - Completed (STARTED -> Completed)
+     */
     @Transactional
-    public void completeCloverMission(Long userMissionId) {
-        updateMissionStatus(userMissionId, MissionStatus.COMPLETED);
+    public CloverMissionStatusResponseDto completeCloverMission(Long userMissionId) {
+
+        // 1. 미션 조회 및 사용자 조회
+        MissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId);
+
+        // 2. 상태 변경 조건 검증
+        if (missionRecord.getMissionStatus() != MissionStatus.STARTED) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
+        }
+
+        // 3. 상태 변경
+        missionRecord.updateStatus(MissionStatus.PAUSED);
+        log.info("미션 상태 변경 완료: {}", MissionStatus.PAUSED);
+
+        // 4. DTO 생성
+        CloverMissionStatusResponseDto response = CloverMissionStatusResponseDto.builder()
+                .userMissionId(missionRecord.getId())
+                .missionTitle(missionRecord.getMissionTitle())
+                .missionStatus(missionRecord.getMissionStatus())
+                .assignedDate(missionRecord.getAssignedDate())
+                .build();
+
+        return response;
     }
 
-    private void updateMissionStatus(Long userMissionId, MissionStatus status) {
+    private MissionRecord findAndVerifyMissionRecord(Long userMissionId) {
         Long currentUserId = userUtil.getCurrentUserId();
-        log.info("{} 미션 상태 변경 시작 - 사용자 ID: {}, 미션 ID: {}", status, currentUserId, userMissionId);
+        log.info("미션 조회  및 검증시작 - 사용자 ID: {}, 미션 ID: {}", currentUserId, userMissionId);
 
         MissionRecord findByUserMissionId = missionRecordRepository.findByIdWithUser(userMissionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MISSION_NOT_FOUND));
@@ -104,9 +177,6 @@ public class CloverMissionService {
             throw new CustomException(ErrorCode.MISSION_FORBIDDEN);
         }
 
-        findByUserMissionId.updateStatus(status);
-        missionRecordRepository.save(findByUserMissionId);
-
-        log.info("미션 상태 변경 완료: {}", status);
+        return findByUserMissionId;
     }
 }

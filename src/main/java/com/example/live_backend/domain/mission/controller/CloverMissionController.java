@@ -2,6 +2,7 @@ package com.example.live_backend.domain.mission.controller;
 
 import com.example.live_backend.domain.mission.dto.CloverMissionListResponseDto;
 import com.example.live_backend.domain.mission.dto.CloverMissionResponseDto;
+import com.example.live_backend.domain.mission.dto.CloverMissionStatusResponseDto;
 import com.example.live_backend.domain.mission.service.CloverMissionService;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
@@ -60,9 +61,9 @@ public class CloverMissionController {
 
 		log.info("클로버 미션 시작 API 호출 - userMissionId: {}", userMissionId);
 
-		cloverMissionService.startCloverMission(userMissionId);
+		CloverMissionStatusResponseDto response = cloverMissionService.startCloverMission(userMissionId);
 
-		return ResponseHandler.success(null);
+		return ResponseHandler.success(response);
 
 	}
 
@@ -72,9 +73,9 @@ public class CloverMissionController {
 
 		log.info("클로버 미션 일시정지 API 호출 - userMissionId: {}", userMissionId);
 
-		cloverMissionService.pauseCloverMission(userMissionId);
+		CloverMissionStatusResponseDto response = cloverMissionService.pauseCloverMission(userMissionId);
 
-		return ResponseHandler.success(null);
+		return ResponseHandler.success(response);
 	}
 
 	@PatchMapping("/{userMissionId}/complete")
@@ -83,8 +84,8 @@ public class CloverMissionController {
 
 		log.info("클로버 미션 완료 API 호출 - userMissionId: {}", userMissionId);
 
-		cloverMissionService.completeCloverMission(userMissionId);
+		CloverMissionStatusResponseDto response = cloverMissionService.completeCloverMission(userMissionId);
 
-		return ResponseHandler.success(null);
+		return ResponseHandler.success(response);
 	}
 }

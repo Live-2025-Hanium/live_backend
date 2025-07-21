@@ -17,6 +17,7 @@ public enum ErrorCode {
 	INVALID_LOGIN_INFO(BAD_REQUEST, "아이디 또는 비밀번호가 일치하지 않습니다."),
 	INVALID_INPUT(BAD_REQUEST, "잘못된 입력값입니다."),
 	VALIDATION_FAILED(BAD_REQUEST, "입력값 검증에 실패했습니다."),
+	INVALID_MISSION_STATUS(BAD_REQUEST, "미션 상태 변경을 할 수 없습니다."),
 
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),
@@ -31,8 +32,7 @@ public enum ErrorCode {
 	SURVEY_NOT_FOUND(NOT_FOUND, "존재하지 않는 설문입니다."),
 
 	/* ------------------ 500 INTERNAL_SERVER_ERROR : 서버 오류 ------------------ */
-	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.")
-	;
+	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String detail;
