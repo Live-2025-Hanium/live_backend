@@ -6,6 +6,8 @@ import com.example.live_backend.domain.mission.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.Enum.MissionDifficulty;
 import com.example.live_backend.domain.mission.Enum.MissionStatus;
 import com.example.live_backend.domain.mission.Enum.MissionType;
+import com.example.live_backend.global.error.exception.CustomException;
+import com.example.live_backend.global.error.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 import org.joda.time.DateTime;
@@ -89,5 +91,38 @@ public class MissionRecord extends BaseEntity {
      */
     public void updateStatus(MissionStatus newStatus) {
         this.missionStatus = newStatus;
+    }
+
+    /**
+     * 미션을 시작 상태로 변경합니다.
+     * ASSIGNED 또는 PAUSED 상태일 때만 시작할 수 있습니다.
+     */
+    public void startMission() {
+        if (this.missionStatus != MissionStatus.ASSIGNED && this.missionStatus != MissionStatus.PAUSED) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
+        }
+        this.missionStatus = MissionStatus.STARTED;
+    }
+
+    /**
+     * 미션을 중지 상태로 변경합니다.
+     * STARTED 상태일 때만 중지할 수 있습니다.
+     */
+    public void pauseMission() {
+        if (this.missionStatus != MissionStatus.STARTED) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
+        }
+        this.missionStatus = MissionStatus.PAUSED;
+    }
+
+    /**
+     * 미션을 완료 상태로 변경합니다.
+     * STARTED 상태일 때만 완료할 수 있습니다.
+     */
+    public void completeMission() {
+        if (this.missionStatus != MissionStatus.STARTED) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
+        }
+        this.missionStatus = MissionStatus.COMPLETED;
     }
 }
