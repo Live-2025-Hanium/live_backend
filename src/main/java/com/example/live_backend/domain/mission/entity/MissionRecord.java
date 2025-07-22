@@ -6,12 +6,13 @@ import com.example.live_backend.domain.mission.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.Enum.MissionDifficulty;
 import com.example.live_backend.domain.mission.Enum.MissionStatus;
 import com.example.live_backend.domain.mission.Enum.MissionType;
+import com.example.live_backend.global.error.exception.CustomException;
+import com.example.live_backend.global.error.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 import org.joda.time.DateTime;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "mission_records")
@@ -65,4 +66,63 @@ public class MissionRecord extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "feedback_difficulty")
     private MissionDifficulty feedbackDifficulty;
+
+    @Builder
+    public MissionRecord(User user, MissionType missionType, Long missionId, String missionTitle,
+                         String missionDescription, MissionCategory missionCategory,
+                         MissionDifficulty missionDifficulty, LocalDate assignedDate,
+                         MissionStatus missionStatus, DateTime completedAt, String feedbackComment, MissionDifficulty feedbackDifficulty) {
+        this.user = user;
+        this.missionType = missionType;
+        this.missionId = missionId;
+        this.missionTitle = missionTitle;
+        this.missionDescription = missionDescription;
+        this.missionCategory = missionCategory;
+        this.missionDifficulty = missionDifficulty;
+        this.assignedDate = assignedDate;
+        this.missionStatus = missionStatus;
+        this.completedAt = completedAt;
+        this.feedbackComment = feedbackComment;
+        this.feedbackDifficulty = feedbackDifficulty;
+    }
+
+    /**
+     * 미션의 상태 변경 메서드
+     */
+    public void updateStatus(MissionStatus newStatus) {
+        this.missionStatus = newStatus;
+    }
+
+    /**
+     * 미션을 시작 상태로 변경합니다.
+     * ASSIGNED 또는 PAUSED 상태일 때만 시작할 수 있습니다.
+     */
+    public void startMission() {
+        if (this.missionStatus != MissionStatus.ASSIGNED && this.missionStatus != MissionStatus.PAUSED) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
+        }
+        this.missionStatus = MissionStatus.STARTED;
+    }
+
+    /**
+     * 미션을 중지 상태로 변경합니다.
+     * STARTED 상태일 때만 중지할 수 있습니다.
+     */
+    public void pauseMission() {
+        if (this.missionStatus != MissionStatus.STARTED) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
+        }
+        this.missionStatus = MissionStatus.PAUSED;
+    }
+
+    /**
+     * 미션을 완료 상태로 변경합니다.
+     * STARTED 상태일 때만 완료할 수 있습니다.
+     */
+    public void completeMission() {
+        if (this.missionStatus != MissionStatus.STARTED) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
+        }
+        this.missionStatus = MissionStatus.COMPLETED;
+    }
 }
