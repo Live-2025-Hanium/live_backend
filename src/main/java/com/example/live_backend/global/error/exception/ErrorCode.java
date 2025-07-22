@@ -21,6 +21,11 @@ public enum ErrorCode {
 
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),
+	EXPIRED_TOKEN(UNAUTHORIZED, "토큰이 만료되었습니다."),
+	INVALID_TOKEN_CATEGORY(UNAUTHORIZED, "유효하지 않은 토큰 유형입니다."),
+	INVALID_TOKEN(UNAUTHORIZED, "유효하지 않은 토큰입니다."),
+	MISSING_TOKEN(UNAUTHORIZED, "토큰이 없습니다."),
+	MISSING_REFRESH_TOKEN(UNAUTHORIZED, "리프레시 토큰이 존재하지 않습니다."),
 
 	/* ------------------ 403 FORBIDDEN : 권한 없음 ------------------ */
 	MISSION_FORBIDDEN(FORBIDDEN, "미션을 변경할 권한이 없습니다."),
