@@ -1,6 +1,8 @@
 package com.example.live_backend.domain.auth.jwt;
 
 import com.example.live_backend.domain.auth.util.HttpHeaderProcessor;
+import com.example.live_backend.domain.memeber.entity.Member;
+import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.global.error.response.ResponseHandler;
@@ -29,6 +31,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
 	private final JwtTokenValidator jwtTokenValidator;
 	private final ObjectMapper objectMapper;
+	private final MemberRepository memberRepository;
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -53,12 +56,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
 			TokenInfo tokenInfo = jwtTokenValidator.validateAccessToken(token);
 
+			// Member 정보 조회 (캐싱??)
+			Member member = memberRepository.findById(tokenInfo.getUserId())
+				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
 			PrincipalDetails principalDetails = new PrincipalDetails(
-				tokenInfo.getUserId(),
-				tokenInfo.getOauthId(),
-				tokenInfo.getRole(),
-				null,
-				null
+				member.getId(),
+				member.getKakaoId(),
+				member.getRole().name(),
+				member.getProfile().getNickname(),
+				member.getEmail()
 			);
 
 			Authentication auth = new UsernamePasswordAuthenticationToken(
