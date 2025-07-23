@@ -1,6 +1,7 @@
 package com.example.live_backend.domain.memeber.entity;
 
 import com.example.live_backend.domain.memeber.Gender;
+import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.memeber.entity.vo.BirthDate;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
 
@@ -28,29 +29,43 @@ public class Member {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@Column(name = "kakao_id", unique = true, nullable = false)
+	private String kakaoId;
+
+	@Column(name = "email", nullable = false)
+	private String email;
+
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private Role role;
+
 	@Embedded
 	private Profile profile;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
 	private Gender gender;
 
 	@Embedded
 	private BirthDate birthDate;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
 	private Occupation occupation;
 
 	@Column(length = 100)
 	private String occupationDetail; // OTHER 선택 시 추가 입력
 
 	@Builder
-	public Member(Profile profile,
+	public Member(String kakaoId,
+		String email,
+		Role role,
+		Profile profile,
 		Gender gender,
 		BirthDate birthDate,
 		Occupation occupation,
 		String occupationDetail) {
+		this.kakaoId = kakaoId;
+		this.email = email;
+		this.role = role;
 		this.profile = profile;
 		this.gender = gender;
 		this.birthDate = birthDate;
@@ -60,6 +75,13 @@ public class Member {
 
 	public void updateProfile(Profile newProfile) {
 		this.profile = newProfile;
+	}
+
+	public void updateDetails(Gender gender, BirthDate birthDate, Occupation occupation, String occupationDetail) {
+		this.gender = gender;
+		this.birthDate = birthDate;
+		this.occupation = occupation;
+		this.occupationDetail = occupationDetail;
 	}
 
 }

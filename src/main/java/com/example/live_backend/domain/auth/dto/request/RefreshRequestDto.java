@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.auth.dto;
+package com.example.live_backend.domain.auth.dto.request;
 
 import lombok.Getter;
 

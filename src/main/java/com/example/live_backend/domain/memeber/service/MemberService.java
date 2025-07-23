@@ -6,7 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.live_backend.domain.auth.AuthenticationService;
+import com.example.live_backend.domain.auth.dto.AuthUserDto;
+import com.example.live_backend.domain.auth.dto.request.KakaoLoginRequestDto;
 import com.example.live_backend.domain.memeber.Gender;
+import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.memeber.dto.MemberProfileRequestDto;
 import com.example.live_backend.domain.memeber.dto.MemberResponseDto;
 import com.example.live_backend.domain.memeber.entity.Member;
@@ -21,6 +24,47 @@ public class MemberService {
 
 	private final MemberRepository memberRepository;
 	private final AuthenticationService authService;
+
+	@Transactional
+	public AuthUserDto loginOrRegister(KakaoLoginRequestDto request) {
+		return memberRepository.findByKakaoId(request.getKakaoId())
+			.map(existingMember -> {
+				// 기존 회원 - 로그인 처리만 수행 (프로필 업데이트 X)
+				return toAuthUserDto(existingMember, false);
+			})
+			.orElseGet(() -> {
+				// 신규 회원 - 회원가입 처리
+				Member newMember = createNewMember(request);
+				Member savedMember = memberRepository.save(newMember);
+				return toAuthUserDto(savedMember, true);
+			});
+	}
+
+	private Member createNewMember(KakaoLoginRequestDto request) {
+		Profile profile = Profile.builder()
+			.nickname(request.getNickname())
+			.profileImageUrl(request.getProfileImageUrl())
+			.build();
+
+		return Member.builder()
+			.kakaoId(request.getKakaoId())
+			.email(request.getEmail())
+			.role(Role.USER)
+			.profile(profile)
+			.build();
+	}
+
+	private AuthUserDto toAuthUserDto(Member member, boolean isNewUser) {
+		return AuthUserDto.builder()
+			.id(member.getId())
+			.kakaoId(member.getKakaoId())
+			.email(member.getEmail())
+			.nickname(member.getProfile().getNickname())
+			.profileImageUrl(member.getProfile().getProfileImageUrl())
+			.role(member.getRole())
+			.isNewUser(isNewUser)
+			.build();
+	}
 
 	@Transactional
 	public MemberResponseDto registerOrUpdateProfile(MemberProfileRequestDto dto) {
@@ -40,7 +84,7 @@ public class MemberService {
 		return memberRepository.findById(userId)
 			.map(existing -> {
 				existing.updateProfile(profile);
-				//existing.updateDetails(gender, birthDate, occupation, detail);
+				existing.updateDetails(gender, birthDate, occupation, detail);
 				return existing;
 			})
 			.orElseGet(() ->
