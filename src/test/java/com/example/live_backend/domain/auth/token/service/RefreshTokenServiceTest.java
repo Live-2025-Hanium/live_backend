@@ -1,13 +1,13 @@
 package com.example.live_backend.domain.auth.token.service;
 
-import com.example.live_backend.domain.auth.AuthToken;
-import com.example.live_backend.domain.auth.AuthTokenGenerator;
-import com.example.live_backend.domain.auth.jwt.JwtUtil;
+import com.example.live_backend.domain.auth.dto.AuthToken;
+import com.example.live_backend.domain.auth.util.AuthTokenGenerator;
+import com.example.live_backend.domain.auth.jwt.JwtTokenValidator;
 import com.example.live_backend.domain.auth.token.entity.RefreshToken;
 import com.example.live_backend.domain.auth.token.repository.RefreshTokenRepository;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
-import org.junit.jupiter.api.BeforeEach;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -30,8 +30,9 @@ class RefreshTokenServiceTest {
     @Mock
     private RefreshTokenRepository repository;
 
+    // 분리 후: JwtTokenValidator를 Mock으로 사용
     @Mock
-    private JwtUtil jwtUtil;
+    private JwtTokenValidator jwtTokenValidator;
 
     @Mock
     private AuthTokenGenerator generator;
@@ -102,7 +103,8 @@ class RefreshTokenServiceTest {
                     .role(TEST_ROLE)
                     .build();
             
-            given(jwtUtil.validateAndExtract(TEST_REFRESH_TOKEN)).willReturn(tokenInfo);
+            // 분리 후: JwtTokenValidator의 validateRefreshToken 메서드 Mock
+            given(jwtTokenValidator.validateRefreshToken(TEST_REFRESH_TOKEN)).willReturn(tokenInfo);
             given(repository.findById(TEST_USER_ID)).willReturn(Optional.of(mockRefreshToken));
             given(generator.generate(TEST_USER_ID, TEST_OAUTH_ID, TEST_ROLE)).willReturn(newTokens);
 
@@ -114,7 +116,7 @@ class RefreshTokenServiceTest {
             assertThat(result.accessToken()).isEqualTo(NEW_ACCESS_TOKEN);
             assertThat(result.refreshToken()).isEqualTo(NEW_REFRESH_TOKEN);
             
-            verify(jwtUtil).validateAndExtract(TEST_REFRESH_TOKEN);
+            verify(jwtTokenValidator).validateRefreshToken(TEST_REFRESH_TOKEN);
             verify(generator).generate(TEST_USER_ID, TEST_OAUTH_ID, TEST_ROLE);
         }
 
@@ -122,24 +124,16 @@ class RefreshTokenServiceTest {
         @DisplayName("만료된 리프레시 토큰으로 새 토큰 발급 - 예외 발생")
         void refresh_ExpiredToken_ThrowsException() {
             // Given
-            com.example.live_backend.domain.auth.jwt.TokenInfo expiredTokenInfo = 
-                com.example.live_backend.domain.auth.jwt.TokenInfo.builder()
-                    .valid(false)
-                    .expired(true)
-                    .category("refresh_token")
-                    .userId(TEST_USER_ID)
-                    .oauthId(TEST_OAUTH_ID)
-                    .role(TEST_ROLE)
-                    .build();
-            
-            given(jwtUtil.validateAndExtract(TEST_REFRESH_TOKEN)).willReturn(expiredTokenInfo);
+            // 분리 후: JwtTokenValidator에서 예외를 던지도록 Mock 설정
+            given(jwtTokenValidator.validateRefreshToken(TEST_REFRESH_TOKEN))
+                .willThrow(new CustomException(ErrorCode.EXPIRED_TOKEN));
 
             // When & Then
             assertThatThrownBy(() -> refreshTokenService.refresh(TEST_REFRESH_TOKEN))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EXPIRED_TOKEN);
             
-            verify(jwtUtil).validateAndExtract(TEST_REFRESH_TOKEN);
+            verify(jwtTokenValidator).validateRefreshToken(TEST_REFRESH_TOKEN);
             verifyNoInteractions(repository, generator);
         }
 
@@ -160,7 +154,7 @@ class RefreshTokenServiceTest {
                     .role(TEST_ROLE)
                     .build();
             
-            given(jwtUtil.validateAndExtract(TEST_REFRESH_TOKEN)).willReturn(tokenInfo);
+            given(jwtTokenValidator.validateRefreshToken(TEST_REFRESH_TOKEN)).willReturn(tokenInfo);
             given(repository.findById(TEST_USER_ID)).willReturn(Optional.of(mockRefreshToken));
 
             // When & Then
@@ -168,7 +162,7 @@ class RefreshTokenServiceTest {
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_TOKEN);
             
-            verify(jwtUtil).validateAndExtract(TEST_REFRESH_TOKEN);
+            verify(jwtTokenValidator).validateRefreshToken(TEST_REFRESH_TOKEN);
             verify(repository).findById(TEST_USER_ID);
             verifyNoInteractions(generator);
         }
@@ -187,7 +181,7 @@ class RefreshTokenServiceTest {
                     .role(TEST_ROLE)
                     .build();
             
-            given(jwtUtil.validateAndExtract(TEST_REFRESH_TOKEN)).willReturn(tokenInfo);
+            given(jwtTokenValidator.validateRefreshToken(TEST_REFRESH_TOKEN)).willReturn(tokenInfo);
             given(repository.findById(TEST_USER_ID)).willReturn(Optional.empty());
 
             // When & Then
@@ -195,7 +189,7 @@ class RefreshTokenServiceTest {
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MISSING_REFRESH_TOKEN);
             
-            verify(jwtUtil).validateAndExtract(TEST_REFRESH_TOKEN);
+            verify(jwtTokenValidator).validateRefreshToken(TEST_REFRESH_TOKEN);
             verify(repository).findById(TEST_USER_ID);
             verifyNoInteractions(generator);
         }
@@ -288,7 +282,8 @@ class RefreshTokenServiceTest {
                     .role(TEST_ROLE)
                     .build();
             
-            given(jwtUtil.validateAndExtract(TEST_REFRESH_TOKEN)).willReturn(tokenInfo);
+            // 분리 후: JwtTokenValidator의 validateRefreshToken 메서드 Mock
+            given(jwtTokenValidator.validateRefreshToken(TEST_REFRESH_TOKEN)).willReturn(tokenInfo);
             
             AuthToken newTokens = new AuthToken(NEW_ACCESS_TOKEN, NEW_REFRESH_TOKEN);
             given(generator.generate(TEST_USER_ID, TEST_OAUTH_ID, TEST_ROLE)).willReturn(newTokens);
@@ -305,7 +300,7 @@ class RefreshTokenServiceTest {
             assertThat(result.refreshToken()).isEqualTo(NEW_REFRESH_TOKEN);
             
             verify(repository).save(any(RefreshToken.class));
-            verify(jwtUtil).validateAndExtract(TEST_REFRESH_TOKEN);
+            verify(jwtTokenValidator).validateRefreshToken(TEST_REFRESH_TOKEN);
             verify(generator).generate(TEST_USER_ID, TEST_OAUTH_ID, TEST_ROLE);
         }
     }

@@ -1,5 +1,7 @@
 package com.example.live_backend.domain.auth.jwt;
 
+import com.example.live_backend.domain.auth.util.HttpHeaderProcessor;
+import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
@@ -25,7 +27,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
-	private final JwtUtil jwtUtil;
+	private final JwtTokenValidator jwtTokenValidator;
 	private final ObjectMapper objectMapper;
 
 	@Override
@@ -38,24 +40,18 @@ public class JwtFilter extends OncePerRequestFilter {
 		FilterChain chain) throws ServletException, IOException {
 
 		String header = req.getHeader(JwtConstants.AUTHORIZATION_HEADER);
-		if (header == null || !header.startsWith(JwtConstants.BEARER_PREFIX)) {
+		
+
+		if (!HttpHeaderProcessor.isBearerToken(header)) {
 			chain.doFilter(req, res);
 			return;
 		}
-		String token = header.substring(JwtConstants.BEARER_PREFIX_LENGTH);
 
 		try {
-			TokenInfo tokenInfo = jwtUtil.validateAndExtract(token);
 
-			if (tokenInfo.isExpired()) {
-				sendError(res, ErrorCode.EXPIRED_TOKEN);
-				return;
-			}
+			String token = HttpHeaderProcessor.extractToken(header);
 
-			if (!JwtConstants.ACCESS_TOKEN_CATEGORY.equals(tokenInfo.getCategory())) {
-				sendError(res, ErrorCode.INVALID_TOKEN_CATEGORY);
-				return;
-			}
+			TokenInfo tokenInfo = jwtTokenValidator.validateAccessToken(token);
 
 			PrincipalDetails principalDetails = new PrincipalDetails(
 				tokenInfo.getUserId(),
@@ -72,6 +68,9 @@ public class JwtFilter extends OncePerRequestFilter {
 			);
 			SecurityContextHolder.getContext().setAuthentication(auth);
 
+		} catch (CustomException e) {
+			sendError(res, e.getErrorCode());
+			return;
 		} catch (Exception e) {
 			sendError(res, ErrorCode.INVALID_TOKEN);
 			return;

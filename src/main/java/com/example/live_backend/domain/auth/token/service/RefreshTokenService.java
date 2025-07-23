@@ -4,10 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.live_backend.domain.auth.AuthToken;
-import com.example.live_backend.domain.auth.AuthTokenGenerator;
-import com.example.live_backend.domain.auth.jwt.JwtConstants;
-import com.example.live_backend.domain.auth.jwt.JwtUtil;
+import com.example.live_backend.domain.auth.dto.AuthToken;
+import com.example.live_backend.domain.auth.util.AuthTokenGenerator;
+import com.example.live_backend.domain.auth.jwt.JwtTokenValidator;
 import com.example.live_backend.domain.auth.jwt.TokenInfo;
 import com.example.live_backend.domain.auth.token.entity.RefreshToken;
 import com.example.live_backend.domain.auth.token.repository.RefreshTokenRepository;
@@ -19,7 +18,9 @@ import com.example.live_backend.global.error.exception.ErrorCode;
 public class RefreshTokenService {
 
 	private final RefreshTokenRepository repository;
-	private final JwtUtil jwtUtil;
+
+	private final JwtTokenValidator jwtTokenValidator;
+
 	private final AuthTokenGenerator generator;
 
 	public RefreshToken getUserRefreshToken(Long userId) {
@@ -27,22 +28,16 @@ public class RefreshTokenService {
 			.orElseThrow(() -> new CustomException(ErrorCode.MISSING_REFRESH_TOKEN));
 	}
 
+
 	@Transactional
 	public AuthToken refresh(String refreshToken) {
 
-		TokenInfo tokenInfo = jwtUtil.validateAndExtract(refreshToken);
-
-		if (tokenInfo.isExpired()) {
-			throw new CustomException(ErrorCode.EXPIRED_TOKEN);
-		}
-
-		if (!JwtConstants.REFRESH_TOKEN_CATEGORY.equals(tokenInfo.getCategory())) {
-			throw new CustomException(ErrorCode.INVALID_TOKEN_CATEGORY);
-		}
+		TokenInfo tokenInfo = jwtTokenValidator.validateRefreshToken(refreshToken);
 
 		Long userId = tokenInfo.getUserId();
-		String expected = getUserRefreshToken(userId).getToken();
-		if (!expected.equals(refreshToken)) {
+		String expectedToken = getUserRefreshToken(userId).getToken();
+		
+		if (!expectedToken.equals(refreshToken)) {
 			throw new CustomException(ErrorCode.INVALID_TOKEN);
 		}
 

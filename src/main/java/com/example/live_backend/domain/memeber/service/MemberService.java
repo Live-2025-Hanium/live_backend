@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.live_backend.domain.auth.AuthenticationService;
+import com.example.live_backend.domain.auth.service.AuthenticationService;
 import com.example.live_backend.domain.auth.dto.response.AuthUserDto;
 import com.example.live_backend.domain.auth.dto.request.KakaoLoginRequestDto;
 import com.example.live_backend.domain.memeber.Gender;
@@ -55,13 +55,19 @@ public class MemberService {
 
 		try {
 			Long currentUserId = authService.getUserId();
-			// 로그인된 사용자의 경우 자신의 현재 닉네임은 제외하고 중복 확인
 			boolean isDuplicate = memberRepository.existsByProfileNicknameAndIdNot(nickname, currentUserId);
-			return isDuplicate ? NicknameCheckResponseDto.unavailable() : NicknameCheckResponseDto.available();
+			if (isDuplicate) {
+				return NicknameCheckResponseDto.unavailable();
+			} else {
+				return NicknameCheckResponseDto.available();
+			}
 		} catch (Exception e) {
-			// 비로그인 사용자의 경우 전체 닉네임 중복 확인
 			boolean isDuplicate = memberRepository.existsByProfileNickname(nickname);
-			return isDuplicate ? NicknameCheckResponseDto.unavailable() : NicknameCheckResponseDto.available();
+			if (isDuplicate) {
+				return NicknameCheckResponseDto.unavailable();
+			} else {
+				return NicknameCheckResponseDto.available();
+			}
 		}
 	}
 

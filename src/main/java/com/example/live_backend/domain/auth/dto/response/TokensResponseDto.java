@@ -1,6 +1,6 @@
 package com.example.live_backend.domain.auth.dto.response;
 
-import com.example.live_backend.domain.auth.AuthToken;
+import com.example.live_backend.domain.auth.dto.AuthToken;
 
 import lombok.Getter;
 

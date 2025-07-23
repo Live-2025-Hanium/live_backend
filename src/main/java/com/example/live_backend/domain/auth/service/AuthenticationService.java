@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.auth;
+package com.example.live_backend.domain.auth.service;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,8 +14,9 @@ public class AuthenticationService {
 	public Authentication getAuthentication() {
 		return SecurityContextHolder.getContext().getAuthentication();
 	}
-	
-	public Long getUserId() {
+
+
+	private PrincipalDetails validateAndGetPrincipalDetails() {
 		Authentication authentication = getAuthentication();
 
 		if (authentication == null || !authentication.isAuthenticated()) {
@@ -25,7 +26,7 @@ public class AuthenticationService {
 		Object principal = authentication.getPrincipal();
 
 		if (principal instanceof PrincipalDetails principalDetails) {
-			return principalDetails.getMemberId();
+			return principalDetails;
 		}
 
 		if ("anonymousUser".equals(principal) || principal == null) {
@@ -35,27 +36,15 @@ public class AuthenticationService {
 		throw new CustomException(ErrorCode.INVALID_TOKEN, 
 			"Invalid principal type: " + principal.getClass().getSimpleName());
 	}
+	
+
+	public Long getUserId() {
+		return validateAndGetPrincipalDetails().getMemberId();
+	}
 
 
 	public PrincipalDetails getCurrentUser() {
-		Authentication authentication = getAuthentication();
-		
-		if (authentication == null || !authentication.isAuthenticated()) {
-			throw new CustomException(ErrorCode.DENIED_UNAUTHORIZED_USER);
-		}
-		
-		Object principal = authentication.getPrincipal();
-		
-		if (principal instanceof PrincipalDetails principalDetails) {
-			return principalDetails;
-		}
-		
-		if ("anonymousUser".equals(principal) || principal == null) {
-			throw new CustomException(ErrorCode.DENIED_UNAUTHORIZED_USER);
-		}
-		
-		throw new CustomException(ErrorCode.INVALID_TOKEN, 
-			"Invalid principal type: " + principal.getClass().getSimpleName());
+		return validateAndGetPrincipalDetails();
 	}
 
 	public boolean hasRole(String role) {
