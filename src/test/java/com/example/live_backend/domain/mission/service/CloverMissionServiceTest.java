@@ -6,6 +6,7 @@ import com.example.live_backend.domain.mission.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.Enum.MissionDifficulty;
 import com.example.live_backend.domain.mission.Enum.MissionStatus;
 import com.example.live_backend.domain.mission.Enum.MissionType;
+import com.example.live_backend.domain.mission.dto.CloverMissionListResponseDto;
 import com.example.live_backend.domain.mission.dto.CloverMissionStatusResponseDto;
 import com.example.live_backend.domain.mission.entity.MissionRecord;
 import com.example.live_backend.domain.mission.repository.MissionRecordRepository;
@@ -20,6 +21,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -60,6 +64,61 @@ class CloverMissionServiceTest {
 
         // mockUser 객체의 id 필드에 1L를 할당
         ReflectionTestUtils.setField(mockUser, "id", userId);
+    }
+
+    @Test
+    @DisplayName("클로버 미션 리스트 조회 성공")
+    void getCloverMissionList_Success() {
+
+        // --- Given ---
+        Long currentUserId = 1L;
+        LocalDateTime now = LocalDateTime.now();
+
+        List<MissionRecord> mockMissionsList = List.of(
+                createTestMissionRecord(101L, MissionStatus.ASSIGNED, mockUser),
+                createTestMissionRecord(102L, MissionStatus.STARTED, mockUser),
+                createTestMissionRecord(103L, MissionStatus.PAUSED, mockUser),
+                createTestMissionRecord(104L, MissionStatus.COMPLETED, mockUser)
+        );
+
+        when(userUtil.getCurrentUserId()).thenReturn(currentUserId);
+        when(missionRecordRepository.findCloverMissions(eq(currentUserId), any(LocalDateTime.class)))
+                .thenReturn(mockMissionsList);
+
+        // --- When ---
+        CloverMissionListResponseDto result = cloverMissionService.getCloverMissionList();
+
+        // --- Then ---
+        assertThat(result).isNotNull();
+        assertThat(result.getUserId()).isEqualTo(currentUserId);
+        assertThat(result.getMissions().size()).isEqualTo(4);
+        assertThat(result.getMissions().get(0).getUserMissionId()).isEqualTo(101L);
+        assertThat(result.getMissions().get(1).getUserMissionId()).isEqualTo(102L);
+        assertThat(result.getMissions().get(2).getUserMissionId()).isEqualTo(103L);
+        assertThat(result.getMissions().get(3).getUserMissionId()).isEqualTo(104L);
+
+        assertThat(result.getMissions().get(0).getMissionStatus()).isEqualTo(MissionStatus.ASSIGNED);
+        assertThat(result.getMissions().get(1).getMissionStatus()).isEqualTo(MissionStatus.STARTED);
+        assertThat(result.getMissions().get(2).getMissionStatus()).isEqualTo(MissionStatus.PAUSED);
+        assertThat(result.getMissions().get(3).getMissionStatus()).isEqualTo(MissionStatus.COMPLETED);
+    }
+
+    @Test
+    @DisplayName("클로버 미션 리스트 조회 실패 - 미션 없음")
+    void getCloverMissionList_Fail_MissionNotFound() {
+
+        // --- Given ---
+        Long currentUserId = 1L;
+        when(userUtil.getCurrentUserId()).thenReturn(currentUserId);
+        when(missionRecordRepository.findCloverMissions(eq(currentUserId), any(LocalDateTime.class)))
+                .thenReturn(Collections.emptyList()); // 빈 리스트 반환
+
+        // --- When & Then ---
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            cloverMissionService.getCloverMissionList();
+        });
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MISSION_NOT_FOUND);
     }
 
     @Test
