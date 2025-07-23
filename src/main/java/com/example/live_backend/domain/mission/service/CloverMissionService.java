@@ -43,7 +43,7 @@ public class CloverMissionService {
         List<CloverMissionListResponseDto.CloverMissionList> missionLists = todayMissions.stream()
                 .map(missionRecord -> CloverMissionListResponseDto.CloverMissionList.builder()
                         .userMissionId(missionRecord.getId())
-                        .title(missionRecord.getMissionTitle())
+                        .missionTitle(missionRecord.getMissionTitle())
                         .missionStatus(missionRecord.getMissionStatus())
                         .missionDifficulty(missionRecord.getMissionDifficulty())
                         .missionCategory(missionRecord.getMissionCategory())
