@@ -12,11 +12,13 @@ import com.example.live_backend.domain.memeber.Gender;
 import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.memeber.dto.MemberProfileRequestDto;
 import com.example.live_backend.domain.memeber.dto.MemberResponseDto;
+import com.example.live_backend.domain.memeber.dto.NicknameCheckResponseDto;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.entity.Occupation;
 import com.example.live_backend.domain.memeber.entity.vo.BirthDate;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
+import com.example.live_backend.global.error.exception.CustomException;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +31,7 @@ public class MemberService {
 	public AuthUserDto loginOrRegister(KakaoLoginRequestDto request) {
 		return memberRepository.findByKakaoId(request.getKakaoId())
 			.map(existingMember -> {
-				// 기존 회원 - 로그인 처리만 수행 (프로필 업데이트 X)
+				// 기존 회원 - 로그인 처리만 수행
 				return toAuthUserDto(existingMember, false);
 			})
 			.orElseGet(() -> {
@@ -38,6 +40,29 @@ public class MemberService {
 				Member savedMember = memberRepository.save(newMember);
 				return toAuthUserDto(savedMember, true);
 			});
+	}
+
+	public NicknameCheckResponseDto checkNicknameAvailability(String nickname) {
+
+		try {
+			Profile.builder()
+				.nickname(nickname)
+				.profileImageUrl(null)
+				.build();
+		} catch (CustomException e) {
+			return new NicknameCheckResponseDto(false, e.getErrorCode().getDetail());
+		}
+
+		try {
+			Long currentUserId = authService.getUserId();
+			// 로그인된 사용자의 경우 자신의 현재 닉네임은 제외하고 중복 확인
+			boolean isDuplicate = memberRepository.existsByProfileNicknameAndIdNot(nickname, currentUserId);
+			return isDuplicate ? NicknameCheckResponseDto.unavailable() : NicknameCheckResponseDto.available();
+		} catch (Exception e) {
+			// 비로그인 사용자의 경우 전체 닉네임 중복 확인
+			boolean isDuplicate = memberRepository.existsByProfileNickname(nickname);
+			return isDuplicate ? NicknameCheckResponseDto.unavailable() : NicknameCheckResponseDto.available();
+		}
 	}
 
 	private Member createNewMember(KakaoLoginRequestDto request) {

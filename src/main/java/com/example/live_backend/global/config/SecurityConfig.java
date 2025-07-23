@@ -68,7 +68,8 @@ public class SecurityConfig {
 				.requestMatchers(
 					"/api/auth/login",
 					"/api/auth/kakao/login",
-					"/api/auth/refresh"
+					"/api/auth/refresh",
+					"/api/members/nickname/check"
 				).permitAll()
 				.anyRequest().authenticated()
 			);
