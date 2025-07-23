@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.live_backend.domain.auth.AuthenticationService;
-import com.example.live_backend.domain.auth.dto.AuthUserDto;
+import com.example.live_backend.domain.auth.dto.response.AuthUserDto;
 import com.example.live_backend.domain.auth.dto.request.KakaoLoginRequestDto;
 import com.example.live_backend.domain.memeber.Gender;
 import com.example.live_backend.domain.memeber.Role;

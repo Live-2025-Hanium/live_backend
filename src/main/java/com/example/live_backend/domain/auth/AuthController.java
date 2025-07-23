@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.live_backend.domain.auth.dto.AuthUserDto;
+import com.example.live_backend.domain.auth.dto.response.AuthUserDto;
 import com.example.live_backend.domain.auth.dto.request.KakaoLoginRequestDto;
 import com.example.live_backend.domain.auth.dto.response.LoginResponseDto;
 import com.example.live_backend.domain.auth.dto.request.RefreshRequestDto;
