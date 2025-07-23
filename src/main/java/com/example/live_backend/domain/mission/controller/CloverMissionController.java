@@ -4,7 +4,6 @@ import com.example.live_backend.domain.mission.dto.CloverMissionListResponseDto;
 import com.example.live_backend.domain.mission.dto.CloverMissionResponseDto;
 import com.example.live_backend.domain.mission.dto.CloverMissionStatusResponseDto;
 import com.example.live_backend.domain.mission.service.CloverMissionService;
-import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,36 +22,22 @@ public class CloverMissionController {
 	private final CloverMissionService cloverMissionService;
 
 	@GetMapping
-	@Operation(summary = "클로버 미션 리스트 조회 ",
-		description = "클로버 미션 리스트를 조회합니다.")
+	@Operation(summary = "클로버 미션 리스트 조회 ", description = "클로버 미션 리스트를 조회합니다.")
 	public ResponseHandler<CloverMissionListResponseDto> getCloverMissionList() {
 
-		try {
-			log.info("클로버 미션 리스트(3개) 조회 API 호출");
-			CloverMissionListResponseDto response = cloverMissionService.getCloverMissionList();
+		CloverMissionListResponseDto response = cloverMissionService.getCloverMissionList();
 
-			log.info("클로버 미션 리스트 조회 완료 - 총 {}개 미션", response.getMissions().size());
-			return ResponseHandler.success(response);
-		} catch (Exception e) {
-			return ResponseHandler.error(ErrorCode.INTERNAL_SERVER_ERROR);
-		}
-
+		return ResponseHandler.success(response);
 	}
 
 	@GetMapping("/{userMissionId}")
 	@Operation(summary = "클로버 미션(1개) 상세 조회 ",
-		description = "클로버 미션 1개의 상세 정보를 조회합니다.")
+			description = "클로버 미션 1개의 상세 정보를 조회합니다.")
 	public ResponseHandler<CloverMissionResponseDto> getCloverMissionInfo(@PathVariable Long userMissionId) {
 
-		try {
-			log.info("클로버 미션 상세 조회 API 호출");
+		CloverMissionResponseDto response = cloverMissionService.getCloverMissionInfo(userMissionId);
 
-			CloverMissionResponseDto response = cloverMissionService.getCloverMissionInfo(userMissionId);
-
-			return ResponseHandler.success(response);
-		} catch (Exception e) {
-			return ResponseHandler.error(ErrorCode.INTERNAL_SERVER_ERROR);
-		}
+		return ResponseHandler.success(response);
 	}
 
 	@PatchMapping("/{userMissionId}/start")

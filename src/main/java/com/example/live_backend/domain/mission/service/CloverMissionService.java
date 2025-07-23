@@ -39,13 +39,14 @@ public class CloverMissionService {
             throw new CustomException(ErrorCode.MISSION_NOT_FOUND);
         }
 
-        log.info("조회된 클로버 미션 개수: {}", todayMissions.size());
-
         // MissionRecord 리스트를 TodayMissionDto 리스트로 변환
         List<CloverMissionListResponseDto.CloverMissionList> missionLists = todayMissions.stream()
                 .map(missionRecord -> CloverMissionListResponseDto.CloverMissionList.builder()
-                        .missionRecordId(missionRecord.getId())
+                        .userMissionId(missionRecord.getId())
                         .title(missionRecord.getMissionTitle())
+                        .missionStatus(missionRecord.getMissionStatus())
+                        .missionDifficulty(missionRecord.getMissionDifficulty())
+                        .missionCategory(missionRecord.getMissionCategory())
                         .build())
                 .toList();
 
@@ -54,7 +55,7 @@ public class CloverMissionService {
                 .missions(missionLists)
                 .build();
 
-        log.info("클로버 미션 리스트 조회 완료 - 총 {}개 미션", missionLists.size());
+        log.info("클로버 미션 리스트 미션 개수 - 총 {}개 미션", missionLists.size());
 
         return response;
     }
