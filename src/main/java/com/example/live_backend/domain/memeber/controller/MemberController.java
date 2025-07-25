@@ -10,12 +10,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.live_backend.domain.memeber.dto.MemberProfileRequestDto;
 import com.example.live_backend.domain.memeber.dto.MemberResponseDto;
 import com.example.live_backend.domain.memeber.dto.NicknameCheckResponseDto;
 import com.example.live_backend.domain.memeber.service.MemberService;
+import com.example.live_backend.global.security.PrincipalDetails;
 
 import jakarta.validation.Valid;
 
@@ -51,9 +53,11 @@ public class MemberController {
 		}
 	)
 	public ResponseEntity<NicknameCheckResponseDto> checkNickname(
-		@RequestParam String nickname
+		@RequestParam String nickname,
+		@AuthenticationPrincipal PrincipalDetails userDetails
 	) {
-		NicknameCheckResponseDto response = memberService.checkNicknameAvailability(nickname);
+		Long currentUserId = userDetails.getMemberId();
+		NicknameCheckResponseDto response = memberService.checkNicknameAvailability(nickname, currentUserId);
 		return ResponseEntity.ok(response);
 	}
 
@@ -80,9 +84,11 @@ public class MemberController {
 		}
 	)
 	public ResponseEntity<MemberResponseDto> registerProfile(
-		@Valid @RequestBody MemberProfileRequestDto dto
+		@Valid @RequestBody MemberProfileRequestDto dto,
+		@AuthenticationPrincipal PrincipalDetails userDetails
 	) {
-		MemberResponseDto response = memberService.registerOrUpdateProfile(dto);
+		Long userId = userDetails.getMemberId();
+		MemberResponseDto response = memberService.registerOrUpdateProfile(dto, userId);
 		return ResponseEntity.ok(response);
 	}
 }

@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.live_backend.domain.auth.service.AuthenticationService;
 import com.example.live_backend.domain.auth.dto.response.AuthUserDto;
 import com.example.live_backend.domain.auth.dto.request.KakaoLoginRequestDto;
 import com.example.live_backend.domain.memeber.Gender;
@@ -25,7 +24,6 @@ import com.example.live_backend.global.error.exception.CustomException;
 public class MemberService {
 
 	private final MemberRepository memberRepository;
-	private final AuthenticationService authService;
 
 	@Transactional
 	public AuthUserDto loginOrRegister(KakaoLoginRequestDto request) {
@@ -42,8 +40,7 @@ public class MemberService {
 			});
 	}
 
-	public NicknameCheckResponseDto checkNicknameAvailability(String nickname) {
-
+	public NicknameCheckResponseDto checkNicknameAvailability(String nickname, Long currentUserId) {
 		try {
 			Profile.builder()
 				.nickname(nickname)
@@ -53,15 +50,16 @@ public class MemberService {
 			return new NicknameCheckResponseDto(false, e.getErrorCode().getDetail());
 		}
 
-		try {
-			Long currentUserId = authService.getUserId();
+		if (currentUserId != null) {
+			// 로그인된 사용자: 자신의 현재 닉네임은 제외하고 중복 확인
 			boolean isDuplicate = memberRepository.existsByProfileNicknameAndIdNot(nickname, currentUserId);
 			if (isDuplicate) {
 				return NicknameCheckResponseDto.unavailable();
 			} else {
 				return NicknameCheckResponseDto.available();
 			}
-		} catch (Exception e) {
+		} else {
+			// 비로그인 사용자: 전체 중복 확인
 			boolean isDuplicate = memberRepository.existsByProfileNickname(nickname);
 			if (isDuplicate) {
 				return NicknameCheckResponseDto.unavailable();
@@ -98,9 +96,7 @@ public class MemberService {
 	}
 
 	@Transactional
-	public MemberResponseDto registerOrUpdateProfile(MemberProfileRequestDto dto) {
-		Long userId = authService.getUserId();
-
+	public MemberResponseDto registerOrUpdateProfile(MemberProfileRequestDto dto, Long userId) {
 		Member member = saveOrUpdateMemberProfile(userId, dto);
 		return toDto(member);
 	}
