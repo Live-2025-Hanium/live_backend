@@ -43,11 +43,11 @@ class MemberServiceTest {
 	class KakaoLoginOrRegister {
 
 		@Test
-		@DisplayName("신규 회원 - 카카오 정보로 회원가입하고 isNewUser=true 반환")
-		void shouldRegisterNewMemberWhenKakaoIdNotExists() {
+		@DisplayName("신규 회원 - OAuth 정보로 회원가입하고 isNewUser=true 반환")
+		void shouldRegisterNewMemberWhenOauthIdNotExists() {
 
 			KakaoLoginRequestDto request = createKakaoLoginRequest();
-			given(memberRepository.findByKakaoId(request.getKakaoId()))
+			given(memberRepository.findByOauthId(request.getOauthId()))
 				.willReturn(Optional.empty());
 			
 			Member savedMember = createMemberFromRequest(request, 1L);
@@ -57,7 +57,7 @@ class MemberServiceTest {
 			AuthUserDto result = memberService.loginOrRegister(request);
 
 			assertThat(result.isNewUser()).isTrue();
-			assertThat(result.getKakaoId()).isEqualTo(request.getKakaoId());
+			assertThat(result.getOauthId()).isEqualTo(request.getOauthId());
 			assertThat(result.getEmail()).isEqualTo(request.getEmail());
 			assertThat(result.getNickname()).isEqualTo(request.getNickname());
 			assertThat(result.getRole()).isEqualTo(Role.USER);
@@ -73,8 +73,8 @@ class MemberServiceTest {
 			Member existingMember = createExistingMember();
 			String originalNickname = existingMember.getProfile().getNickname();
 			
-			given(memberRepository.findByKakaoId(request.getKakaoId()))
-				.willReturn(Optional.of(existingMember));
+					given(memberRepository.findByOauthId(request.getOauthId()))
+			.willReturn(Optional.of(existingMember));
 
 			AuthUserDto result = memberService.loginOrRegister(request);
 
@@ -88,7 +88,7 @@ class MemberServiceTest {
 		private KakaoLoginRequestDto createKakaoLoginRequest() {
 			KakaoLoginRequestDto request = new KakaoLoginRequestDto();
 
-			setField(request, "kakaoId", "12345");
+			setField(request, "oauthId", "12345");
 			setField(request, "email", "test@example.com");
 			setField(request, "nickname", "카카오닉네임");
 			setField(request, "profileImageUrl", "https://example.com/profile.jpg");
@@ -101,12 +101,12 @@ class MemberServiceTest {
 				.profileImageUrl(request.getProfileImageUrl())
 				.build();
 
-			Member member = Member.builder()
-				.kakaoId(request.getKakaoId())
-				.email(request.getEmail())
-				.role(Role.USER)
-				.profile(profile)
-				.build();
+					Member member = Member.builder()
+			.oauthId(request.getOauthId())
+			.email(request.getEmail())
+			.role(Role.USER)
+			.profile(profile)
+			.build();
 			
 			setField(member, "id", id);
 			return member;
@@ -118,11 +118,11 @@ class MemberServiceTest {
 				.profileImageUrl("https://example.com/old.jpg")
 				.build();
 
-			Member member = Member.builder()
-				.kakaoId("12345")
-				.email("existing@example.com")
-				.role(Role.USER)
-				.profile(profile)
+					Member member = Member.builder()
+			.oauthId("12345")
+			.email("existing@example.com")
+			.role(Role.USER)
+			.profile(profile)
 				.build();
 			
 			setField(member, "id", 1L);

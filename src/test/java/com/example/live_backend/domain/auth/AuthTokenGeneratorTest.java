@@ -38,7 +38,6 @@ class AuthTokenGeneratorTest {
 
     @BeforeEach
     void setUp() {
-        // 리플렉션을 사용하여 private 필드 설정
         ReflectionTestUtils.setField(authTokenGenerator, "accessTokenExpiration", ACCESS_TOKEN_EXPIRATION);
         ReflectionTestUtils.setField(authTokenGenerator, "refreshTokenExpiration", REFRESH_TOKEN_EXPIRATION);
     }

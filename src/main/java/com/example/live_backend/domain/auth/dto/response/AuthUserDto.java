@@ -10,7 +10,7 @@ import lombok.Getter;
 @Builder
 public class AuthUserDto {
     private Long id;
-    private String kakaoId;
+    private String oauthId;
     private String email;
     private String nickname;
     private String profileImageUrl;

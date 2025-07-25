@@ -62,7 +62,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
 			PrincipalDetails principalDetails = new PrincipalDetails(
 				member.getId(),
-				member.getKakaoId(),
+				member.getOauthId(),
 				member.getRole().name(),
 				member.getProfile().getNickname(),
 				member.getEmail()

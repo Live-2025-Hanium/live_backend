@@ -29,7 +29,7 @@ public class MemberService {
 
 	@Transactional
 	public AuthUserDto loginOrRegister(KakaoLoginRequestDto request) {
-		return memberRepository.findByKakaoId(request.getKakaoId())
+		return memberRepository.findByOauthId(request.getOauthId())
 			.map(existingMember -> {
 				// 기존 회원 - 로그인 처리만 수행
 				return toAuthUserDto(existingMember, false);
@@ -78,7 +78,7 @@ public class MemberService {
 			.build();
 
 		return Member.builder()
-			.kakaoId(request.getKakaoId())
+			.oauthId(request.getOauthId())
 			.email(request.getEmail())
 			.role(Role.USER)
 			.profile(profile)
@@ -88,7 +88,7 @@ public class MemberService {
 	private AuthUserDto toAuthUserDto(Member member, boolean isNewUser) {
 		return AuthUserDto.builder()
 			.id(member.getId())
-			.kakaoId(member.getKakaoId())
+			.oauthId(member.getOauthId())
 			.email(member.getEmail())
 			.nickname(member.getProfile().getNickname())
 			.profileImageUrl(member.getProfile().getProfileImageUrl())

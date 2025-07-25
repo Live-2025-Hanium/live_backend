@@ -30,7 +30,6 @@ class RefreshTokenServiceTest {
     @Mock
     private RefreshTokenRepository repository;
 
-    // 분리 후: JwtTokenValidator를 Mock으로 사용
     @Mock
     private JwtTokenValidator jwtTokenValidator;
 
@@ -102,8 +101,7 @@ class RefreshTokenServiceTest {
                     .oauthId(TEST_OAUTH_ID)
                     .role(TEST_ROLE)
                     .build();
-            
-            // 분리 후: JwtTokenValidator의 validateRefreshToken 메서드 Mock
+
             given(jwtTokenValidator.validateRefreshToken(TEST_REFRESH_TOKEN)).willReturn(tokenInfo);
             given(repository.findById(TEST_USER_ID)).willReturn(Optional.of(mockRefreshToken));
             given(generator.generate(TEST_USER_ID, TEST_OAUTH_ID, TEST_ROLE)).willReturn(newTokens);
@@ -124,7 +122,6 @@ class RefreshTokenServiceTest {
         @DisplayName("만료된 리프레시 토큰으로 새 토큰 발급 - 예외 발생")
         void refresh_ExpiredToken_ThrowsException() {
             // Given
-            // 분리 후: JwtTokenValidator에서 예외를 던지도록 Mock 설정
             given(jwtTokenValidator.validateRefreshToken(TEST_REFRESH_TOKEN))
                 .willThrow(new CustomException(ErrorCode.EXPIRED_TOKEN));
 
@@ -265,7 +262,7 @@ class RefreshTokenServiceTest {
         @Test
         @DisplayName("토큰 저장 후 리프레시 성공 시나리오")
         void saveAndRefresh_FullScenario_Success() {
-            // Given - 토큰 저장
+            // Given
             RefreshToken savedToken = spy(new RefreshToken(TEST_USER_ID, TEST_REFRESH_TOKEN));
             given(repository.findById(TEST_USER_ID)).willReturn(Optional.empty())
                 .willReturn(Optional.of(savedToken))
@@ -281,17 +278,16 @@ class RefreshTokenServiceTest {
                     .oauthId(TEST_OAUTH_ID)
                     .role(TEST_ROLE)
                     .build();
-            
-            // 분리 후: JwtTokenValidator의 validateRefreshToken 메서드 Mock
+
             given(jwtTokenValidator.validateRefreshToken(TEST_REFRESH_TOKEN)).willReturn(tokenInfo);
             
             AuthToken newTokens = new AuthToken(NEW_ACCESS_TOKEN, NEW_REFRESH_TOKEN);
             given(generator.generate(TEST_USER_ID, TEST_OAUTH_ID, TEST_ROLE)).willReturn(newTokens);
 
-            // When - 토큰 저장
+            // When
             refreshTokenService.saveRefreshToken(TEST_USER_ID, TEST_REFRESH_TOKEN);
             
-            // When - 토큰 리프레시
+            // When
             AuthToken result = refreshTokenService.refresh(TEST_REFRESH_TOKEN);
 
             // Then

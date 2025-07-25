@@ -29,7 +29,7 @@ public class AuthenticationFacade {
         
         // 2. 토큰 생성
         AuthToken tokens = tokenGenerator.generate(
-            user.getId(), user.getKakaoId(), user.getRole().name()
+            user.getId(), user.getOauthId(), user.getRole().name()
         );
         
         // 3. 리프레시 토큰 저장

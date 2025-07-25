@@ -20,7 +20,7 @@ import lombok.Getter;
 public class PrincipalDetails implements UserDetails {
 
 	private final Long memberId;
-	private final String memberKey; // OAuth2 memberKey (카카오 ID)
+	private final String oauthId; // OAuth2 제공자 ID (카카오/구글/네이버 등)
 	private final String role;
 	private final String name; // 닉네임
 	private final String email; // 이메일 주소
@@ -50,7 +50,7 @@ public class PrincipalDetails implements UserDetails {
 
 	@Override
 	public String getUsername() {
-		return memberKey;
+		return oauthId;
 	}
 
 	@Override

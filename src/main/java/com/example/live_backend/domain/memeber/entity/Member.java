@@ -29,8 +29,8 @@ public class Member {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "kakao_id", unique = true, nullable = false)
-	private String kakaoId;
+	@Column(name = "oauth_id", unique = true, nullable = false)
+	private String oauthId;
 
 	@Column(name = "email", nullable = false)
 	private String email;
@@ -55,7 +55,7 @@ public class Member {
 	private String occupationDetail; // OTHER 선택 시 추가 입력
 
 	@Builder
-	public Member(String kakaoId,
+	public Member(String oauthId,
 		String email,
 		Role role,
 		Profile profile,
@@ -63,7 +63,7 @@ public class Member {
 		BirthDate birthDate,
 		Occupation occupation,
 		String occupationDetail) {
-		this.kakaoId = kakaoId;
+		this.oauthId = oauthId;
 		this.email = email;
 		this.role = role;
 		this.profile = profile;

@@ -31,7 +31,7 @@ class AuthenticationServiceTest {
 
     private final Long TEST_USER_ID = 123L;
     private final String TEST_OAUTH_ID = "oauth_123";
-    private final String TEST_ROLE = "ROLE_USER";
+    private final String TEST_ROLE = "USER";
 
     @BeforeEach
     void setUp() {
@@ -227,7 +227,7 @@ class AuthenticationServiceTest {
             // Then
             assertThat(result).isNotNull();
             assertThat(result.getMemberId()).isEqualTo(TEST_USER_ID);
-            assertThat(result.getMemberKey()).isEqualTo(TEST_OAUTH_ID);
+            		assertThat(result.getOauthId()).isEqualTo(TEST_OAUTH_ID);
             assertThat(result.getRole()).isEqualTo(TEST_ROLE);
         }
     }
@@ -240,7 +240,7 @@ class AuthenticationServiceTest {
         @DisplayName("사용자 권한 확인 - 성공")
         void hasRole_UserRole_Success() {
             // Given
-            PrincipalDetails principalDetails = createTestPrincipalDetails(TEST_USER_ID, "ROLE_USER");
+            PrincipalDetails principalDetails = createTestPrincipalDetails(TEST_USER_ID, "USER");
             Authentication auth = new UsernamePasswordAuthenticationToken(
                 principalDetails, 
                 null, 
@@ -262,7 +262,7 @@ class AuthenticationServiceTest {
         @DisplayName("관리자 권한 확인 - 성공")
         void hasRole_AdminRole_Success() {
             // Given
-            PrincipalDetails principalDetails = createTestPrincipalDetails(TEST_USER_ID, "ROLE_ADMIN");
+            PrincipalDetails principalDetails = createTestPrincipalDetails(TEST_USER_ID, "ADMIN");
             Authentication auth = new UsernamePasswordAuthenticationToken(
                 principalDetails, 
                 null, 
@@ -305,7 +305,7 @@ class AuthenticationServiceTest {
         void getAuthentication_AfterContextChange_ReturnsCorrectUser() {
             // Given - 첫 번째 사용자
             Long firstUserId = 100L;
-            PrincipalDetails firstPrincipal = createTestPrincipalDetails(firstUserId, "ROLE_USER");
+            PrincipalDetails firstPrincipal = createTestPrincipalDetails(firstUserId, "USER");
             Authentication firstAuth = new UsernamePasswordAuthenticationToken(
                 firstPrincipal, null, firstPrincipal.getAuthorities()
             );
@@ -319,7 +319,7 @@ class AuthenticationServiceTest {
 
             // Given - 두 번째 사용자로 변경
             Long secondUserId = 200L;
-            PrincipalDetails secondPrincipal = createTestPrincipalDetails(secondUserId, "ROLE_ADMIN");
+            PrincipalDetails secondPrincipal = createTestPrincipalDetails(secondUserId, "ADMIN");
             Authentication secondAuth = new UsernamePasswordAuthenticationToken(
                 secondPrincipal, null, secondPrincipal.getAuthorities()
             );

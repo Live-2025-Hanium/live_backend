@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class KakaoLoginRequestDto {
-    private String kakaoId;
+    private String oauthId;
     private String email;
     private String nickname;
     private String profileImageUrl;
