@@ -203,14 +203,13 @@ class MemberServiceTest {
 		}
 	}
 
-	// 리플렉션 헬퍼 메서드
 	private void setField(Object target, String fieldName, Object value) {
 		try {
 			var field = target.getClass().getDeclaredField(fieldName);
 			field.setAccessible(true);
 			field.set(target, value);
 		} catch (Exception e) {
-			// 상위 클래스에서 찾기
+
 			try {
 				var field = target.getClass().getSuperclass().getDeclaredField(fieldName);
 				field.setAccessible(true);

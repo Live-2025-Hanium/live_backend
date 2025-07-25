@@ -24,18 +24,15 @@ public class AuthenticationFacade {
 
     @Transactional
     public LoginResponseDto processKakaoLogin(KakaoLoginRequestDto request) {
-        // 1. 사용자 로그인 또는 회원가입 처리
+
         AuthUserDto user = memberService.loginOrRegister(request);
-        
-        // 2. 토큰 생성
+
         AuthToken tokens = tokenGenerator.generate(
             user.getId(), user.getOauthId(), user.getRole().name()
         );
-        
-        // 3. 리프레시 토큰 저장
+
         refreshTokenService.saveRefreshToken(user.getId(), tokens.refreshToken());
-        
-        // 4. 응답 DTO 생성 - 정적 팩토리 메서드 사용
+
         return LoginResponseDto.from(user, tokens);
     }
 } 
