@@ -24,6 +24,7 @@ public class CloverMissionService {
 
     private final MissionRecordRepository missionRecordRepository;
     private final UserUtil userUtil;
+    private final CloverMissionDtoConverter dtoConverter;
 
     @Transactional(readOnly = true)
     public CloverMissionListResponseDto getCloverMissionList() {
@@ -69,15 +70,7 @@ public class CloverMissionService {
         MissionRecord cloverMissionById = missionRecordRepository.findById(userMissionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MISSION_NOT_FOUND));
 
-        CloverMissionResponseDto response = CloverMissionResponseDto.builder()
-                .missionRecordId(cloverMissionById.getId())
-                .title(cloverMissionById.getMissionTitle())
-                .description(cloverMissionById.getMissionDescription())
-                .category(cloverMissionById.getMissionCategory())
-                .difficulty(cloverMissionById.getMissionDifficulty())
-                .build();
-
-        return response;
+        return dtoConverter.convert(cloverMissionById);
     }
 
     /**

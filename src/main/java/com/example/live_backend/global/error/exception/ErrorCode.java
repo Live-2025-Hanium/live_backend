@@ -37,7 +37,8 @@ public enum ErrorCode {
 	SURVEY_NOT_FOUND(NOT_FOUND, "존재하지 않는 설문입니다."),
 
 	/* ------------------ 500 INTERNAL_SERVER_ERROR : 서버 오류 ------------------ */
-	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
+	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
+	UNSUPPORTED_CLOVER_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "지원하지 않는 클로버 미션 타입입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String detail;
