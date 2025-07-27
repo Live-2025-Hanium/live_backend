@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.live_backend.domain.auth.dto.AuthToken;
 import com.example.live_backend.domain.auth.dto.response.LoginResponseDto;
+import com.example.live_backend.domain.auth.dto.response.LoginResult;
 import com.example.live_backend.domain.auth.dto.request.KakaoLoginRequestDto;
 import com.example.live_backend.domain.auth.dto.request.RefreshRequestDto;
 import com.example.live_backend.domain.auth.dto.response.TokensResponseDto;
@@ -73,15 +74,15 @@ public class AuthController {
 		)
 		@RequestBody KakaoLoginRequestDto request
 	) {
-		LoginResponseDto response = authenticationFacade.processKakaoLogin(request);
+		LoginResult result = authenticationFacade.processKakaoLogin(request);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.add(HttpHeaders.AUTHORIZATION, 
-					HttpHeaderProcessor.createBearerToken(response.getAccessToken()));
+					HttpHeaderProcessor.createBearerToken(result.getTokens().accessToken()));
 		
 		return ResponseEntity.ok()
 			.headers(headers)
-			.body(response);
+			.body(result.getResponse());
 	}
 
 	@PostMapping("/refresh")

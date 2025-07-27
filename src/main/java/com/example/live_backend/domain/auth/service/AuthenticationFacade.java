@@ -9,6 +9,7 @@ import com.example.live_backend.domain.auth.util.AuthTokenGenerator;
 import com.example.live_backend.domain.auth.dto.request.KakaoLoginRequestDto;
 import com.example.live_backend.domain.auth.dto.response.AuthUserDto;
 import com.example.live_backend.domain.auth.dto.response.LoginResponseDto;
+import com.example.live_backend.domain.auth.dto.response.LoginResult;
 import com.example.live_backend.domain.auth.token.service.RefreshTokenService;
 import com.example.live_backend.domain.memeber.service.MemberService;
 
@@ -21,9 +22,8 @@ public class AuthenticationFacade {
     private final AuthTokenGenerator tokenGenerator;
     private final RefreshTokenService refreshTokenService;
 
-
     @Transactional
-    public LoginResponseDto processKakaoLogin(KakaoLoginRequestDto request) {
+    public LoginResult processKakaoLogin(KakaoLoginRequestDto request) {
 
         AuthUserDto user = memberService.loginOrRegister(request);
 
@@ -33,6 +33,8 @@ public class AuthenticationFacade {
 
         refreshTokenService.saveRefreshToken(user.getId(), tokens.refreshToken());
 
-        return LoginResponseDto.from(user, tokens);
+        LoginResponseDto response = LoginResponseDto.from(user);
+
+        return new LoginResult(response, tokens);
     }
 } 

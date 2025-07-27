@@ -4,18 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import com.example.live_backend.domain.auth.dto.AuthToken;
-
 @Getter
 @AllArgsConstructor
 @Builder
 public class LoginResponseDto {
-    private String accessToken;
-    private String refreshToken;
     private UserInfoDto user;
     private boolean isNewUser;
 
-    public static LoginResponseDto from(AuthUserDto user, AuthToken tokens) {
+    public static LoginResponseDto from(AuthUserDto user) {
         UserInfoDto userInfo = UserInfoDto.builder()
             .id(user.getId())
             .email(user.getEmail())
@@ -25,8 +21,6 @@ public class LoginResponseDto {
             .build();
 
         return LoginResponseDto.builder()
-            .accessToken(tokens.accessToken())
-            .refreshToken(tokens.refreshToken())
             .user(userInfo)
             .isNewUser(user.isNewUser())
             .build();
