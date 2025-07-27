@@ -20,8 +20,7 @@ public enum ErrorCode {
 	MEMBER_NICKNAME_REQUIRED(BAD_REQUEST, "닉네임은 필수 입력값입니다."),
 	MEMBER_NICKNAME_INVALID(BAD_REQUEST, "닉네임은 2자 이상 20자 이하여야 합니다."),
 	MEMBER_BIRTHDATE_INVALID(BAD_REQUEST, "생년월일은 미래일 수 없습니다."),
-
-
+	INVALID_MISSION_STATUS(BAD_REQUEST, "미션 상태 변경을 할 수 없습니다."),
 
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),
@@ -31,6 +30,9 @@ public enum ErrorCode {
 	MISSING_TOKEN(UNAUTHORIZED, "토큰이 없습니다."),
 	MISSING_REFRESH_TOKEN(UNAUTHORIZED, "리프레시 토큰이 존재하지 않습니다."),
 
+	/* ------------------ 403 FORBIDDEN : 권한 없음 ------------------ */
+	MISSION_FORBIDDEN(FORBIDDEN, "미션을 변경할 권한이 없습니다."),
+
 	/* ------------------ 404 NOT_FOUND: 리소스 없음 ------------------ */
 	USER_NOT_FOUND(NOT_FOUND, "존재하지 않는 사용자입니다."),
 	EXAMPLE_NOT_FOUND(NOT_FOUND, "존재하지 않는 예제입니다."),
@@ -38,7 +40,8 @@ public enum ErrorCode {
 	SURVEY_NOT_FOUND(NOT_FOUND, "존재하지 않는 설문입니다."),
 
 	/* ------------------ 500 INTERNAL_SERVER_ERROR : 서버 오류 ------------------ */
-	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
+	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
+	UNSUPPORTED_CLOVER_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "지원하지 않는 클로버 미션 타입입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String detail;

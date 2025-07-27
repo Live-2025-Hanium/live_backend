@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface MissionRecordRepository extends JpaRepository<MissionRecord, Long> {
 
@@ -23,4 +24,8 @@ public interface MissionRecordRepository extends JpaRepository<MissionRecord, Lo
             @Param("userId") Long userId,
             @Param("today") LocalDateTime today
     );
+
+    @Query("SELECT mr FROM MissionRecord mr JOIN FETCH mr.user WHERE mr.id = :id")
+    Optional<MissionRecord> findByIdWithUser(@Param("id") Long id);
+
 }
