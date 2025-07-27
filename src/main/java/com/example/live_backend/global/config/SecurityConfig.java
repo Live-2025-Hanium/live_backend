@@ -73,8 +73,9 @@ public class SecurityConfig {
 			// 엔드포인트별 접근 제어
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(
-					"/api/auth/login",
-					"/api/auth/refresh"
+					"/api/auth/kakao/login",
+					"/api/auth/refresh",
+					"/api/members/nickname/check"
 				).permitAll()
 				.anyRequest().authenticated()
 			);

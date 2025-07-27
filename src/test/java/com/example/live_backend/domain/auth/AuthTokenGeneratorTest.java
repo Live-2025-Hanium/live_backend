@@ -1,6 +1,9 @@
 package com.example.live_backend.domain.auth;
 
+import com.example.live_backend.domain.auth.dto.AuthToken;
 import com.example.live_backend.domain.auth.jwt.JwtUtil;
+import com.example.live_backend.domain.auth.util.AuthTokenGenerator;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,7 +38,6 @@ class AuthTokenGeneratorTest {
 
     @BeforeEach
     void setUp() {
-        // 리플렉션을 사용하여 private 필드 설정
         ReflectionTestUtils.setField(authTokenGenerator, "accessTokenExpiration", ACCESS_TOKEN_EXPIRATION);
         ReflectionTestUtils.setField(authTokenGenerator, "refreshTokenExpiration", REFRESH_TOKEN_EXPIRATION);
     }

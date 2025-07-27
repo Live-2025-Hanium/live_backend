@@ -1,10 +1,12 @@
-package com.example.live_backend.domain.auth;
+package com.example.live_backend.domain.auth.util;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.example.live_backend.domain.auth.dto.AuthToken;
+import com.example.live_backend.domain.auth.jwt.JwtConstants;
 import com.example.live_backend.domain.auth.jwt.JwtUtil;
 
 @Component
@@ -20,10 +22,10 @@ public class AuthTokenGenerator {
 
 	public AuthToken generate(Long userId, String oauthId, String role) {
 		String accessToken = jwtUtil.createJwt(
-			com.example.live_backend.domain.auth.jwt.JwtConstants.ACCESS_TOKEN_CATEGORY, 
+			JwtConstants.ACCESS_TOKEN_CATEGORY,
 			userId, oauthId, role, accessTokenExpiration);
 		String refreshToken = jwtUtil.createJwt(
-			com.example.live_backend.domain.auth.jwt.JwtConstants.REFRESH_TOKEN_CATEGORY, 
+			JwtConstants.REFRESH_TOKEN_CATEGORY,
 			userId, oauthId, role, refreshTokenExpiration);
 		return new AuthToken(accessToken, refreshToken);
 	}

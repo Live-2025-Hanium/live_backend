@@ -13,20 +13,34 @@ import lombok.Getter;
 /**
  * Spring Security에서 사용하는 사용자 인증 정보
  * JWT 인증 시 Authentication 객체에 저장되는 Principal
+ * @AuthenticationPrincipal로 직접 주입받을 수 있음!
  */
 @AllArgsConstructor
 @Getter
 public class PrincipalDetails implements UserDetails {
 
 	private final Long memberId;
-	private final String memberKey; // OAuth2 memberKey (예: "google 123456789")
+	private final String oauthId; // OAuth2 제공자 ID (카카오/구글/네이버 등)
 	private final String role;
-	private final String name; // 실제 사용자 이름
+	private final String name; // 닉네임
 	private final String email; // 이메일 주소
+	
+
+	public boolean isAdmin() {
+		return "ADMIN".equals(role);
+	}
+
+	public boolean isUser() {
+		return "USER".equals(role);
+	}
+
+	public String getNickname() {
+		return name;
+	}
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return Collections.singleton(new SimpleGrantedAuthority(role));
+		return Collections.singleton(new SimpleGrantedAuthority("ROLE_" + role));
 	}
 
 	@Override
@@ -36,7 +50,7 @@ public class PrincipalDetails implements UserDetails {
 
 	@Override
 	public String getUsername() {
-		return memberKey;
+		return oauthId;
 	}
 
 	@Override
