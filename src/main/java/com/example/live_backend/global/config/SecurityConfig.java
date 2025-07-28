@@ -8,12 +8,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -62,8 +56,7 @@ public class SecurityConfig {
 			.securityMatcher("/api/**")
 			.csrf(AbstractHttpConfigurer::disable)
 			.formLogin(AbstractHttpConfigurer::disable)
-			//.httpBasic(AbstractHttpConfigurer::disable)
-			.httpBasic(httpBasic -> httpBasic.realmName("API"))
+			.httpBasic(AbstractHttpConfigurer::disable)
 			.cors(AbstractHttpConfigurer::disable) // Flutter 앱에서는 CORS 불필요
 			.sessionManagement(mgmt ->
 				mgmt.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -82,11 +75,6 @@ public class SecurityConfig {
 		return http.build();
 	}
 
-	@Bean
-	public UserDetailsService userDetailsService() {
-		PrincipalDetails user = new PrincipalDetails(1L, "ROLE_USER");
-		return new InMemoryUserDetailsManager(user);
-	}
 
 	// Flutter 앱에서는 CORS 설정이 불필요합니다.
 	// 웹 브라우저가 아닌 네이티브 앱이므로 브라우저의 동일 출처 정책에 영향받지 않습니다!
