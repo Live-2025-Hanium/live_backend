@@ -41,7 +41,9 @@ public enum ErrorCode {
 
 	/* ------------------ 500 INTERNAL_SERVER_ERROR : 서버 오류 ------------------ */
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
-	UNSUPPORTED_CLOVER_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "지원하지 않는 클로버 미션 타입입니다.");
+	UNSUPPORTED_CLOVER_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "지원하지 않는 클로버 미션 타입입니다."),
+	S3_CONNECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 연결에 실패했습니다."),
+	PRESIGNED_URL_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "업로드 URL 생성에 실패했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String detail;
