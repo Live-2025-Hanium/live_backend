@@ -21,6 +21,7 @@ public enum ErrorCode {
 	MEMBER_NICKNAME_INVALID(BAD_REQUEST, "닉네임은 2자 이상 20자 이하여야 합니다."),
 	MEMBER_BIRTHDATE_INVALID(BAD_REQUEST, "생년월일은 미래일 수 없습니다."),
 	INVALID_MISSION_STATUS(BAD_REQUEST, "미션 상태 변경을 할 수 없습니다."),
+	INVALID_UPLOAD_TYPE(BAD_REQUEST, "업로드 타입이 일치하지 않습니다."),
 
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),

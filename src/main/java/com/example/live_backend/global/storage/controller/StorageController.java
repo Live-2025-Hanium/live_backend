@@ -1,9 +1,8 @@
 package com.example.live_backend.global.storage.controller;
 
-import com.example.live_backend.domain.memeber.service.MemberService;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
-import com.example.live_backend.global.storage.S3StorageService;
+import com.example.live_backend.global.storage.UploadFacade;
 import com.example.live_backend.global.storage.dto.PresignedUrlRequestDto;
 import com.example.live_backend.global.storage.dto.PresignedUrlResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,20 +21,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 public class StorageController {
 
-        private final S3StorageService s3StorageService;
-        private final MemberService memberService;
+    private final UploadFacade uploadFacade;
 
-        @PostMapping("/presigned-url/profile-image")
-        @Operation(summary = "Presigned URL 발급", description = "파일 업로드를 위한 Presigned URL를 발급합니다.")
+    @PostMapping("/presigned-url")
+    @Operation(summary = "Presigned URL 발급", description = "파일 업로드를 위한 Presigned URL를 발급합니다.")
     public ResponseHandler<PresignedUrlResponseDto> generatePresignedUrl(
             @RequestBody PresignedUrlRequestDto request,
             @AuthenticationPrincipal PrincipalDetails userDetails) {
 
-        PresignedUrlResponseDto response = s3StorageService.generatePresignedUploadUrl(request);
-
-        if (userDetails != null) {
-            memberService.updateProfileImage(userDetails.getMemberId(), response.getAccessUrl());
-        }
+        PresignedUrlResponseDto response = uploadFacade.generateUrlAndSave(request, userDetails);
 
         return ResponseHandler.success(response);
     }

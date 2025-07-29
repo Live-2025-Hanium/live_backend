@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.exception.SdkException;
-import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -20,8 +19,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class S3StorageService {
 
+    private static final Duration PRESIGN_URL_EXPIRATION  = Duration.ofMinutes(3);
+
     private final S3Presigner s3Presigner;
-    private final S3Client s3Client;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
@@ -35,7 +35,7 @@ public class S3StorageService {
      * @return PresignedUrlResponseDto
      */
     public PresignedUrlResponseDto generatePresignedUploadUrl(PresignedUrlRequestDto request) {
-        String s3Key = generateS3Key(request.getFileName());
+        String s3Key = generateS3Key(request.getFileName(), request.getUploadType());
 
         try {
             PutObjectRequest putRequest = PutObjectRequest.builder()
@@ -45,7 +45,7 @@ public class S3StorageService {
                     .build();
 
             PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                    .signatureDuration(Duration.ofMinutes(3))
+                    .signatureDuration(PRESIGN_URL_EXPIRATION)
                     .putObjectRequest(putRequest)
                     .build();
 
@@ -62,8 +62,9 @@ public class S3StorageService {
         }
     }
 
-    private String generateS3Key(String fileName) {
-        String directory = "profile-image";
+    private String generateS3Key(String fileName, UploadType uploadType) {
+
+        String directory = uploadType.getDir();
         String timestamp = String.valueOf(System.currentTimeMillis());
         String uuid = UUID.randomUUID().toString().substring(0, 8);
         String extension = fileName.substring(fileName.lastIndexOf('.'));
