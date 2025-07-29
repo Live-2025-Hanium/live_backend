@@ -27,6 +27,7 @@ import com.example.live_backend.domain.auth.token.service.RefreshTokenService;
 import com.example.live_backend.domain.auth.util.HttpHeaderProcessor;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
+import com.example.live_backend.global.security.annotation.PublicApi;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,6 +45,7 @@ public class AuthController {
 	private final JwtUtil jwtUtil;
 
 	@PostMapping("/kakao/login")
+	@PublicApi(reason = "로그인은 누구나 접근 가능해야 하는 공개 API")
 	@Operation(
 		summary = "카카오 소셜 로그인",
 		description = "카카오 OAuth2 인증을 통한 로그인 또는 회원가입을 처리합니다. 신규 사용자인 경우 자동으로 회원가입이 됩니다.",
@@ -97,6 +99,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/refresh")
+	@PublicApi(reason = "토큰 갱신은 만료된 액세스 토큰도 처리해야 하므로 인증 우회 필요")
 	@Operation(
 		summary = "액세스 토큰 갱신",
 		description = "리프레시 토큰을 사용하여 새로운 액세스 토큰과 리프레시 토큰을 발급받습니다.",
@@ -151,6 +154,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/logout")
+	@PublicApi(reason = "로그아웃은 만료된 토큰도 처리해야 하므로 인증 우회 필요")
 	@Operation(
 		summary = "로그아웃",
 		description = "리프레시 토큰을 무효화하여 로그아웃을 처리합니다. 클라이언트에서는 로컬에 저장된 Access/Refresh Token을 제거해야 합니다.",
