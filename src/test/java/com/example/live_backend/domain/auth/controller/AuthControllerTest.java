@@ -2,6 +2,7 @@ package com.example.live_backend.domain.auth.controller;
 
 import com.example.live_backend.domain.auth.dto.request.LogoutRequestDto;
 import com.example.live_backend.domain.auth.jwt.JwtUtil;
+import com.example.live_backend.domain.auth.jwt.TokenInfo;
 import com.example.live_backend.domain.auth.service.AuthenticationFacade;
 import com.example.live_backend.domain.auth.token.service.RefreshTokenService;
 import com.example.live_backend.global.error.exception.CustomException;
@@ -48,7 +49,12 @@ class AuthControllerTest {
         void logout_ValidRefreshToken_Success() {
             // Given
             LogoutRequestDto request = createLogoutRequest(TEST_REFRESH_TOKEN);
-            given(jwtUtil.getUserId(TEST_REFRESH_TOKEN)).willReturn(TEST_USER_ID);
+            TokenInfo validTokenInfo = TokenInfo.builder()
+                .valid(true)
+                .expired(false)
+                .userId(TEST_USER_ID)
+                .build();
+            given(jwtUtil.validateAndExtract(TEST_REFRESH_TOKEN)).willReturn(validTokenInfo);
             doNothing().when(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
 
             // When
@@ -56,7 +62,7 @@ class AuthControllerTest {
 
             // Then
             assertThat(response.getStatusCodeValue()).isEqualTo(200);
-            verify(jwtUtil).getUserId(TEST_REFRESH_TOKEN);
+            verify(jwtUtil).validateAndExtract(TEST_REFRESH_TOKEN);
             verify(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
         }
 
@@ -66,32 +72,38 @@ class AuthControllerTest {
             // Given
             String invalidToken = "invalid.refresh.token";
             LogoutRequestDto request = createLogoutRequest(invalidToken);
-            given(jwtUtil.getUserId(invalidToken)).willThrow(new RuntimeException("Invalid token"));
+            given(jwtUtil.validateAndExtract(invalidToken)).willThrow(new RuntimeException("Invalid token"));
 
             // When & Then
             assertThatThrownBy(() -> authController.logout(request))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_TOKEN);
 
-            verify(jwtUtil).getUserId(invalidToken);
+            verify(jwtUtil).validateAndExtract(invalidToken);
             verify(refreshTokenService, never()).deleteRefreshToken(any());
         }
 
         @Test
-        @DisplayName("만료된 리프레시 토큰으로 로그아웃 - 401 에러")
-        void logout_ExpiredRefreshToken_ThrowsUnauthorized() {
+        @DisplayName("만료된 리프레시 토큰으로 로그아웃 - 성공")
+        void logout_ExpiredRefreshToken_Success() {
             // Given
             String expiredToken = "expired.refresh.token";
             LogoutRequestDto request = createLogoutRequest(expiredToken);
-            given(jwtUtil.getUserId(expiredToken)).willThrow(new RuntimeException("Token expired"));
+            TokenInfo expiredTokenInfo = TokenInfo.builder()
+                .valid(false)
+                .expired(true)
+                .userId(TEST_USER_ID)
+                .build();
+            given(jwtUtil.validateAndExtract(expiredToken)).willReturn(expiredTokenInfo);
+            doNothing().when(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
 
-            // When & Then
-            assertThatThrownBy(() -> authController.logout(request))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_TOKEN);
+            // When
+            ResponseEntity<Void> response = authController.logout(request);
 
-            verify(jwtUtil).getUserId(expiredToken);
-            verify(refreshTokenService, never()).deleteRefreshToken(any());
+            // Then
+            assertThat(response.getStatusCodeValue()).isEqualTo(200);
+            verify(jwtUtil).validateAndExtract(expiredToken);
+            verify(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
         }
 
         @Test
@@ -99,14 +111,14 @@ class AuthControllerTest {
         void logout_NullRefreshToken_ThrowsUnauthorized() {
             // Given
             LogoutRequestDto request = createLogoutRequest(null);
-            given(jwtUtil.getUserId(null)).willThrow(new RuntimeException("Null token"));
+            given(jwtUtil.validateAndExtract(null)).willThrow(new RuntimeException("Null token"));
 
             // When & Then
             assertThatThrownBy(() -> authController.logout(request))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_TOKEN);
 
-            verify(jwtUtil).getUserId(null);
+            verify(jwtUtil).validateAndExtract(null);
             verify(refreshTokenService, never()).deleteRefreshToken(any());
         }
 
@@ -115,14 +127,14 @@ class AuthControllerTest {
         void logout_EmptyRefreshToken_ThrowsUnauthorized() {
             // Given
             LogoutRequestDto request = createLogoutRequest("");
-            given(jwtUtil.getUserId("")).willThrow(new RuntimeException("Empty token"));
+            given(jwtUtil.validateAndExtract("")).willThrow(new RuntimeException("Empty token"));
 
             // When & Then
             assertThatThrownBy(() -> authController.logout(request))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_TOKEN);
 
-            verify(jwtUtil).getUserId("");
+            verify(jwtUtil).validateAndExtract("");
             verify(refreshTokenService, never()).deleteRefreshToken(any());
         }
 
@@ -131,7 +143,12 @@ class AuthControllerTest {
         void logout_DeleteRefreshTokenThrowsException_StillSuccessful() {
             // Given
             LogoutRequestDto request = createLogoutRequest(TEST_REFRESH_TOKEN);
-            given(jwtUtil.getUserId(TEST_REFRESH_TOKEN)).willReturn(TEST_USER_ID);
+            TokenInfo validTokenInfo = TokenInfo.builder()
+                .valid(true)
+                .expired(false)
+                .userId(TEST_USER_ID)
+                .build();
+            given(jwtUtil.validateAndExtract(TEST_REFRESH_TOKEN)).willReturn(validTokenInfo);
             doThrow(new RuntimeException("Delete failed")).when(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
 
             // When
@@ -139,7 +156,7 @@ class AuthControllerTest {
 
             // Then
             assertThat(response.getStatusCodeValue()).isEqualTo(200);
-            verify(jwtUtil).getUserId(TEST_REFRESH_TOKEN);
+            verify(jwtUtil).validateAndExtract(TEST_REFRESH_TOKEN);
             verify(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
         }
 
@@ -149,14 +166,14 @@ class AuthControllerTest {
             // Given
             String malformedToken = "malformed.jwt.token";
             LogoutRequestDto request = createLogoutRequest(malformedToken);
-            given(jwtUtil.getUserId(malformedToken)).willThrow(new RuntimeException("JWT parsing failed"));
+            given(jwtUtil.validateAndExtract(malformedToken)).willThrow(new RuntimeException("JWT parsing failed"));
 
             // When & Then
             assertThatThrownBy(() -> authController.logout(request))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_TOKEN);
 
-            verify(jwtUtil).getUserId(malformedToken);
+            verify(jwtUtil).validateAndExtract(malformedToken);
             verify(refreshTokenService, never()).deleteRefreshToken(any());
         }
 

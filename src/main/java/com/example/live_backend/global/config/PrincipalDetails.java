@@ -7,10 +7,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * Spring Security UserDetails 구현 클래스
- * InMemoryUserDetailsManager에서 사용되는 Mock 사용자 정보
- */
 public class PrincipalDetails implements UserDetails {
 
 	private final Long userId;
@@ -56,7 +52,6 @@ public class PrincipalDetails implements UserDetails {
 		return true;
 	}
 
-	// 추가 편의 메서드
 	public Long getUserId() {
 		return userId;
 	}

@@ -21,6 +21,7 @@ import com.example.live_backend.domain.auth.dto.request.KakaoLoginRequestDto;
 import com.example.live_backend.domain.auth.dto.request.RefreshRequestDto;
 import com.example.live_backend.domain.auth.dto.response.TokensResponseDto;
 import com.example.live_backend.domain.auth.jwt.JwtUtil;
+import com.example.live_backend.domain.auth.jwt.TokenInfo;
 import com.example.live_backend.domain.auth.service.AuthenticationFacade;
 import com.example.live_backend.domain.auth.token.service.RefreshTokenService;
 import com.example.live_backend.domain.auth.util.HttpHeaderProcessor;
@@ -180,18 +181,19 @@ public class AuthController {
 			)
 		)
 		@RequestBody LogoutRequestDto request
-	) {
+		) {
 		try {
-			Long userId = jwtUtil.getUserId(request.getRefreshToken());
+			TokenInfo tokenInfo = jwtUtil.validateAndExtract(request.getRefreshToken());
+			Long userId = tokenInfo.getUserId();
 
 			try {
 				refreshTokenService.deleteRefreshToken(userId);
-				log.info("로그아웃 성공: userId={}", userId);
+				log.info("로그아웃 성공: userId={}, 토큰만료여부={}", userId, tokenInfo.isExpired());
 			} catch (Exception deleteException) {
-				log.warn("리프레시 토큰 삭제 실패 (로그아웃은 정상 처리): userId={}, error={}",
+				log.warn("리프레시 토큰 삭제 실패 (로그아웃은 정상 처리): userId={}, error={}", 
 					userId, deleteException.getMessage());
 			}
-
+			
 			return ResponseEntity.ok().build();
 		} catch (Exception e) {
 			log.warn("로그아웃 실패 - JWT 파싱 오류: error={}", e.getMessage());
