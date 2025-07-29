@@ -41,20 +41,16 @@ class S3StorageServiceTest {
     }
 
     @Test
-    @DisplayName("Presigned URL 생성 성공 테스트")
+    @DisplayName("성공 - Presigned URL 생성")
     void generatePresignedUploadUrl_Success() throws Exception {
 
-        String fileName = "profile.jpg";
-        String contentType = "image/jpeg";
-        PresignedUrlRequestDto requestDto = new PresignedUrlRequestDto(fileName, contentType);
+        PresignedUrlRequestDto requestDto = new PresignedUrlRequestDto("profile.jpg", "image/jpeg", UploadType.PROFILE);
 
         String expectedUploadUrl = "https://test-bucket.s3.amazonaws.com/upload-url?sig=1234";
         URL mockUrl = new URL(expectedUploadUrl);
 
         PresignedPutObjectRequest mockPresignedRequest = mock(PresignedPutObjectRequest.class);
-
         when(mockPresignedRequest.url()).thenReturn(mockUrl);
-
         when(s3Presigner.presignPutObject(any(PutObjectPresignRequest.class)))
                 .thenReturn(mockPresignedRequest);
 
@@ -62,16 +58,16 @@ class S3StorageServiceTest {
 
         assertThat(responseDto).isNotNull();
         assertThat(responseDto.getUploadUrl()).isEqualTo(expectedUploadUrl);
-        assertThat(responseDto.getS3Key()).startsWith("profile-image/");
+        assertThat(responseDto.getS3Key()).startsWith(UploadType.PROFILE.getDir() + "/");
         assertThat(responseDto.getS3Key()).endsWith(".jpg");
         assertThat(responseDto.getAccessUrl()).isEqualTo("https://test-bucket.s3.amazonaws.com/" + responseDto.getS3Key());
     }
 
     @Test
-    @DisplayName("Presigned URL 생성 실패 테스트 (S3 서비스 예외 발생)")
+    @DisplayName("실패 - Presigned URL 생성")
     void generatePresignedUploadUrl_Failure_When_S3_Throws_Exception() {
 
-        PresignedUrlRequestDto requestDto = new PresignedUrlRequestDto("profile.png", "image/png");
+        PresignedUrlRequestDto requestDto = new PresignedUrlRequestDto("profile.png", "image/png", UploadType.PROFILE);
 
         when(s3Presigner.presignPutObject(any(PutObjectPresignRequest.class)))
                 .thenThrow(SdkException.builder().message("S3 Error").build());
