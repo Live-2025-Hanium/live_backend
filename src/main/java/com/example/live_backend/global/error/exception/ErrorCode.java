@@ -21,6 +21,7 @@ public enum ErrorCode {
 	MEMBER_NICKNAME_INVALID(BAD_REQUEST, "닉네임은 2자 이상 20자 이하여야 합니다."),
 	MEMBER_BIRTHDATE_INVALID(BAD_REQUEST, "생년월일은 미래일 수 없습니다."),
 	INVALID_MISSION_STATUS(BAD_REQUEST, "미션 상태 변경을 할 수 없습니다."),
+	INVALID_UPLOAD_TYPE(BAD_REQUEST, "업로드 타입이 일치하지 않습니다."),
 
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),
@@ -41,7 +42,9 @@ public enum ErrorCode {
 
 	/* ------------------ 500 INTERNAL_SERVER_ERROR : 서버 오류 ------------------ */
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
-	UNSUPPORTED_CLOVER_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "지원하지 않는 클로버 미션 타입입니다.");
+	UNSUPPORTED_CLOVER_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "지원하지 않는 클로버 미션 타입입니다."),
+	S3_CONNECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 연결에 실패했습니다."),
+	PRESIGNED_URL_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "업로드 URL 생성에 실패했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String detail;

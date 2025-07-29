@@ -1,6 +1,7 @@
 package com.example.live_backend.domain.memeber.service;
 
 
+import com.example.live_backend.global.error.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -145,4 +146,14 @@ public class MemberService {
 			member.getOccupationDetail()
 		);
 	}
+
+	@Transactional
+	public void updateProfileImage(Long memberId, String profileImageUrl) {
+		Member member = memberRepository.findById(memberId)
+				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+		Profile updatedProfile = member.getProfile().update(null, profileImageUrl);
+		member.updateProfile(updatedProfile);
+	}
+
 }
