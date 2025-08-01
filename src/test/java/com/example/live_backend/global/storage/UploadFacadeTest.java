@@ -34,7 +34,7 @@ class UploadFacadeTest {
         Member member = Member.builder()
                 .email("test@example.com")
                 .oauthId("test-oauth-id")
-                .profile(new Profile("test-nickname", "test-profile-image-url"))
+                .profile(new Profile("testNickname", "test-profile-image-url"))
                 .role(Role.USER)
                 .build();
         ReflectionTestUtils.setField(member, "id", 1L);
