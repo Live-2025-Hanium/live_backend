@@ -14,8 +14,4 @@ public class PhotoMission extends CloverMission {
 
     @Column(name = "illustration_url")
     private String illustrationUrl;
-
-    public PhotoMission(String illustrationUrl) {
-        this.illustrationUrl = illustrationUrl;
-    }
 }

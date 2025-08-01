@@ -12,8 +12,4 @@ public class TimerMission extends CloverMission {
 
     @Column(name = "required_seconds")
     private int requiredSeconds;
-
-    public TimerMission(int requiredSeconds) {
-        this.requiredSeconds = requiredSeconds;
-    }
 }

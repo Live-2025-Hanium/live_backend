@@ -6,30 +6,6 @@ cd /home/ec2-user/app
 # 환경변수 DOCKER_APP_NAME을 live-backend로 설정
 DOCKER_APP_NAME=live-backend
 
-# Qdrant 체크 및 시작 로직
-EXIST_QDRANT=$(docker ps -f "name=qdrant-shared" -q)
-if [ -z "$EXIST_QDRANT" ]; then
-  echo "🔄 공유 Qdrant 컨테이너가 존재하지 않아 새로 시작합니다."
-  docker run -d --name qdrant-shared --restart unless-stopped -p 6333:6333 -v qdrant_storage:/qdrant/storage qdrant/qdrant:latest
-
-  echo "  - Qdrant 컨테이너가 준비될 때까지 대기 중..."
-  # 60초 동안 Health Check 시도
-  for i in {1..20}; do
-    HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:6333/healthz)
-    if [ "$HEALTH_STATUS" -eq 200 ]; then
-      echo "  - ✅ Qdrant가 성공적으로 시작되었습니다."
-      break
-    fi
-    echo "  - Qdrant 시작 대기 중... ($i/20)"
-    sleep 3
-  done
-
-  if [ "$HEALTH_STATUS" -ne 200 ]; then
-    echo "❌ Qdrant 시작 실패 : $(date +%Y)-$(date +%m)-$(date +%d) $(date +%H):$(date +%M):$(date +%S)" >> /home/ec2-user/deploy.log
-    exit 1
-  fi
-fi
-
 # 실행중인 blue가 있는지 확인
 # 프로젝트의 실행 중인 컨테이너를 확인하고, 해당 컨테이너가 실행 중인지 여부를 EXIST_BLUE 변수에 저장
 EXIST_BLUE=$(docker-compose -p ${DOCKER_APP_NAME}-blue -f docker-compose.blue.yml ps | grep Up)
