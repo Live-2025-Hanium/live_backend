@@ -7,9 +7,12 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - TZ=Asia/Seoul
+      - QDRANT_HOST=qdrant-shared
     restart: unless-stopped
     volumes:
       - ./logs:/app/logs
+    networks:
+      - qdrant-net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/ping"]
       interval: 30s
@@ -17,11 +20,7 @@ services:
       retries: 3
       start_period: 40s
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: qdrant-green
-    ports:
-      - "6333:6333"
-    volumes:
-      - qdrant_storage:/qdrant/storage
-    restart: unless-stopped
+networks:
+  qdrant-net:
+    external: true
+    name: qdrant-shared-network
