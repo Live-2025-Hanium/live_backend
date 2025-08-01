@@ -16,12 +16,5 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: qdrant-green
-    ports:
-      - "6333:6333"
-    volumes:
-      - qdrant_storage:/qdrant/storage
-    restart: unless-stopped
+    external_links:
+      - qdrant-shared:qdrant-shared
