@@ -63,20 +63,17 @@ public class Profile {
 		if (!StringUtils.hasText(nickname)) {
 			throw new CustomException(ErrorCode.MEMBER_NICKNAME_REQUIRED);
 		}
-		
-		// 공백 검사 (trim 하기 전에 검사)
+
 		if (nickname.contains(" ")) {
 			throw new CustomException(ErrorCode.MEMBER_NICKNAME_SPACE_NOT_ALLOWED);
 		}
 		
 		String trimmed = nickname.trim();
-		
-		// 길이 검사
+
 		if (trimmed.length() < MIN_NICKNAME_LENGTH || trimmed.length() > MAX_NICKNAME_LENGTH) {
 			throw new CustomException(ErrorCode.MEMBER_NICKNAME_LENGTH_INVALID);
 		}
-		
-		// 문자 구성 검사 (한글, 영문, 숫자만 허용)
+
 		if (!NICKNAME_PATTERN.matcher(trimmed).matches()) {
 			throw new CustomException(ErrorCode.MEMBER_NICKNAME_CHARACTER_INVALID);
 		}

@@ -42,7 +42,7 @@ class UploadFacadeTest {
         userDetails = new PrincipalDetails(
                 member.getId(),
                 member.getOauthId(),
-                member.getRole().name(), // Enum의 이름을 String으로 변환
+                member.getRole().name(),
                 member.getProfile().getNickname(),
                 member.getEmail()
         );
@@ -82,11 +82,9 @@ class UploadFacadeTest {
 
         when(s3StorageService.generatePresignedUploadUrl(any())).thenReturn(expectedResponse);
 
-        // PROFILE 타입 테스트
         PresignedUrlResponseDto profileResponse = uploadFacade.generateUrlAndSave(profileRequest, userDetails);
         assertThat(profileResponse.getAccessUrl()).isEqualTo(fakeAccessUrl);
 
-        // POST 타입 테스트
         PresignedUrlResponseDto postResponse = uploadFacade.generateUrlAndSave(postRequest, userDetails);
         assertThat(postResponse.getAccessUrl()).isEqualTo(fakeAccessUrl);
 
