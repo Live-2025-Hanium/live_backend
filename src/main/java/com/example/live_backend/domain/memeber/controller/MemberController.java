@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +16,10 @@ import com.example.live_backend.domain.memeber.dto.MemberProfileRequestDto;
 import com.example.live_backend.domain.memeber.dto.MemberResponseDto;
 import com.example.live_backend.domain.memeber.dto.NicknameCheckResponseDto;
 import com.example.live_backend.domain.memeber.service.MemberService;
+import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
+import com.example.live_backend.global.security.annotation.PublicApi;
+import com.example.live_backend.global.security.annotation.AuthenticatedApi;
 
 import jakarta.validation.Valid;
 
@@ -29,6 +31,7 @@ public class MemberController {
 
 	private final MemberService memberService;
 
+	@PublicApi(reason = "온보딩 시 비로그인 사용자도 닉네임 중복 확인 필요")
 	@GetMapping("/nickname/check")
 	@Operation(
 		summary = "닉네임 중복 확인",
@@ -52,15 +55,17 @@ public class MemberController {
 			)
 		}
 	)
-	public ResponseEntity<NicknameCheckResponseDto> checkNickname(
+	public ResponseHandler<NicknameCheckResponseDto> checkNickname(
 		@RequestParam String nickname,
-		@AuthenticationPrincipal PrincipalDetails userDetails
+		@AuthenticationPrincipal(errorOnInvalidType = false) PrincipalDetails userDetails
 	) {
-		Long currentUserId = userDetails.getMemberId();
+	
+		Long currentUserId = (userDetails != null) ? userDetails.getMemberId() : null;
 		NicknameCheckResponseDto response = memberService.checkNicknameAvailability(nickname, currentUserId);
-		return ResponseEntity.ok(response);
+		return ResponseHandler.success(response);
 	}
 
+	@AuthenticatedApi(reason = "프로필 등록/수정은 로그인된 사용자만 가능")
 	@PostMapping("/profile")
 	@Operation(
 		summary = "회원 프로필 등록/수정",
@@ -80,15 +85,18 @@ public class MemberController {
 			),
 			@ApiResponse(responseCode = "400", description = "잘못된 요청 (유효성 검사 실패 등)",
 				content = @Content(schema = @Schema())
+			),
+			@ApiResponse(responseCode = "401", description = "인증 실패",
+				content = @Content(schema = @Schema())
 			)
 		}
 	)
-	public ResponseEntity<MemberResponseDto> registerProfile(
+	public ResponseHandler<MemberResponseDto> registerProfile(
 		@Valid @RequestBody MemberProfileRequestDto dto,
 		@AuthenticationPrincipal PrincipalDetails userDetails
 	) {
 		Long userId = userDetails.getMemberId();
 		MemberResponseDto response = memberService.registerOrUpdateProfile(dto, userId);
-		return ResponseEntity.ok(response);
+		return ResponseHandler.success(response);
 	}
 }

@@ -7,6 +7,7 @@ import com.example.live_backend.domain.auth.service.AuthenticationFacade;
 import com.example.live_backend.domain.auth.token.service.RefreshTokenService;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
+import com.example.live_backend.global.error.response.ResponseHandler;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
@@ -58,10 +58,10 @@ class AuthControllerTest {
             doNothing().when(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
 
             // When
-            ResponseEntity<Void> response = authController.logout(request);
+            ResponseHandler<Void> response = authController.logout(request);
 
             // Then
-            assertThat(response.getStatusCodeValue()).isEqualTo(200);
+            assertThat(response.isSuccess()).isTrue();
             verify(jwtUtil).validateAndExtract(TEST_REFRESH_TOKEN);
             verify(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
         }
@@ -98,10 +98,10 @@ class AuthControllerTest {
             doNothing().when(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
 
             // When
-            ResponseEntity<Void> response = authController.logout(request);
+            ResponseHandler<Void> response = authController.logout(request);
 
             // Then
-            assertThat(response.getStatusCodeValue()).isEqualTo(200);
+            assertThat(response.isSuccess()).isTrue();
             verify(jwtUtil).validateAndExtract(expiredToken);
             verify(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
         }
@@ -152,10 +152,10 @@ class AuthControllerTest {
             doThrow(new RuntimeException("Delete failed")).when(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
 
             // When
-            ResponseEntity<Void> response = authController.logout(request);
+            ResponseHandler<Void> response = authController.logout(request);
 
             // Then
-            assertThat(response.getStatusCodeValue()).isEqualTo(200);
+            assertThat(response.isSuccess()).isTrue();
             verify(jwtUtil).validateAndExtract(TEST_REFRESH_TOKEN);
             verify(refreshTokenService).deleteRefreshToken(TEST_USER_ID);
         }
