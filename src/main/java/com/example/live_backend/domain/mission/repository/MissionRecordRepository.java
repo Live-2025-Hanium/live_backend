@@ -15,7 +15,7 @@ public interface MissionRecordRepository extends JpaRepository<MissionRecord, Lo
      * 특정 사용자의 오늘 만들어진 클로버 미션들(3개) 조회
      */
     @Query("SELECT mr FROM MissionRecord mr " +
-            "WHERE mr.member.id = :userId " +
+            "WHERE mr.user.id = :userId " +
             "AND mr.missionType = 'CLOVER' " +
             "AND DATE(mr.assignedDate) = DATE(:today) "+
             "AND mr.missionStatus = 'ASSIGNED' " +
@@ -25,7 +25,7 @@ public interface MissionRecordRepository extends JpaRepository<MissionRecord, Lo
             @Param("today") LocalDateTime today
     );
 
-    @Query("SELECT mr FROM MissionRecord mr JOIN FETCH mr.member WHERE mr.id = :id")
+    @Query("SELECT mr FROM MissionRecord mr JOIN FETCH mr.user WHERE mr.id = :id")
     Optional<MissionRecord> findByIdWithUser(@Param("id") Long id);
 
 }

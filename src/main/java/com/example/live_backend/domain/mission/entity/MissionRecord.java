@@ -1,7 +1,7 @@
 package com.example.live_backend.domain.mission.entity;
 
 import com.example.live_backend.domain.BaseEntity;
-import com.example.live_backend.domain.memeber.entity.Member;
+import com.example.live_backend.domain.example.entity.User;
 import com.example.live_backend.domain.mission.Enum.*;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
@@ -24,8 +24,8 @@ public class MissionRecord extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(name = "mission_type", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -91,12 +91,12 @@ public class MissionRecord extends BaseEntity {
     /**
      * CloverMission 엔티티로부터 MissionRecord 엔티티를 생성하는 팩토리 메서드
      * @param cloverMission 원본 클로버 미션
-     * @param member 미션을 할당받는 사용자
+     * @param user 미션을 할당받는 사용자
      * @return 생성된 MissionRecord
      */
-    public static MissionRecord fromCloverMission(CloverMission cloverMission, Member member) {
+    public static MissionRecord fromCloverMission(CloverMission cloverMission, User user) {
         MissionRecordBuilder builder = MissionRecord.builder()
-                .member(member)
+                .user(user)
                 .missionType(MissionType.CLOVER)
                 .missionId(cloverMission.getId())
                 .missionTitle(cloverMission.getTitle())

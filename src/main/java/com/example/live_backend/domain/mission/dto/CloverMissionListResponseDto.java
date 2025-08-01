@@ -1,10 +1,8 @@
 package com.example.live_backend.domain.mission.dto;
 
-import com.example.live_backend.domain.mission.Enum.CloverType;
 import com.example.live_backend.domain.mission.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.Enum.MissionDifficulty;
 import com.example.live_backend.domain.mission.Enum.MissionStatus;
-import com.example.live_backend.domain.mission.entity.MissionRecord;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,9 +34,6 @@ public class CloverMissionListResponseDto {
         @Schema(description = "미션 제목", example = "동료에게 안부 인사하기")
         private String missionTitle;
 
-        @Schema(description = "클로버 미션 타입", example = "TIMER / DISTANCE / PHOTO / VISIT")
-        private CloverType cloverType;
-
         @Schema(description = "미션 수행 상태", example = "ASSIGNED / STARTED / PAUSED / COMPLETED")
         private MissionStatus missionStatus;
 
@@ -47,29 +42,5 @@ public class CloverMissionListResponseDto {
 
         @Schema(description = "미션 카테고리", example = "RELATIONSHIP / ENVIRONMENT / HEALTH ...")
         private MissionCategory missionCategory;
-    }
-
-    /**
-     * MissionRecord 리스트를 DTO로 변환하는 정적 팩토리 메서드
-     * @param userId         사용자 ID
-     * @param missionRecords 변환할 MissionRecord 엔티티 리스트
-     * @return 생성된 CloverMissionListResponseDto 객체
-     */
-    public static CloverMissionListResponseDto of(Long userId, List<MissionRecord> missionRecords) {
-        List<CloverMissionList> missionDtoList = missionRecords.stream()
-                .map(record -> CloverMissionList.builder()
-                        .userMissionId(record.getId())
-                        .missionTitle(record.getMissionTitle())
-                        .cloverType(record.getCloverType())
-                        .missionStatus(record.getMissionStatus())
-                        .missionDifficulty(record.getMissionDifficulty())
-                        .missionCategory(record.getMissionCategory())
-                        .build())
-                .toList();
-
-        return CloverMissionListResponseDto.builder()
-                .userId(userId)
-                .missions(missionDtoList)
-                .build();
     }
 }
