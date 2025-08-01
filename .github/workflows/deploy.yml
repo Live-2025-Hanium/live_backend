@@ -123,6 +123,7 @@ jobs:
           cp appspec.yml deploy/
           cp docker-compose.blue.yml deploy/
           cp docker-compose.green.yml deploy/
+          cp docker-compose.vector-db.yml deploy/ 
           cp live-backend.tar deploy/
           cp -r scripts deploy/
           zip -r -qq app.zip deploy/
