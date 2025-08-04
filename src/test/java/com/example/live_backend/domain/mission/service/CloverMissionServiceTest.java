@@ -106,7 +106,7 @@ class CloverMissionServiceTest {
             assertThat(result.getUserId()).isEqualTo(userId);
             assertThat(result.getMissions().size()).isEqualTo(4);
 
-            verify(vectorDBService, never()).searchSimilarMissionsIds(anyString(), anyInt());
+            verify(vectorDBService, never()).searchSimilarMissionsIds(anyString(), anyInt(), anyList());
             verify(cloverMissionRepository, never()).findAllById(any());
             verify(missionRecordRepository, never()).saveAll(any());
         }
@@ -122,7 +122,7 @@ class CloverMissionServiceTest {
                     .thenReturn(Collections.emptyList());
 
             List<Long> missionIdsFromVectorDB = List.of(1L, 2L);
-            when(vectorDBService.searchSimilarMissionsIds(anyString(), anyInt()))
+            when(vectorDBService.searchSimilarMissionsIds(anyString(), anyInt(), anyList()))
                     .thenReturn(missionIdsFromVectorDB);
 
             DistanceMission mission1 = new DistanceMission(1000);
@@ -154,7 +154,7 @@ class CloverMissionServiceTest {
             assertThat(result.getUserId()).isEqualTo(userId);
             assertThat(result.getMissions().size()).isEqualTo(2);
 
-            verify(vectorDBService, times(1)).searchSimilarMissionsIds(anyString(), eq(3));
+            verify(vectorDBService, times(1)).searchSimilarMissionsIds(anyString(), eq(3), anyList());
             verify(cloverMissionRepository, times(1)).findAllById(missionIdsFromVectorDB);
             verify(missionRecordRepository, times(1)).saveAll(anyList());
         }
@@ -463,6 +463,65 @@ class CloverMissionServiceTest {
             });
 
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_MISSION_STATUS);
+        }
+    }
+
+    @Nested
+    @DisplayName("클로버 미션 리필 (재할당)")
+    class RefillCloverMissions {
+
+        @Test
+        @DisplayName("성공 - 기존 미션을 제외하고 새로운 미션을 재할당 받음")
+        void assignCloverMissionList_Success() {
+            // --- Given ---
+            when(memberRepository.findById(userId)).thenReturn(Optional.of(mockUser));
+
+            MissionRecord existingRecord1 = createTestMissionRecord(201L, MissionStatus.COMPLETED, mockUser);
+            ReflectionTestUtils.setField(existingRecord1, "missionId", 101L);
+            MissionRecord existingRecord2 = createTestMissionRecord(202L, MissionStatus.ASSIGNED, mockUser);
+            ReflectionTestUtils.setField(existingRecord2, "missionId", 102L);
+
+            List<MissionRecord> todayMissions = List.of(existingRecord1, existingRecord2);
+            when(missionRecordRepository.findCloverMissions(eq(userId), any(LocalDateTime.class)))
+                    .thenReturn(todayMissions);
+
+            List<Long> excludedIds = List.of(101L, 102L);
+            List<Long> newMissionIds = List.of(103L, 104L);
+            when(vectorDBService.searchSimilarMissionsIds(anyString(), anyInt(), eq(excludedIds)))
+                    .thenReturn(newMissionIds);
+
+            CloverMission newMission1 = new TimerMission(300);
+            ReflectionTestUtils.setField(newMission1, "id", 103L);
+            CloverMission newMission2 = new TimerMission(600);
+            ReflectionTestUtils.setField(newMission2, "id", 104L);
+            List<CloverMission> foundMissions = List.of(newMission1, newMission2);
+            when(cloverMissionRepository.findAllById(newMissionIds)).thenReturn(foundMissions);
+
+            List<MissionRecord> savedNewRecords = foundMissions.stream()
+                    .map(mission -> MissionRecord.fromCloverMission(mission, mockUser))
+                    .toList();
+            when(missionRecordRepository.saveAll(anyList())).thenReturn(savedNewRecords);
+
+            // --- When ---
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(userId);
+
+            // --- Then ---
+            assertThat(result).isNotNull();
+            assertThat(result.getUserId()).isEqualTo(userId);
+            assertThat(result.getMissions().size()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("실패 - 존재하지 않는 사용자가 미션 재할당 요청")
+        void assignCloverMissionList_Fail_UserNotFound() {
+            // --- Given ---
+            when(memberRepository.findById(userId)).thenReturn(Optional.empty());
+
+            // --- When & Then ---
+            CustomException exception = assertThrows(CustomException.class, () -> {
+                cloverMissionService.assignCloverMissionList(userId);
+            });
+            assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
         }
     }
 

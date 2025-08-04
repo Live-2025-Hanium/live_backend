@@ -40,8 +40,8 @@ public class CloverMissionController {
 			@PathVariable Long userMissionId,
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
-		Long memberId = userDetails.getMemberId();
-		CloverMissionResponseDto response = cloverMissionService.getCloverMissionInfo(userMissionId, memberId);
+		Long userId = userDetails.getMemberId();
+		CloverMissionResponseDto response = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
 		return ResponseHandler.success(response);
 	}
@@ -52,8 +52,8 @@ public class CloverMissionController {
 			@PathVariable Long userMissionId,
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
-		Long memberId = userDetails.getMemberId();
-		CloverMissionStatusResponseDto response = cloverMissionService.startCloverMission(userMissionId, memberId);
+		Long userId = userDetails.getMemberId();
+		CloverMissionStatusResponseDto response = cloverMissionService.startCloverMission(userMissionId, userId);
 
 		return ResponseHandler.success(response);
 
@@ -65,8 +65,8 @@ public class CloverMissionController {
 			@PathVariable Long userMissionId,
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
-		Long memberId = userDetails.getMemberId();
-		CloverMissionStatusResponseDto response = cloverMissionService.pauseCloverMission(userMissionId, memberId);
+		Long userId = userDetails.getMemberId();
+		CloverMissionStatusResponseDto response = cloverMissionService.pauseCloverMission(userMissionId, userId);
 
 		return ResponseHandler.success(response);
 	}
@@ -77,8 +77,19 @@ public class CloverMissionController {
 			@PathVariable Long userMissionId,
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
-		Long memberId = userDetails.getMemberId();
-		CloverMissionStatusResponseDto response = cloverMissionService.completeCloverMission(userMissionId, memberId);
+		Long userId = userDetails.getMemberId();
+		CloverMissionStatusResponseDto response = cloverMissionService.completeCloverMission(userMissionId, userId);
+
+		return ResponseHandler.success(response);
+	}
+
+	@GetMapping("/refill")
+	@Operation(summary = "클로버 리필", description = "클로버 미션을 새롭게 할당합니다.")
+	public ResponseHandler<CloverMissionListResponseDto> refillCloverMission(
+			@AuthenticationPrincipal PrincipalDetails userDetails) {
+
+		Long userId = userDetails.getMemberId();
+		CloverMissionListResponseDto response = cloverMissionService.assignCloverMissionList(userId);
 
 		return ResponseHandler.success(response);
 	}
