@@ -18,6 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.example.live_backend.domain.auth.dto.response.AuthUserDto;
 import com.example.live_backend.domain.auth.dto.request.KakaoLoginRequestDto;
 import com.example.live_backend.domain.memeber.Role;
+import com.example.live_backend.domain.memeber.dto.MemberProfileRequestDto;
+import com.example.live_backend.domain.memeber.dto.MemberResponseDto;
 import com.example.live_backend.domain.memeber.dto.NicknameCheckResponseDto;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
@@ -195,6 +197,87 @@ class MemberServiceTest {
 			} catch (Exception ex) {
 				throw new RuntimeException("Failed to set field: " + fieldName, ex);
 			}
+		}
+	}
+
+	@Nested
+	@DisplayName("온보딩 프로필 등록/수정")
+	class OnboardingProfileTest {
+
+		@Test
+		@DisplayName("성공 - 기존 회원 프로필 업데이트")
+		void shouldUpdateExistingMemberProfile() {
+			// Given
+			Long userId = 1L;
+			MemberProfileRequestDto dto = createValidMemberProfileRequest();
+			Member existingMember = createMemberWithProfile(userId);
+			
+			given(memberRepository.findById(userId)).willReturn(Optional.of(existingMember));
+
+			// When
+			MemberResponseDto result = memberService.registerOrUpdateProfile(dto, userId);
+
+			// Then
+			assertThat(result.getNickname()).isEqualTo("새로운닉네임123");
+			assertThat(result.getGender()).isEqualTo("MALE");
+			assertThat(result.getOccupation()).isEqualTo("STUDENT");
+			verify(memberRepository).findById(userId);
+		}
+
+		@Test
+		@DisplayName("성공 - 신규 회원 생성")
+		void shouldCreateNewMemberWhenUserNotFound() {
+			// Given
+			Long userId = 999L;
+			MemberProfileRequestDto dto = createValidMemberProfileRequest();
+			
+			given(memberRepository.findById(userId)).willReturn(Optional.empty());
+			given(memberRepository.save(any(Member.class))).willAnswer(invocation -> {
+				Member member = invocation.getArgument(0);
+				setField(member, "id", userId);
+				return member;
+			});
+
+			// When
+			MemberResponseDto result = memberService.registerOrUpdateProfile(dto, userId);
+
+			// Then
+			assertThat(result.getNickname()).isEqualTo("새로운닉네임123");
+			assertThat(result.getGender()).isEqualTo("MALE");
+			assertThat(result.getOccupation()).isEqualTo("STUDENT");
+			verify(memberRepository).findById(userId);
+			verify(memberRepository).save(any(Member.class));
+		}
+
+		private MemberProfileRequestDto createValidMemberProfileRequest() {
+			MemberProfileRequestDto dto = new MemberProfileRequestDto();
+			setField(dto, "nickname", "새로운닉네임123");
+			setField(dto, "profileImageUrl", "https://s3.amazonaws.com/profile/image.jpg");
+			setField(dto, "gender", "MALE");
+			setField(dto, "birthYear", 1995);
+			setField(dto, "birthMonth", 3);
+			setField(dto, "birthDay", 15);
+			setField(dto, "occupation", "STUDENT");
+			setField(dto, "occupationDetail", null);
+			return dto;
+		}
+
+
+
+		private Member createMemberWithProfile(Long userId) {
+			Profile profile = Profile.builder()
+				.nickname("기존닉네임")
+				.profileImageUrl("existing-url")
+				.build();
+			
+			Member member = Member.builder()
+				.oauthId("oauth-" + userId)
+				.email("test" + userId + "@example.com")
+				.role(Role.USER)
+				.profile(profile)
+				.build();
+			setField(member, "id", userId);
+			return member;
 		}
 	}
 } 
