@@ -101,6 +101,11 @@ jobs:
       - name: ⚙️ JAR 파일 빌드 (테스트 포함)
         run: ./gradlew clean build -Pprofile=test
 
+      - name: 🔍 빌드된 JAR 내부 설정 확인
+        run: |
+          echo "--- Verifying settings inside the built JAR file ---"
+          unzip -p build/libs/*-SNAPSHOT.jar BOOT-INF/classes/application-dev.yml
+
       - name: 🐳 Docker 이미지 빌드
         run: docker build -t live-backend:latest .
 
@@ -123,6 +128,7 @@ jobs:
           cp appspec.yml deploy/
           cp docker-compose.blue.yml deploy/
           cp docker-compose.green.yml deploy/
+          cp docker-compose.vector-db.yml deploy/
           cp live-backend.tar deploy/
           cp -r scripts deploy/
           zip -r -qq app.zip deploy/
