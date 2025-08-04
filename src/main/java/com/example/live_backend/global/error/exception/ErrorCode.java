@@ -24,6 +24,7 @@ public enum ErrorCode {
 	MEMBER_BIRTHDATE_INVALID(BAD_REQUEST, "생년월일은 미래일 수 없습니다."),
 	INVALID_MISSION_STATUS(BAD_REQUEST, "미션 상태 변경을 할 수 없습니다."),
 	INVALID_UPLOAD_TYPE(BAD_REQUEST, "업로드 타입이 일치하지 않습니다."),
+	INVALID_CLOVER_TYPE(BAD_REQUEST, "지원하지 않는 클로버 타입입니다."),
 
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),
@@ -35,6 +36,7 @@ public enum ErrorCode {
 
 	/* ------------------ 403 FORBIDDEN : 권한 없음 ------------------ */
 	MISSION_FORBIDDEN(FORBIDDEN, "미션을 변경할 권한이 없습니다."),
+	REGISTRATION_DENIED(FORBIDDEN, "미션을 등록할 권한이 없습니다."),
 
 	/* ------------------ 404 NOT_FOUND: 리소스 없음 ------------------ */
 	USER_NOT_FOUND(NOT_FOUND, "존재하지 않는 사용자입니다."),

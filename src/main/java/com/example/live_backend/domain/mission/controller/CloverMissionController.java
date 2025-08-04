@@ -5,10 +5,12 @@ import com.example.live_backend.domain.mission.dto.CloverMissionResponseDto;
 import com.example.live_backend.domain.mission.dto.CloverMissionStatusResponseDto;
 import com.example.live_backend.domain.mission.service.CloverMissionService;
 import com.example.live_backend.global.error.response.ResponseHandler;
+import com.example.live_backend.global.security.PrincipalDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,9 +24,11 @@ public class CloverMissionController {
 
 	@GetMapping
 	@Operation(summary = "클로버 미션 리스트 조회 ", description = "클로버 미션 리스트를 조회합니다.")
-	public ResponseHandler<CloverMissionListResponseDto> getCloverMissionList() {
+	public ResponseHandler<CloverMissionListResponseDto> getCloverMissionList(
+			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
-		CloverMissionListResponseDto response = cloverMissionService.getCloverMissionList();
+		Long userId = userDetails.getMemberId();
+		CloverMissionListResponseDto response = cloverMissionService.getCloverMissionList(userId);
 
 		return ResponseHandler.success(response);
 	}
@@ -32,20 +36,24 @@ public class CloverMissionController {
 	@GetMapping("/{userMissionId}")
 	@Operation(summary = "클로버 미션(1개) 상세 조회 ",
 			description = "클로버 미션 1개의 상세 정보를 조회합니다.")
-	public ResponseHandler<CloverMissionResponseDto> getCloverMissionInfo(@PathVariable Long userMissionId) {
+	public ResponseHandler<CloverMissionResponseDto> getCloverMissionInfo(
+			@PathVariable Long userMissionId,
+			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
-		CloverMissionResponseDto response = cloverMissionService.getCloverMissionInfo(userMissionId);
+		Long userId = userDetails.getMemberId();
+		CloverMissionResponseDto response = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
 		return ResponseHandler.success(response);
 	}
 
 	@PatchMapping("/{userMissionId}/start")
 	@Operation(summary = "클로버 미션 시작(Started)", description = "클로버 미션을 시작 상태로 변경합니다.")
-	public ResponseHandler<?> startMission(@PathVariable Long userMissionId) {
+	public ResponseHandler<CloverMissionStatusResponseDto> startMission(
+			@PathVariable Long userMissionId,
+			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
-		log.info("클로버 미션 시작 API 호출 - userMissionId: {}", userMissionId);
-
-		CloverMissionStatusResponseDto response = cloverMissionService.startCloverMission(userMissionId);
+		Long userId = userDetails.getMemberId();
+		CloverMissionStatusResponseDto response = cloverMissionService.startCloverMission(userMissionId, userId);
 
 		return ResponseHandler.success(response);
 
@@ -53,22 +61,35 @@ public class CloverMissionController {
 
 	@PatchMapping("/{userMissionId}/pause")
 	@Operation(summary = "클로버 미션 일시정지(Paused)", description = "클로버 미션을 일시정지 상태로 변경합니다.")
-	public ResponseHandler<?> pauseMission(@PathVariable Long userMissionId) {
+	public ResponseHandler<CloverMissionStatusResponseDto> pauseMission(
+			@PathVariable Long userMissionId,
+			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
-		log.info("클로버 미션 일시정지 API 호출 - userMissionId: {}", userMissionId);
-
-		CloverMissionStatusResponseDto response = cloverMissionService.pauseCloverMission(userMissionId);
+		Long userId = userDetails.getMemberId();
+		CloverMissionStatusResponseDto response = cloverMissionService.pauseCloverMission(userMissionId, userId);
 
 		return ResponseHandler.success(response);
 	}
 
 	@PatchMapping("/{userMissionId}/complete")
 	@Operation(summary = "클로버 미션 완료(Completed)", description = "클로버 미션을 완료 상태로 변경합니다.")
-	public ResponseHandler<?> completeMission(@PathVariable Long userMissionId) {
+	public ResponseHandler<CloverMissionStatusResponseDto> completeMission(
+			@PathVariable Long userMissionId,
+			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
-		log.info("클로버 미션 완료 API 호출 - userMissionId: {}", userMissionId);
+		Long userId = userDetails.getMemberId();
+		CloverMissionStatusResponseDto response = cloverMissionService.completeCloverMission(userMissionId, userId);
 
-		CloverMissionStatusResponseDto response = cloverMissionService.completeCloverMission(userMissionId);
+		return ResponseHandler.success(response);
+	}
+
+	@GetMapping("/refill")
+	@Operation(summary = "클로버 리필", description = "클로버 미션을 새롭게 할당합니다.")
+	public ResponseHandler<CloverMissionListResponseDto> refillCloverMission(
+			@AuthenticationPrincipal PrincipalDetails userDetails) {
+
+		Long userId = userDetails.getMemberId();
+		CloverMissionListResponseDto response = cloverMissionService.assignCloverMissionList(userId);
 
 		return ResponseHandler.success(response);
 	}
