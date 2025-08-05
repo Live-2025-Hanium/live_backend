@@ -52,4 +52,15 @@ public class MemberController implements MemberControllerDocs {
 		MemberResponseDto response = memberService.registerOrUpdateProfile(dto, userId);
 		return ResponseHandler.success(response);
 	}
+
+	@Override
+	@AuthenticatedApi(reason = "로그인된 사용자만 자신의 정보 조회 가능")
+	@GetMapping("/me")
+	public ResponseHandler<MemberResponseDto> getMyProfile(
+		@AuthenticationPrincipal PrincipalDetails userDetails
+	) {
+		Long userId = userDetails.getMemberId();
+		MemberResponseDto response = memberService.getMemberById(userId);
+		return ResponseHandler.success(response);
+	}
 }

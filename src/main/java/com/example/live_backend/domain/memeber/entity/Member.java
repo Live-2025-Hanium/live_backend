@@ -19,6 +19,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "members")
 @Getter
@@ -54,6 +56,9 @@ public class Member {
 	@Column(length = 100)
 	private String occupationDetail; // OTHER 선택 시 추가 입력
 
+	@Column(name = "last_survey_submitted_at")
+	private LocalDateTime lastSurveySubmittedAt;
+
 	@Builder
 	public Member(String oauthId,
 		String email,
@@ -82,6 +87,10 @@ public class Member {
 		this.birthDate = birthDate;
 		this.occupation = occupation;
 		this.occupationDetail = occupationDetail;
+	}
+
+	public void updateLastSurveySubmittedAt(LocalDateTime lastSurveySubmittedAt) {
+		this.lastSurveySubmittedAt = lastSurveySubmittedAt;
 	}
 
 }

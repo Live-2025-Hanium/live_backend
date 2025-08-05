@@ -169,7 +169,8 @@ class MemberControllerTest {
             "MALE",
             "1995-03-15",
             "STUDENT",
-            null
+            null,
+            null  // lastSurveySubmittedAt
         );
     }
 

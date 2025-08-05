@@ -2,7 +2,9 @@ package com.example.live_backend.domain.survey.service;
 
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
-import com.example.live_backend.domain.memeber.util.UserUtil;
+import com.example.live_backend.global.security.SecurityUtil;
+import com.example.live_backend.domain.memeber.entity.Member;
+import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.survey.dto.request.SurveySubmissionDto;
 import com.example.live_backend.domain.survey.dto.response.SurveySubmissionResponseDto;
 import com.example.live_backend.domain.survey.dto.response.SurveyResponseListDto;
@@ -23,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +33,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+@org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 @DisplayName("설문 서비스 테스트")
 class SurveyServiceTest {
 
@@ -37,23 +41,36 @@ class SurveyServiceTest {
 	private SurveyResponseRepository surveyResponseRepository;
 
 	@Mock
-	private UserUtil userUtil;
+	private MemberRepository memberRepository;
+
+	@Mock
+	private SecurityUtil securityUtil;
 
 	@InjectMocks
 	private SurveyService surveyService;
 
 	private SurveySubmissionDto validRequest;
 	private SurveyResponse mockSurveyResponse;
+	private Member mockMember;
 	private final Long MOCK_USER_ID = 1L;
 
 	@BeforeEach
 	void initFixtures() {
+		// mockMember 먼저 초기화
+		mockMember = org.mockito.Mockito.mock(Member.class);
+		given(mockMember.getId()).willReturn(MOCK_USER_ID);
+		// void 메서드는 doNothing()으로 설정
+		org.mockito.Mockito.doNothing().when(mockMember).updateLastSurveySubmittedAt(any(LocalDateTime.class));
 
+		// 기본 mock 설정
+		given(securityUtil.getCurrentUserId()).willReturn(MOCK_USER_ID);
+		given(memberRepository.findById(MOCK_USER_ID)).willReturn(Optional.of(mockMember));
+		
 		List<SurveySubmissionDto.SurveyAnswerDto> answers = Arrays.asList(
-			new SurveySubmissionDto.SurveyAnswerDto(1, 3),
+			new SurveySubmissionDto.SurveyAnswerDto(1, 1),
 			new SurveySubmissionDto.SurveyAnswerDto(2, 2),
-			new SurveySubmissionDto.SurveyAnswerDto(3, 4),
-			new SurveySubmissionDto.SurveyAnswerDto(4, 1),
+			new SurveySubmissionDto.SurveyAnswerDto(3, 3),
+			new SurveySubmissionDto.SurveyAnswerDto(4, 4),
 			new SurveySubmissionDto.SurveyAnswerDto(5, 5),
 			new SurveySubmissionDto.SurveyAnswerDto(6, 1),
 			new SurveySubmissionDto.SurveyAnswerDto(7, 2),
@@ -69,7 +86,7 @@ class SurveyServiceTest {
 		validRequest = new SurveySubmissionDto(answers);
 
 		mockSurveyResponse = SurveyResponse.builder()
-			.userId(MOCK_USER_ID)
+			.member(mockMember)
 			.build();
 
 		setField(mockSurveyResponse, "id", 100L);
@@ -85,32 +102,38 @@ class SurveyServiceTest {
 
 	@Nested
 	@DisplayName("설문 제출 기능")
-	class SubmitTests {
-
-		@BeforeEach
-		void stubUserId() {
-			// 매번 submit 시 현재 사용자 ID는 MOCK_USER_ID로
-			given(userUtil.getCurrentUserId()).willReturn(MOCK_USER_ID);
-		}
+	class SubmissionTests {
 
 		@Test
 		@DisplayName("정상적인 설문 제출 - 성공")
-		void submitSurvey_Success() {
-			// Given
-			given(surveyResponseRepository.save(any(SurveyResponse.class)))
-				.willReturn(mockSurveyResponse);
+		void givenValidRequest_whenSubmitSurvey_thenSuccessfulSubmission() {
+			// given
+			LocalDateTime expectedTime = LocalDateTime.now();
+			SurveyResponse savedResponse = org.mockito.Mockito.mock(SurveyResponse.class);
+			given(savedResponse.getId()).willReturn(123L);
+			given(savedResponse.getCreatedAt()).willReturn(expectedTime);
+			given(savedResponse.getAnswers()).willReturn(validRequest.getAnswers().stream().map(dto -> 
+				SurveyAnswer.builder()
+					.questionNumber(dto.getQuestionNumber())
+					.answerNumber(dto.getAnswerNumber())
+					.build()
+			).toList());
+			
+			given(surveyResponseRepository.save(any(SurveyResponse.class))).willReturn(savedResponse);
 
-			// When
+			// when
 			SurveySubmissionResponseDto result = surveyService.submitSurvey(validRequest);
 
-			// Then
+			// then
 			assertThat(result).isNotNull();
-			assertThat(result.getResponseId()).isEqualTo(100L);
+			assertThat(result.getResponseId()).isEqualTo(123L);
+			assertThat(result.getSubmittedAt()).isEqualTo(expectedTime);
 			assertThat(result.getTotalAnswers()).isEqualTo(15);
-			assertThat(result.getSubmittedAt()).isNotNull();
 
-			verify(userUtil).getCurrentUserId();
+			verify(securityUtil).getCurrentUserId();
+			verify(memberRepository).findById(MOCK_USER_ID);
 			verify(surveyResponseRepository).save(any(SurveyResponse.class));
+			verify(mockMember).updateLastSurveySubmittedAt(expectedTime);
 		}
 
 		@Test
@@ -267,11 +290,13 @@ class SurveyServiceTest {
 		void submitSurvey_SecurityContextUserId_Success() {
 			// Given
 			Long expectedId = 999L;
-			given(userUtil.getCurrentUserId()).willReturn(expectedId);
+			given(securityUtil.getCurrentUserId()).willReturn(expectedId);
+			given(memberRepository.findById(expectedId)).willReturn(Optional.of(mockMember));
+			given(mockMember.getId()).willReturn(expectedId);
 			given(surveyResponseRepository.save(any(SurveyResponse.class)))
 				.willAnswer(invocation -> {
 					SurveyResponse saved = invocation.getArgument(0);
-					assertThat(saved.getUserId()).isEqualTo(expectedId);
+					assertThat(saved.getMember().getId()).isEqualTo(expectedId);
 					setField(saved, "id", 200L);
 					setField(saved, "createdAt", LocalDateTime.now());
 					return saved;
@@ -282,7 +307,7 @@ class SurveyServiceTest {
 
 			// Then
 			assertThat(result.getResponseId()).isEqualTo(200L);
-			verify(userUtil).getCurrentUserId();
+			verify(securityUtil).getCurrentUserId();
 			verify(surveyResponseRepository).save(any(SurveyResponse.class));
 		}
 	}
@@ -296,9 +321,9 @@ class SurveyServiceTest {
 		void getUserSurveyResponses_Success() {
 			// Given
 			List<SurveyResponse> mockList = List.of(mockSurveyResponse);
-			given(surveyResponseRepository.findByUserIdOrderByCreatedAtDesc(MOCK_USER_ID))
+			given(surveyResponseRepository.findByMember_IdOrderByCreatedAtDesc(MOCK_USER_ID))
 				.willReturn(mockList);
-			given(surveyResponseRepository.countByUserId(MOCK_USER_ID))
+			given(surveyResponseRepository.countByMember_Id(MOCK_USER_ID))
 				.willReturn(1L);
 
 			// When
@@ -313,9 +338,9 @@ class SurveyServiceTest {
 			assertThat(result.getResponses().get(0).getAnswers()).hasSize(15);
 
 			verify(surveyResponseRepository)
-				.findByUserIdOrderByCreatedAtDesc(MOCK_USER_ID);
+				.findByMember_IdOrderByCreatedAtDesc(MOCK_USER_ID);
 			verify(surveyResponseRepository)
-				.countByUserId(MOCK_USER_ID);
+				.countByMember_Id(MOCK_USER_ID);
 		}
 
 		@Test
@@ -348,8 +373,8 @@ class SurveyServiceTest {
 		if (field == null) {
 			throw new RuntimeException("필드를 찾을 수 없습니다: " + fieldName);
 		}
-		org.springframework.util.ReflectionUtils.makeAccessible(field);
-		org.springframework.util.ReflectionUtils.setField(field, target, value);
+		ReflectionUtils.makeAccessible(field);
+		ReflectionUtils.setField(field, target, value);
 	}
 
 }

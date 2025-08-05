@@ -2,6 +2,8 @@ package com.example.live_backend.domain.memeber.dto;
 
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 @Getter
 public class MemberResponseDto {
 	private Long id;
@@ -11,6 +13,7 @@ public class MemberResponseDto {
 	private String birthDate;
 	private String occupation;
 	private String occupationDetail;
+	private LocalDateTime lastSurveySubmittedAt;
 
 	public MemberResponseDto(Long id,
 		String nickname,
@@ -18,7 +21,8 @@ public class MemberResponseDto {
 		String gender,
 		String birthDate,
 		String occupation,
-		String occupationDetail) {
+		String occupationDetail,
+		LocalDateTime lastSurveySubmittedAt) {
 		this.id = id;
 		this.nickname = nickname;
 		this.profileImageUrl = profileImageUrl;
@@ -26,5 +30,6 @@ public class MemberResponseDto {
 		this.birthDate = birthDate;
 		this.occupation = occupation;
 		this.occupationDetail = occupationDetail;
+		this.lastSurveySubmittedAt = lastSurveySubmittedAt;
 	}
 }

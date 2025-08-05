@@ -8,14 +8,15 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SurveyResponseRepository extends JpaRepository<SurveyResponse, Long> {
     
     /**
-     * 특정 사용자의 설문 응답 목록을 최신순으로 조회
+     * 특정 회원의 설문 응답 목록을 최신순으로 조회
      */
-    List<SurveyResponse> findByUserIdOrderByCreatedAtDesc(Long userId);
+    List<SurveyResponse> findByMember_IdOrderByCreatedAtDesc(Long memberId);
     
     /**
      * 특정 기간 내 설문 응답 조회 (관리자용)
@@ -25,7 +26,12 @@ public interface SurveyResponseRepository extends JpaRepository<SurveyResponse, 
                                                 @Param("endDate") LocalDateTime endDate);
     
     /**
-     * 사용자별 설문 응답 횟수 조회
+     * 회원별 설문 응답 횟수 조회
      */
-    Long countByUserId(Long userId);
+    Long countByMember_Id(Long memberId);
+
+    /**
+     * 특정 회원의 가장 최근 설문 응답 조회
+     */
+    Optional<SurveyResponse> findFirstByMember_IdOrderByCreatedAtDesc(Long memberId);
 } 
