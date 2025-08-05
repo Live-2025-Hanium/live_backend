@@ -7,6 +7,7 @@ import lombok.*;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
@@ -19,6 +20,9 @@ public class Profile {
 
 	private static final int MIN_NICKNAME_LENGTH = 2;
 	private static final int MAX_NICKNAME_LENGTH = 20;
+	
+	// 닉네임 정책: 한글, 영문(대소문자), 숫자만 허용
+	private static final Pattern NICKNAME_PATTERN = Pattern.compile("^[가-힣a-zA-Z0-9]+$");
 
 	@Column(name = "nickname", nullable = false, length = 20)
 	private String nickname;
@@ -59,10 +63,19 @@ public class Profile {
 		if (!StringUtils.hasText(nickname)) {
 			throw new CustomException(ErrorCode.MEMBER_NICKNAME_REQUIRED);
 		}
+
+		if (nickname.contains(" ")) {
+			throw new CustomException(ErrorCode.MEMBER_NICKNAME_SPACE_NOT_ALLOWED);
+		}
+		
 		String trimmed = nickname.trim();
-		if (trimmed.length() < MIN_NICKNAME_LENGTH
-			|| trimmed.length() > MAX_NICKNAME_LENGTH) {
-			throw new CustomException(ErrorCode.MEMBER_NICKNAME_INVALID);
+
+		if (trimmed.length() < MIN_NICKNAME_LENGTH || trimmed.length() > MAX_NICKNAME_LENGTH) {
+			throw new CustomException(ErrorCode.MEMBER_NICKNAME_LENGTH_INVALID);
+		}
+
+		if (!NICKNAME_PATTERN.matcher(trimmed).matches()) {
+			throw new CustomException(ErrorCode.MEMBER_NICKNAME_CHARACTER_INVALID);
 		}
 	}
 }

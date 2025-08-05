@@ -70,7 +70,7 @@ class CloverMissionServiceTest {
             .email("mockuser@example.com")
             .oauthId("test-oauth-id")
             .role(Role.USER)
-            .profile(new Profile("Mock-user", "https://example.com/profile.jpg"))
+            .profile(new Profile("Mockuser", "https://example.com/profile.jpg"))
             .gender(Gender.FEMALE)
             .build();
 
