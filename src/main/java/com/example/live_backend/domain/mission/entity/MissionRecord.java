@@ -45,11 +45,11 @@ public class MissionRecord extends BaseEntity {
     private CloverType cloverType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "mission_category", nullable = false)
+    @Column(name = "mission_category")
     private MissionCategory missionCategory;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "mission_difficulty", nullable = false)
+    @Column(name = "mission_difficulty")
     private MissionDifficulty missionDifficulty;
 
     @Column(name = "required_meters")
@@ -122,6 +122,20 @@ public class MissionRecord extends BaseEntity {
         }
 
         return builder.build();
+    }
+
+    /**
+     * MyMission, Member 엔티티로부터 MissionRecord 엔티티를 생성하는 팩토리 메서드
+     */
+    public static MissionRecord from(MyMission myMission, Member member) {
+        return MissionRecord.builder()
+                .member(member)
+                .missionType(MissionType.MY)
+                .missionId(myMission.getId())
+                .missionTitle(myMission.getTitle())
+                .assignedDate(LocalDate.now())
+                .missionStatus(MissionStatus.STARTED)
+                .build();
     }
 
     /**
