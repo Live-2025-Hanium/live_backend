@@ -25,7 +25,7 @@ import java.util.Optional;
 
 @Tag(name = "게시판", description = "게시판 관련 API")
 @RestController
-@RequestMapping("/api/boards")
+@RequestMapping("/api/v1/boards")
 @RequiredArgsConstructor
 public class BoardController implements BoardControllerDocs {
 
@@ -75,8 +75,9 @@ public class BoardController implements BoardControllerDocs {
 	@Override
 	@PublicApi(reason = "홈 화면 게시글 조회는 누구나 가능합니다")
 	@GetMapping("/home")
-	public ResponseHandler<List<BoardCategoryHomeResponseDto>> getBoardsForHome() {
-		List<BoardCategoryHomeResponseDto> response = boardService.getBoardsForHome();
+	public ResponseHandler<List<BoardCategoryHomeResponseDto>> getBoardsForHome(
+		@RequestParam(defaultValue = "latest") String sortBy) {
+		List<BoardCategoryHomeResponseDto> response = boardService.getBoardsForHome(sortBy);
 		return ResponseHandler.success(response);
 	}
 
@@ -86,9 +87,10 @@ public class BoardController implements BoardControllerDocs {
 	public ResponseHandler<CursorTemplate<Long, BoardListResponseDto>> searchBoards(
 		@RequestParam String keyword,
 		@RequestParam(required = false) Long cursor,
-		@RequestParam(defaultValue = "20") Integer size) {
+		@RequestParam(defaultValue = "20") Integer size,
+		@RequestParam(defaultValue = "latest") String sortBy) {
 		CursorTemplate<Long, BoardListResponseDto> response =
-			boardService.searchBoardsWithCursor(keyword, cursor, size);
+			boardService.searchBoardsWithCursor(keyword, cursor, size, sortBy);
 		return ResponseHandler.success(response);
 	}
 

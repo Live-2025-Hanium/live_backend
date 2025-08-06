@@ -120,15 +120,23 @@ public class BoardService {
     /**
      * 홈 화면용 카테고리별 게시글 조회 (각 카테고리당 최신 10개)
      */
-    public List<BoardCategoryHomeResponseDto> getBoardsForHome() {
+    public List<BoardCategoryHomeResponseDto> getBoardsForHome(String sortBy) {
         List<Category> categories = categoryRepository.findAllOrderById();
         
         return categories.stream()
                 .map(category -> {
-                    List<Board> boards = boardRepository.findLatestBoardsByCategory(
-                            category.getName(), 
-                            org.springframework.data.domain.PageRequest.of(0, 10)
-                    );
+                    List<Board> boards;
+                    if ("views".equals(sortBy)) {
+                        boards = boardRepository.findBoardsByCategoryOrderByViews(
+                                category.getName(), 
+                                org.springframework.data.domain.PageRequest.of(0, 10)
+                        );
+                    } else {
+                        boards = boardRepository.findLatestBoardsByCategory(
+                                category.getName(), 
+                                org.springframework.data.domain.PageRequest.of(0, 10)
+                        );
+                    }
                     
                     List<Long> boardIds = boards.stream()
                             .map(Board::getId)
@@ -170,10 +178,16 @@ public class BoardService {
      * 커서 기반 키워드 검색 (무한 스크롤)
      */
     public CursorTemplate<Long, BoardListResponseDto> searchBoardsWithCursor(
-            String keyword, Long cursor, Integer size) {
+            String keyword, Long cursor, Integer size, String sortBy) {
         
         int pageSize = size != null ? size : 20;
-        List<Board> boards = boardRepository.searchBoardsWithCursor(keyword, cursor, pageSize);
+        List<Board> boards;
+        
+        if ("views".equals(sortBy)) {
+            boards = boardRepository.searchBoardsWithCursorOrderByViews(keyword, cursor, cursor, pageSize);
+        } else {
+            boards = boardRepository.searchBoardsWithCursor(keyword, cursor, pageSize);
+        }
         
         return createCursorResponse(boards, pageSize);
     }

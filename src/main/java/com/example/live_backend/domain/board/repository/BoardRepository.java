@@ -27,5 +27,16 @@ public interface BoardRepository extends JpaRepository<Board, Long>, BoardReposi
            "ORDER BY b.createdAt DESC")
     List<Board> findLatestBoardsByCategory(@Param("categoryName") String categoryName, Pageable pageable);
 
+    @Query("SELECT b FROM Board b JOIN FETCH b.category WHERE b.isDeleted = false AND b.category.name = :categoryName " +
+           "ORDER BY b.viewCount DESC, b.createdAt DESC")
+    List<Board> findBoardsByCategoryOrderByViews(@Param("categoryName") String categoryName, Pageable pageable);
+
+    @Query("SELECT b FROM Board b JOIN FETCH b.category WHERE b.isDeleted = false AND b.category.name = :categoryName " +
+           "AND (:cursor IS NULL OR b.viewCount < :cursor OR (b.viewCount = :cursor AND b.id < :cursorId)) " +
+           "ORDER BY b.viewCount DESC, b.id DESC")
+    List<Board> findByCategoryWithCursorOrderByViews(@Param("categoryName") String categoryName, 
+                                                     @Param("cursor") Long cursor,
+                                                     @Param("cursorId") Long cursorId, 
+                                                     Pageable pageable);
 
 } 

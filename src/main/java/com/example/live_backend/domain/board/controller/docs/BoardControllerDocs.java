@@ -74,7 +74,10 @@ public interface BoardControllerDocs {
 	@ApiResponse(responseCode = "200", description = "조회 성공",
 		content = @Content(schema = @Schema(implementation = BoardCategoryHomeResponseDto.class))
 	)
-	ResponseHandler<List<BoardCategoryHomeResponseDto>> getBoardsForHome();
+	ResponseHandler<List<BoardCategoryHomeResponseDto>> getBoardsForHome(
+		@Parameter(description = "정렬 기준 (latest: 최신순, views: 조회수순)", example = "latest") 
+		@RequestParam(defaultValue = "latest") String sortBy
+	);
 
 	@Operation(summary = "게시글 검색 (커서 기반)", description = "키워드로 게시글을 검색합니다. 커서 기반 무한 스크롤을 지원합니다.")
 	@ApiResponse(responseCode = "200", description = "검색 성공",
@@ -83,7 +86,9 @@ public interface BoardControllerDocs {
 	ResponseHandler<CursorTemplate<Long, BoardListResponseDto>> searchBoards(
 		@Parameter(description = "검색 키워드", required = true) @RequestParam String keyword,
 		@Parameter(description = "커서 ID", required = false)  @RequestParam(required = false) Long cursor,
-		@Parameter(description = "조회 크기", example = "20")  @RequestParam(defaultValue = "20") Integer size
+		@Parameter(description = "조회 크기", example = "20")  @RequestParam(defaultValue = "20") Integer size,
+		@Parameter(description = "정렬 기준 (latest: 최신순, views: 조회수순)", example = "latest") 
+		@RequestParam(defaultValue = "latest") String sortBy
 	);
 
 	@Operation(summary = "카테고리 목록 조회", description = "사용 중인 카테고리 목록을 조회합니다.")

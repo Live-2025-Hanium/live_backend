@@ -33,6 +33,20 @@ public class BoardRepositoryImpl implements BoardRepositoryCustom {
                 .fetch();
     }
 
+    @Override
+    public List<Board> searchBoardsWithCursorOrderByViews(String keyword, Long viewCountCursor, Long idCursor, int size) {
+        return queryFactory
+                .selectFrom(board)
+                .where(
+                        board.isDeleted.eq(false),
+                        searchKeyword(keyword),
+                        viewCountCursorCondition(viewCountCursor, idCursor)
+                )
+                .orderBy(board.viewCount.desc(), board.id.desc())
+                .limit(size + 1)
+                .fetch();
+    }
+
     private BooleanExpression searchKeyword(String keyword) {
         if (!StringUtils.hasText(keyword)) {
             return null;
@@ -51,6 +65,15 @@ public class BoardRepositoryImpl implements BoardRepositoryCustom {
         }
         
         return board.id.lt(cursor);
+    }
+    
+    private BooleanExpression viewCountCursorCondition(Long viewCountCursor, Long idCursor) {
+        if (viewCountCursor == null) {
+            return null;
+        }
+        
+        return board.viewCount.lt(viewCountCursor)
+                .or(board.viewCount.eq(viewCountCursor).and(board.id.lt(idCursor)));
     }
     
     
