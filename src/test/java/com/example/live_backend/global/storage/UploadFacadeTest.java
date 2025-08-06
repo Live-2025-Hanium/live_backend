@@ -73,7 +73,7 @@ class UploadFacadeTest {
     @DisplayName("성공 - 다양한 업로드 타입 모두 지원")
     void generateUrlAndSave_AllUploadTypes_Success() {
         PresignedUrlRequestDto profileRequest = new PresignedUrlRequestDto("profile.jpg", "image/jpeg", UploadType.PROFILE);
-        PresignedUrlRequestDto postRequest = new PresignedUrlRequestDto("post.jpg", "image/jpeg", UploadType.POST);
+        PresignedUrlRequestDto postRequest = new PresignedUrlRequestDto("post.jpg", "image/jpeg", UploadType.BOARD);
 
         String fakeAccessUrl = "https://test-bucket.s3.amazonaws.com/fake-key.jpg";
         PresignedUrlResponseDto expectedResponse = PresignedUrlResponseDto.builder()
