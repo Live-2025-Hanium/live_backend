@@ -173,4 +173,14 @@ public interface MemberControllerDocs {
         @Valid @RequestBody MemberProfileRequestDto dto,
         @AuthenticationPrincipal PrincipalDetails userDetails
     );
+
+    @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 정보를 조회합니다. 마지막 설문조사 일시도 포함됩니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "사용자 정보 조회 성공"),
+        @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+    })
+    ResponseHandler<MemberResponseDto> getMyProfile(
+        @AuthenticationPrincipal PrincipalDetails userDetails
+    );
 } 

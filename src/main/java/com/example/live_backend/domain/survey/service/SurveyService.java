@@ -2,7 +2,9 @@ package com.example.live_backend.domain.survey.service;
 
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
-import com.example.live_backend.domain.memeber.util.UserUtil;
+import com.example.live_backend.global.security.SecurityUtil;
+import com.example.live_backend.domain.memeber.entity.Member;
+import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.survey.dto.request.SurveySubmissionDto;
 import com.example.live_backend.domain.survey.dto.response.SurveySubmissionResponseDto;
 import com.example.live_backend.domain.survey.dto.response.SurveyResponseListDto;
@@ -27,7 +29,8 @@ import java.util.stream.Collectors;
 public class SurveyService {
 
     private final SurveyResponseRepository surveyResponseRepository;
-    private final UserUtil userUtil;
+    private final MemberRepository memberRepository;
+    private final SecurityUtil securityUtil;
     
     private static final int TOTAL_QUESTIONS = 15;
     private static final int MIN_ANSWER_NUMBER = 1;
@@ -36,8 +39,12 @@ public class SurveyService {
 
     @Transactional
     public SurveySubmissionResponseDto submitSurvey(SurveySubmissionDto request) {
-        Long currentUserId = userUtil.getCurrentUserId();
+        Long currentUserId = securityUtil.getCurrentUserId();
         log.info("설문 응답 제출 시작 - 인증된 사용자 ID: {}", currentUserId);
+
+        // 현재 사용자의 Member 엔티티 조회
+        Member member = memberRepository.findById(currentUserId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         List<SurveySubmissionDto.SurveyAnswerDto> answers = request.getAnswers();
         validateAnswerCount(answers);
@@ -47,7 +54,7 @@ public class SurveyService {
         validateMissingQuestions(answers);
 
         SurveyResponse surveyResponse = SurveyResponse.builder()
-            .userId(currentUserId)
+            .member(member)
             .build();
 
         for (var dto : answers) {
@@ -59,6 +66,10 @@ public class SurveyService {
         }
 
         SurveyResponse saved = surveyResponseRepository.save(surveyResponse);
+        
+        // Member의 마지막 설문 제출 일시 업데이트
+        member.updateLastSurveySubmittedAt(saved.getCreatedAt());
+        
         log.info("설문 응답 제출 완료 - 응답 ID: {}, 사용자 ID: {}", saved.getId(), currentUserId);
 
         return SurveySubmissionResponseDto.builder()
@@ -129,21 +140,21 @@ public class SurveyService {
     }
      
      /**
-      * 특정 사용자의 설문 응답 목록 조회 (관리자용)
+      * 특정 회원의 설문 응답 목록 조회 (관리자용)
       */
      @Transactional(readOnly = true)
-     public SurveyResponseListDto.UserSurveyResponseListDto getUserSurveyResponses(Long userId) {
-         log.info("사용자 설문 응답 조회 - 사용자 ID: {}", userId);
+     public SurveyResponseListDto.UserSurveyResponseListDto getUserSurveyResponses(Long memberId) {
+         log.info("회원 설문 응답 조회 - 회원 ID: {}", memberId);
          
-         List<SurveyResponse> responses = surveyResponseRepository.findByUserIdOrderByCreatedAtDesc(userId);
-         Long totalCount = surveyResponseRepository.countByUserId(userId);
+                 List<SurveyResponse> responses = surveyResponseRepository.findByMember_IdOrderByCreatedAtDesc(memberId);
+        Long totalCount = surveyResponseRepository.countByMember_Id(memberId);
          
          List<SurveyResponseListDto> responseDtos = responses.stream()
                  .map(this::convertToResponseListDto)
                  .toList();
          
          return SurveyResponseListDto.UserSurveyResponseListDto.builder()
-                 .userId(userId)
+                 .userId(memberId)
                  .totalResponseCount(totalCount)
                  .responses(responseDtos)
                  .build();
@@ -176,7 +187,7 @@ public class SurveyService {
          
          return SurveyResponseListDto.builder()
                  .responseId(response.getId())
-                 .userId(response.getUserId())
+                 .userId(response.getMemberId())
                  .submittedAt(response.getCreatedAt())
                  .answers(answerDtos)
                  .build();

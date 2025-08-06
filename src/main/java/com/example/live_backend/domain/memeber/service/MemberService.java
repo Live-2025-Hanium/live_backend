@@ -140,11 +140,19 @@ public class MemberService {
 			member.getId(),
 			member.getProfile().getNickname(),
 			member.getProfile().getProfileImageUrl(),
-			member.getGender().name(),
-			member.getBirthDate().getValue().toString(),
-			member.getOccupation().name(),
-			member.getOccupationDetail()
+			member.getGender() != null ? member.getGender().name() : null,
+			member.getBirthDate() != null ? member.getBirthDate().getValue().toString() : null,
+			member.getOccupation() != null ? member.getOccupation().name() : null,
+			member.getOccupationDetail(),
+			member.getLastSurveySubmittedAt()
 		);
+	}
+
+	@Transactional(readOnly = true)
+	public MemberResponseDto getMemberById(Long memberId) {
+		Member member = memberRepository.findById(memberId)
+				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+		return toDto(member);
 	}
 
 	@Transactional

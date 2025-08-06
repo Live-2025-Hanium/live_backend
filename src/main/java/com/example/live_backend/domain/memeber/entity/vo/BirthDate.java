@@ -15,7 +15,7 @@ import com.example.live_backend.global.error.exception.ErrorCode;
 @NoArgsConstructor
 public class BirthDate {
 
-	@Column(name = "birth_date", nullable = false)
+	@Column(name = "birth_date")
 	private LocalDate value;
 
 	private BirthDate(LocalDate date) {
