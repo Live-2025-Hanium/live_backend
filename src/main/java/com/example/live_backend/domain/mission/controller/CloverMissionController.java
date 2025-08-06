@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/missions/clover")
-@Tag(name = "Clover", description = "클로버 미션 관련 API")
+@Tag(name = "Clover Mission", description = "클로버 미션 관련 API")
 @Slf4j
 public class CloverMissionController {
 

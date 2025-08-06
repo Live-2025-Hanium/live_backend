@@ -1,6 +1,5 @@
 package com.example.live_backend.domain.mission.controller;
 
-import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.mission.dto.AdminRegisterCloverMissionRequestDto;
 import com.example.live_backend.domain.mission.dto.AdminRegisterCloverMissionResponseDto;
 import com.example.live_backend.domain.mission.service.CloverAdminService;
@@ -23,7 +22,7 @@ public class CloverAdminController {
     private final CloverAdminService cloverAdminService;
 
     @PostMapping("/register")
-    @Operation(summary = "관리자 - 클로버 미션 등록", description = "관리자 기능으로 클로버 미션을 등록합니다.")
+    @Operation(summary = "관리자 -클로버 미션 등록", description = "관리자 기능으로 클로버 미션을 등록합니다.")
     public ResponseHandler<AdminRegisterCloverMissionResponseDto> registerCloverMissions(
             @RequestBody AdminRegisterCloverMissionRequestDto requestDto,
             @AuthenticationPrincipal PrincipalDetails userDetails) {
