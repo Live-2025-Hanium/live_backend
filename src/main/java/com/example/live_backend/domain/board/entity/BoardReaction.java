@@ -1,7 +1,7 @@
 package com.example.live_backend.domain.board.entity;
 
 import com.example.live_backend.domain.BaseEntity;
-import com.example.live_backend.domain.board.enums.ReactionType;
+import com.example.live_backend.domain.board.entity.enums.ReactionType;
 import com.example.live_backend.domain.memeber.entity.Member;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
