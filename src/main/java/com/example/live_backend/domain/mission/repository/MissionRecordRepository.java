@@ -33,7 +33,7 @@ public interface MissionRecordRepository extends JpaRepository<MissionRecord, Lo
     );
 
     @Query("SELECT mr FROM MissionRecord mr JOIN FETCH mr.member WHERE mr.id = :id")
-    Optional<MissionRecord> findByIdWithUser(@Param("id") Long id);
+    Optional<MissionRecord> findByIdWithMember(@Param("id") Long id);
 
     /**
      * MissionRecord, MyMission 조인 조회
@@ -42,4 +42,5 @@ public interface MissionRecordRepository extends JpaRepository<MissionRecord, Lo
             "LEFT JOIN FETCH MyMission mm ON mr.missionId = mm.id " +
             "WHERE mr.missionType = 'MY' AND mr.member.id = :memberId")
     List<Object[]> findMissionRecordsWithMyMission(@Param("memberId") Long memberId);
+
 }
