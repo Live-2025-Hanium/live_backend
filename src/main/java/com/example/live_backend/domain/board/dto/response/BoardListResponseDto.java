@@ -1,9 +1,11 @@
 package com.example.live_backend.domain.board.dto.response;
 
-import com.example.live_backend.domain.board.entity.Board;
+
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+
+import com.example.live_backend.domain.board.entity.Board;
 
 @Getter
 public class BoardListResponseDto {
