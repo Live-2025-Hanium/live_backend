@@ -19,6 +19,7 @@ import com.example.live_backend.domain.board.repository.BoardRepository;
 import com.example.live_backend.domain.board.repository.CategoryRepository;
 import com.example.live_backend.domain.board.repository.ImageRepository;
 import com.example.live_backend.domain.board.repository.BoardImageRepository;
+import com.example.live_backend.domain.board.repository.CommentRepository;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.global.error.exception.CustomException;
@@ -43,6 +44,7 @@ public class BoardService {
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
     private final BoardImageRepository boardImageRepository;
+    private final CommentRepository commentRepository;
 
     /**
      * 게시글 생성 (관리자만 가능)
@@ -114,7 +116,9 @@ public class BoardService {
 
         String authorNickname = getAuthorNickname(board.getAuthor());
 
-        return new BoardDetailResponseDto(board, authorNickname, reactionCounts, userReactions);
+        Long commentCount = commentRepository.countByBoardId(boardId);
+
+        return new BoardDetailResponseDto(board, authorNickname, commentCount, reactionCounts, userReactions);
     }
 
     /**
