@@ -18,9 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,67 +29,24 @@ public class CommentService {
     private final CommentLikeRepository commentLikeRepository;
     private final BoardRepository boardRepository;
     private final MemberRepository memberRepository;
+    private final CommentQueryService commentQueryService;
+    private final CommentLikeService commentLikeService;
+    private final CommentDtoAssembler commentDtoAssembler;
 
     /**
      * 게시글의 댓글 목록 조회
      */
     public List<CommentResponseDto> getCommentsByBoardId(Long boardId, Long memberId) {
-        // 부모 댓글들 조회
-        List<Comment> parentComments = commentRepository.findParentCommentsByBoardId(boardId);
+
+        CommentQueryService.CommentStructure commentStructure = 
+                commentQueryService.getCommentStructure(boardId);
         
-        if (parentComments.isEmpty()) {
+        if (commentStructure.isEmpty()) {
             return List.of();
         }
-
-        // 모든 댓글 ID 수집 (부모 + 자식)
-        List<Long> parentCommentIds = parentComments.stream()
-                .map(Comment::getId)
-                .toList();
-        
-        List<Comment> allReplies = parentCommentIds.stream()
-                .flatMap(parentId -> commentRepository.findRepliesByParentCommentId(parentId).stream())
-                .toList();
-        
-        List<Long> allCommentIds = parentComments.stream()
-                .map(Comment::getId)
-                .collect(Collectors.toList());
-        allCommentIds.addAll(allReplies.stream().map(Comment::getId).toList());
-
-        // 좋아요 수 조회
-        Map<Long, Long> likeCounts = getLikeCounts(allCommentIds);
-        
-        // 현재 사용자의 좋아요 여부 조회
-        List<Long> likedCommentIds = memberId != null ? 
-                commentLikeRepository.findLikedCommentIdsByMemberAndCommentIds(allCommentIds, memberId) : 
-                List.of();
-
-        // 부모 댓글들을 DTO로 변환
-        return parentComments.stream()
-                .map(parentComment -> {
-                    // 해당 부모 댓글의 대댓글들 조회
-                    List<Comment> replies = commentRepository.findRepliesByParentCommentId(parentComment.getId());
-                    
-                    // 대댓글들을 DTO로 변환
-                    List<CommentResponseDto> replyDtos = replies.stream()
-                            .map(reply -> new CommentResponseDto(
-                                    reply,
-                                    getAuthorNickname(reply.getAuthor()),
-                                    likeCounts.getOrDefault(reply.getId(), 0L),
-                                    likedCommentIds.contains(reply.getId()),
-                                    memberId != null && reply.getAuthor().getId().equals(memberId)
-                            ))
-                            .toList();
-
-                    return new CommentResponseDto(
-                            parentComment,
-                            getAuthorNickname(parentComment.getAuthor()),
-                            likeCounts.getOrDefault(parentComment.getId(), 0L),
-                            likedCommentIds.contains(parentComment.getId()),
-                            memberId != null && parentComment.getAuthor().getId().equals(memberId),
-                            replyDtos
-                    );
-                })
-                .toList();
+        CommentLikeService.CommentLikeMetadata likeMetadata = 
+                commentLikeService.getCommentLikeMetadata(commentStructure.getAllCommentIds(), memberId);
+        return commentDtoAssembler.assembleCommentDtos(commentStructure, likeMetadata, memberId);
     }
 
     /**
@@ -201,20 +156,5 @@ public class CommentService {
         }
     }
 
-    private Map<Long, Long> getLikeCounts(List<Long> commentIds) {
-        if (commentIds.isEmpty()) {
-            return Map.of();
-        }
-        
-        return commentLikeRepository.countLikesByCommentIds(commentIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (Long) row[1]
-                ));
-    }
 
-    private String getAuthorNickname(Member author) {
-        return author.getProfile() != null ? author.getProfile().getNickname() : "알 수 없음";
-    }
 } 
