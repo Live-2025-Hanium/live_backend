@@ -73,16 +73,4 @@ public class Board extends BaseEntity {
     public void delete() {
         this.isDeleted = true;
     }
-
-    public void addImage(BoardImage boardImage) {
-        this.boardImages.add(boardImage);
-    }
-
-    public void removeImage(BoardImage boardImage) {
-        this.boardImages.remove(boardImage);
-    }
-
-    public BoardImage getThumbnailImage() {
-        return boardImages.isEmpty() ? null : boardImages.get(0);
-    }
 } 
