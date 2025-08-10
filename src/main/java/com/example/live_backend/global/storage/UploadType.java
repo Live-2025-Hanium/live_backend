@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum UploadType {
     PROFILE("profile-image"),
-    POST("post-image");
+    BOARD("board-image");
 
     private final String dir;
 }
