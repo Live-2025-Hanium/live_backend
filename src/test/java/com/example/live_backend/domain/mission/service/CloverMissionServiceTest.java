@@ -193,7 +193,7 @@ class CloverMissionServiceTest {
                     .missionTitle("테스트 미션")
                     .build();
 
-            when(missionRecordRepository.findByIdWithUser(eq(userMissionId))).thenReturn(Optional.of(distanceMission));
+            when(missionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(distanceMission));
 
             CloverMissionResponseDto expectedDto = CloverMissionResponseDto.builder()
                     .userMissionId(userMissionId)
@@ -206,7 +206,7 @@ class CloverMissionServiceTest {
             CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
-            verify(missionRecordRepository).findByIdWithUser(eq(userMissionId));
+            verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
             verify(cloverMissionDtoConverter).convert(eq(distanceMission));
 
             assertThat(actualDto).isNotNull();
@@ -232,14 +232,14 @@ class CloverMissionServiceTest {
                     .cloverType("TIMER")
                     .build();
 
-            when(missionRecordRepository.findByIdWithUser(eq(userMissionId))).thenReturn(Optional.of(timerMission));
+            when(missionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(timerMission));
             when(cloverMissionDtoConverter.convert(any(MissionRecord.class))).thenReturn(expectedDto);
 
             // --- When ---
             CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
-            verify(missionRecordRepository).findByIdWithUser(eq(userMissionId));
+            verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
             verify(cloverMissionDtoConverter).convert(eq(timerMission));
             assertThat(actualDto).isNotNull();
             assertThat(actualDto.getUserMissionId()).isEqualTo(userMissionId);
@@ -264,14 +264,14 @@ class CloverMissionServiceTest {
                     .targetAddress(address)
                     .build();
 
-            when(missionRecordRepository.findByIdWithUser(eq(userMissionId))).thenReturn(Optional.of(visitMission));
+            when(missionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(visitMission));
             when(cloverMissionDtoConverter.convert(any(MissionRecord.class))).thenReturn(expectedDto);
 
             // --- When ---
             CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
-            verify(missionRecordRepository).findByIdWithUser(eq(userMissionId));
+            verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
             verify(cloverMissionDtoConverter).convert(eq(visitMission));
             assertThat(actualDto).isNotNull();
             assertThat(actualDto.getTargetAddress()).isEqualTo(address);
@@ -296,14 +296,14 @@ class CloverMissionServiceTest {
                     .illustrationUrl(imageUrl)
                     .build();
 
-            when(missionRecordRepository.findByIdWithUser(eq(userMissionId))).thenReturn(Optional.of(photoMission));
+            when(missionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(photoMission));
             when(cloverMissionDtoConverter.convert(any(MissionRecord.class))).thenReturn(expectedDto);
 
             // --- When ---
             CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
-            verify(missionRecordRepository).findByIdWithUser(eq(userMissionId));
+            verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
             verify(cloverMissionDtoConverter).convert(eq(photoMission));
             assertThat(actualDto).isNotNull();
             assertThat(actualDto.getIllustrationUrl()).isEqualTo(imageUrl);
@@ -315,7 +315,7 @@ class CloverMissionServiceTest {
 
             // --- Given ---
             Long nonExistentId = 999L;
-            when(missionRecordRepository.findByIdWithUser(eq(nonExistentId))).thenReturn(Optional.empty());
+            when(missionRecordRepository.findByIdWithMember(eq(nonExistentId))).thenReturn(Optional.empty());
 
             // --- When & Then ---
             CustomException e = assertThrows(CustomException.class, () -> {
@@ -323,7 +323,7 @@ class CloverMissionServiceTest {
             });
 
             assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MISSION_NOT_FOUND);
-            verify(missionRecordRepository).findByIdWithUser(eq(nonExistentId));
+            verify(missionRecordRepository).findByIdWithMember(eq(nonExistentId));
         }
     }
 
@@ -338,7 +338,7 @@ class CloverMissionServiceTest {
             // --- Given ---
             MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.ASSIGNED, mockUser);
 
-            when(missionRecordRepository.findByIdWithUser(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When ---
             CloverMissionStatusResponseDto result = cloverMissionService.startCloverMission(userMissionId, userId);
@@ -354,7 +354,7 @@ class CloverMissionServiceTest {
             // --- Given ---
             MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.STARTED, mockUser);
 
-            when(missionRecordRepository.findByIdWithUser(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
@@ -373,7 +373,7 @@ class CloverMissionServiceTest {
 
             MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.ASSIGNED, mockUser);
 
-            when(missionRecordRepository.findByIdWithUser(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
@@ -388,7 +388,7 @@ class CloverMissionServiceTest {
         void changeMissionStatus_Fail_MissionNotFound() {
 
             // --- Given ---
-            when(missionRecordRepository.findByIdWithUser(anyLong())).thenReturn(Optional.empty());
+            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.empty());
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
@@ -405,7 +405,7 @@ class CloverMissionServiceTest {
             // --- Given ---
             MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.STARTED, mockUser);
 
-            when(missionRecordRepository.findByIdWithUser(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When ---
             CloverMissionStatusResponseDto result = cloverMissionService.pauseCloverMission(userMissionId, userId);
@@ -421,7 +421,7 @@ class CloverMissionServiceTest {
             // --- Given ---
             MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.COMPLETED, mockUser);
 
-            when(missionRecordRepository.findByIdWithUser(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
@@ -438,7 +438,7 @@ class CloverMissionServiceTest {
             // --- Given ---
             MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.STARTED, mockUser);
 
-            when(missionRecordRepository.findByIdWithUser(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When ---
             CloverMissionStatusResponseDto result = cloverMissionService.completeCloverMission(userMissionId, userId);
@@ -455,7 +455,7 @@ class CloverMissionServiceTest {
             MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.PAUSED, mockUser);
 
 
-            when(missionRecordRepository.findByIdWithUser(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {

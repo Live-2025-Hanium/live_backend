@@ -88,6 +88,9 @@ public class MissionRecord extends BaseEntity {
     @Column(name = "feedback_difficulty")
     private MissionDifficulty feedbackDifficulty;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     /**
      * CloverMission 엔티티로부터 MissionRecord 엔티티를 생성하는 팩토리 메서드
      * @param cloverMission 원본 클로버 미션
@@ -193,5 +196,41 @@ public class MissionRecord extends BaseEntity {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
         this.missionStatus = MissionStatus.COMPLETED;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    public void addFeedback(String feedbackComment, MissionDifficulty feedbackDifficulty) {
+        setFeedback(feedbackComment, feedbackDifficulty, null);
+    }
+
+    public void addFeedbackWithImage(String feedbackComment, MissionDifficulty feedbackDifficulty, String imageUrl) {
+        setFeedback(feedbackComment, feedbackDifficulty, imageUrl);
+    }
+
+    public void updateFeedback(String feedbackComment, MissionDifficulty feedbackDifficulty) {
+        setFeedback(feedbackComment, feedbackDifficulty, null);
+    }
+    public void updateFeedbackWithImage(String feedbackComment, MissionDifficulty feedbackDifficulty, String imageUrl) {
+        setFeedback(feedbackComment, feedbackDifficulty, imageUrl);
+    }
+
+    public void setFeedback(String feedbackComment, MissionDifficulty feedbackDifficulty, String imageUrl) {
+        validateFeedback();
+
+        this.feedbackComment = feedbackComment;
+        this.feedbackDifficulty = feedbackDifficulty;
+        if (imageUrl != null) {
+            this.imageUrl = imageUrl;
+        }
+    }
+
+    private void validateFeedback() {
+        if (this.missionStatus != MissionStatus.COMPLETED) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
+        }
+
+        if (this.missionType == MissionType.MY) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_TYPE);
+        }
     }
 }

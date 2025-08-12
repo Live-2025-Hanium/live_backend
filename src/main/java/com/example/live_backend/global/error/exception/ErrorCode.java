@@ -28,6 +28,8 @@ public enum ErrorCode {
 	FAILED_TO_CONVERT_TO_JSON(BAD_REQUEST, "JSON로 변환에 실패했습니다."),
 	FAILED_TO_CONVERT_FROM_JSON(BAD_REQUEST, "JSON으로부터 변환에 실패했습니다."),
 	MISSION_EXPIRED(BAD_REQUEST, "미션 완료할 수 있는 날짜가 아닙니다."),
+	INVALID_MISSION_TYPE(BAD_REQUEST, "미션 타입이 일치하지 않습니다."),
+	IMAGE_URL_REQUIRED(BAD_REQUEST, "PHOTO 미션에는 인증샷이 필요합니다."),
 
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),
