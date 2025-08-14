@@ -80,7 +80,6 @@ public class MissionRecord extends BaseEntity {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
-    @Lob
     @Column(name = "feedback_comment")
     private String feedbackComment;
 
