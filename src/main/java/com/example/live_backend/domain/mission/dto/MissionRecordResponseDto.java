@@ -25,7 +25,7 @@ public class MissionRecordResponseDto {
     private CloverType cloverType;
 
     @Schema(description = "미션 상태", example = "COMPLETED")
-    private MissionStatus missionStatus;
+    private CloverMissionStatus cloverMissionStatus;
 
     @Schema(description = "완료 시간", example = "2023-12-25T10:30:00")
     private LocalDateTime completedAt;
@@ -50,7 +50,7 @@ public class MissionRecordResponseDto {
                 .userMissionId(missionRecord.getId())
                 .missionTitle(missionRecord.getMissionTitle())
                 .cloverType(missionRecord.getCloverType())
-                .missionStatus(missionRecord.getMissionStatus())
+                .cloverMissionStatus(missionRecord.getCloverMissionStatus())
                 .completedAt(missionRecord.getCompletedAt())
                 .missionCategory(missionRecord.getMissionCategory())
                 .missionDifficulty(missionRecord.getMissionDifficulty())

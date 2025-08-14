@@ -20,7 +20,7 @@ public class CloverMissionDtoConverter {
                 .cloverType(String.valueOf(missionRecord.getCloverType()))
                 .missionTitle(missionRecord.getMissionTitle())
                 .description(missionRecord.getMissionDescription())
-                .missionStatus(missionRecord.getMissionStatus())
+                .cloverMissionStatus(missionRecord.getCloverMissionStatus())
                 .missionDifficulty(missionRecord.getMissionDifficulty())
                 .missionCategory(missionRecord.getMissionCategory());
 

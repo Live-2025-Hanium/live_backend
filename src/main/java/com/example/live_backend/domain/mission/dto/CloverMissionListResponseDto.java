@@ -1,9 +1,9 @@
 package com.example.live_backend.domain.mission.dto;
 
+import com.example.live_backend.domain.mission.Enum.CloverMissionStatus;
 import com.example.live_backend.domain.mission.Enum.CloverType;
 import com.example.live_backend.domain.mission.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.Enum.MissionDifficulty;
-import com.example.live_backend.domain.mission.Enum.MissionStatus;
 import com.example.live_backend.domain.mission.entity.MissionRecord;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -40,7 +40,7 @@ public class CloverMissionListResponseDto {
         private CloverType cloverType;
 
         @Schema(description = "미션 수행 상태", example = "ASSIGNED / STARTED / PAUSED / COMPLETED")
-        private MissionStatus missionStatus;
+        private CloverMissionStatus cloverMissionStatus;
 
         @Schema(description = "미션 난이도", example = "VERY_EASY / EASY / NORMAL / HARD / VERY_HARD")
         private MissionDifficulty missionDifficulty;
@@ -61,7 +61,7 @@ public class CloverMissionListResponseDto {
                         .userMissionId(record.getId())
                         .missionTitle(record.getMissionTitle())
                         .cloverType(record.getCloverType())
-                        .missionStatus(record.getMissionStatus())
+                        .cloverMissionStatus(record.getCloverMissionStatus())
                         .missionDifficulty(record.getMissionDifficulty())
                         .missionCategory(record.getMissionCategory())
                         .build())

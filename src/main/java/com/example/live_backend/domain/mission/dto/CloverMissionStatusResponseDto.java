@@ -1,6 +1,6 @@
 package com.example.live_backend.domain.mission.dto;
 
-import com.example.live_backend.domain.mission.Enum.MissionStatus;
+import com.example.live_backend.domain.mission.Enum.CloverMissionStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +22,7 @@ public class CloverMissionStatusResponseDto {
     private String missionTitle;
 
     @Schema(description = "미션 진행 상태", example = "STARTED")
-    private MissionStatus missionStatus;
+    private CloverMissionStatus cloverMissionStatus;
 
     @Schema(description = "미션 할당 날짜", example = "2025-11-13")
     private LocalDate assignedDate;

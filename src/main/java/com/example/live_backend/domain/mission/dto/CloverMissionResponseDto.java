@@ -2,7 +2,7 @@ package com.example.live_backend.domain.mission.dto;
 
 import com.example.live_backend.domain.mission.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.Enum.MissionDifficulty;
-import com.example.live_backend.domain.mission.Enum.MissionStatus;
+import com.example.live_backend.domain.mission.Enum.CloverMissionStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -30,7 +30,7 @@ public class CloverMissionResponseDto {
     private String description;
 
     @Schema(description = "미션 수행 상태", example = "ASSIGNED / STARTED / PAUSED / COMPLETED")
-    private MissionStatus missionStatus;
+    private CloverMissionStatus cloverMissionStatus;
 
     @Schema(description = "미션 카테고리", example = "EASY")
     private MissionCategory missionCategory;

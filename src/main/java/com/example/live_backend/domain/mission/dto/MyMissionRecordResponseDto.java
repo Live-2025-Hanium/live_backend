@@ -1,6 +1,6 @@
 package com.example.live_backend.domain.mission.dto;
 
-import com.example.live_backend.domain.mission.Enum.MissionStatus;
+import com.example.live_backend.domain.mission.Enum.CloverMissionStatus;
 import com.example.live_backend.domain.mission.Enum.MissionType;
 import com.example.live_backend.domain.mission.entity.MissionRecord;
 import com.example.live_backend.domain.mission.entity.MyMission;
@@ -22,7 +22,7 @@ public class MyMissionRecordResponseDto {
     private Long userMissionId;
     private MissionType missionType; // MY
     private String missionTitle;
-    private MissionStatus missionStatus;
+    private CloverMissionStatus cloverMissionStatus;
     private List<String> scheduledTime;
     private List<DayOfWeek> repeatDays;
 
@@ -40,7 +40,7 @@ public class MyMissionRecordResponseDto {
                 .userMissionId(missionRecord.getId())
                 .missionType(missionRecord.getMissionType())
                 .missionTitle(missionRecord.getMissionTitle())
-                .missionStatus(missionRecord.getMissionStatus())
+                .cloverMissionStatus(missionRecord.getCloverMissionStatus())
                 .scheduledTime(formattedTimes)
                 .repeatDays(myMission.getRepeatDays())
                 .build();

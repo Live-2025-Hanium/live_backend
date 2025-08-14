@@ -90,10 +90,10 @@ class CloverMissionServiceTest {
             when(memberRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 
             List<MissionRecord> existingMissions = List.of(
-                    createTestMissionRecord(101L, MissionStatus.ASSIGNED, mockUser),
-                    createTestMissionRecord(102L, MissionStatus.STARTED, mockUser),
-                    createTestMissionRecord(103L, MissionStatus.PAUSED, mockUser),
-                    createTestMissionRecord(104L, MissionStatus.COMPLETED, mockUser)
+                    createTestMissionRecord(101L, CloverMissionStatus.ASSIGNED, mockUser),
+                    createTestMissionRecord(102L, CloverMissionStatus.STARTED, mockUser),
+                    createTestMissionRecord(103L, CloverMissionStatus.PAUSED, mockUser),
+                    createTestMissionRecord(104L, CloverMissionStatus.COMPLETED, mockUser)
             );
             when(missionRecordRepository.findCloverMissions(eq(userId), any(LocalDateTime.class)))
                     .thenReturn(existingMissions);
@@ -329,14 +329,14 @@ class CloverMissionServiceTest {
 
     @Nested
     @DisplayName("클로버 미션 상태 변경")
-    class ChangeCloverMissionStatus {
+    class ChangeCloverCloverMissionStatus {
 
         @Test
         @DisplayName("성공 - 미션 상태 변경 (ASSIGNED -> STARTED)")
         void startCloverMission_Success() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.ASSIGNED, mockUser);
+            MissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.ASSIGNED, mockUser);
 
             when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
@@ -344,7 +344,7 @@ class CloverMissionServiceTest {
             CloverMissionStatusResponseDto result = cloverMissionService.startCloverMission(userMissionId, userId);
 
             // --- Then ---
-            assertThat(result.getMissionStatus()).isEqualTo(MissionStatus.STARTED);
+            assertThat(result.getCloverMissionStatus()).isEqualTo(CloverMissionStatus.STARTED);
         }
 
         @Test
@@ -352,7 +352,7 @@ class CloverMissionServiceTest {
         void startCloverMission_Fail_InvalidStatus() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.STARTED, mockUser);
+            MissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.STARTED, mockUser);
 
             when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
@@ -371,7 +371,7 @@ class CloverMissionServiceTest {
             // --- Given ---
             Long anotherUserId = 2L; // 현재 로그인한 사용자 (1L이 아님)
 
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.ASSIGNED, mockUser);
+            MissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.ASSIGNED, mockUser);
 
             when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
@@ -403,7 +403,7 @@ class CloverMissionServiceTest {
         void pauseCloverMission_Success() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.STARTED, mockUser);
+            MissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.STARTED, mockUser);
 
             when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
@@ -411,7 +411,7 @@ class CloverMissionServiceTest {
             CloverMissionStatusResponseDto result = cloverMissionService.pauseCloverMission(userMissionId, userId);
 
             // --- Then ---
-            assertThat(result.getMissionStatus()).isEqualTo(MissionStatus.PAUSED);
+            assertThat(result.getCloverMissionStatus()).isEqualTo(CloverMissionStatus.PAUSED);
         }
 
         @Test
@@ -419,7 +419,7 @@ class CloverMissionServiceTest {
         void pauseCloverMission_Fail_InvalidStatus() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.COMPLETED, mockUser);
+            MissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.COMPLETED, mockUser);
 
             when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
@@ -436,7 +436,7 @@ class CloverMissionServiceTest {
         void completeCloverMission_Success() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.STARTED, mockUser);
+            MissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.STARTED, mockUser);
 
             when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
@@ -444,7 +444,7 @@ class CloverMissionServiceTest {
             CloverMissionStatusResponseDto result = cloverMissionService.completeCloverMission(userMissionId, userId);
 
             // --- Then ---
-            assertThat(result.getMissionStatus()).isEqualTo(MissionStatus.COMPLETED);
+            assertThat(result.getCloverMissionStatus()).isEqualTo(CloverMissionStatus.COMPLETED);
         }
 
         @Test
@@ -452,7 +452,7 @@ class CloverMissionServiceTest {
         void completeCloverMission_Fail_InvalidStatus() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.PAUSED, mockUser);
+            MissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.PAUSED, mockUser);
 
 
             when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
@@ -476,9 +476,9 @@ class CloverMissionServiceTest {
             // --- Given ---
             when(memberRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 
-            MissionRecord existingRecord1 = createTestMissionRecord(201L, MissionStatus.COMPLETED, mockUser);
+            MissionRecord existingRecord1 = createTestMissionRecord(201L, CloverMissionStatus.COMPLETED, mockUser);
             ReflectionTestUtils.setField(existingRecord1, "missionId", 101L);
-            MissionRecord existingRecord2 = createTestMissionRecord(202L, MissionStatus.ASSIGNED, mockUser);
+            MissionRecord existingRecord2 = createTestMissionRecord(202L, CloverMissionStatus.ASSIGNED, mockUser);
             ReflectionTestUtils.setField(existingRecord2, "missionId", 102L);
 
             List<MissionRecord> todayMissions = List.of(existingRecord1, existingRecord2);
@@ -532,10 +532,10 @@ class CloverMissionServiceTest {
      * @param user 미션 소유자
      * @return 생성된 MissionRecord 객체
      */
-        private MissionRecord createTestMissionRecord(Long userMissionId, MissionStatus status, Member user) {
+        private MissionRecord createTestMissionRecord(Long userMissionId, CloverMissionStatus status, Member user) {
         MissionRecord mission = MissionRecord.builder()
                 .member(user)
-                .missionStatus(status) // 파라미터로 받은 상태를 설정
+                .cloverMissionStatus(status) // 파라미터로 받은 상태를 설정
                 .missionType(MissionType.CLOVER)
                 .missionId(100L)
                 .missionTitle("테스트 미션")

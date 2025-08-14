@@ -38,7 +38,7 @@ public class CloverMissionRecord {
 
     @Column(name = "mission_status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private MissionStatus missionStatus;
+    private CloverMissionStatus cloverMissionStatus;
 
     @Column(name = "clover_type")
     @Enumerated(EnumType.STRING)
@@ -92,7 +92,7 @@ public class CloverMissionRecord {
                 .missionId(cloverMission.getId())
                 .missionTitle(cloverMission.getTitle())
                 .missionDescription(cloverMission.getDescription())
-                .missionStatus(MissionStatus.ASSIGNED) // 클로버 미션 기록을 만들었다는 것은 클로버 미션이 할당되었다는 것
+                .cloverMissionStatus(CloverMissionStatus.ASSIGNED) // 클로버 미션 기록을 만들었다는 것은 클로버 미션이 할당되었다는 것
                 .missionCategory(cloverMission.getCategory())
                 .missionDifficulty(cloverMission.getDifficulty())
                 .assignedDate(LocalDate.now());
@@ -132,26 +132,26 @@ public class CloverMissionRecord {
     }
 
     public void startMission() {
-        if (this.missionStatus != MissionStatus.ASSIGNED && this.missionStatus != MissionStatus.PAUSED) {
+        if (this.cloverMissionStatus != CloverMissionStatus.ASSIGNED && this.cloverMissionStatus != CloverMissionStatus.PAUSED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
-        this.missionStatus = MissionStatus.STARTED;
+        this.cloverMissionStatus = CloverMissionStatus.STARTED;
     }
 
 
     public void pauseMission() {
-        if (this.missionStatus != MissionStatus.STARTED) {
+        if (this.cloverMissionStatus != CloverMissionStatus.STARTED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
-        this.missionStatus = MissionStatus.PAUSED;
+        this.cloverMissionStatus = CloverMissionStatus.PAUSED;
     }
 
 
     public void completeMission() {
-        if (this.missionStatus != MissionStatus.STARTED) {
+        if (this.cloverMissionStatus != CloverMissionStatus.STARTED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
-        this.missionStatus = MissionStatus.COMPLETED;
+        this.cloverMissionStatus = CloverMissionStatus.COMPLETED;
         this.completedAt = LocalDateTime.now();
     }
 
@@ -172,7 +172,7 @@ public class CloverMissionRecord {
 
     public void setFeedback(String feedbackComment, MissionDifficulty feedbackDifficulty, String imageUrl) {
 
-        if (this.missionStatus != MissionStatus.COMPLETED) {
+        if (this.cloverMissionStatus != CloverMissionStatus.COMPLETED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
 

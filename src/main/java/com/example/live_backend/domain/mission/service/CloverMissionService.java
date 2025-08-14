@@ -91,7 +91,7 @@ public class CloverMissionService {
         CloverMissionStatusResponseDto response = CloverMissionStatusResponseDto.builder()
                 .userMissionId(missionRecord.getId())
                 .missionTitle(missionRecord.getMissionTitle())
-                .missionStatus(missionRecord.getMissionStatus())
+                .cloverMissionStatus(missionRecord.getCloverMissionStatus())
                 .assignedDate(missionRecord.getAssignedDate())
                 .build();
 
@@ -111,7 +111,7 @@ public class CloverMissionService {
         CloverMissionStatusResponseDto response = CloverMissionStatusResponseDto.builder()
                 .userMissionId(missionRecord.getId())
                 .missionTitle(missionRecord.getMissionTitle())
-                .missionStatus(missionRecord.getMissionStatus())
+                .cloverMissionStatus(missionRecord.getCloverMissionStatus())
                 .assignedDate(missionRecord.getAssignedDate())
                 .build();
 
@@ -131,7 +131,7 @@ public class CloverMissionService {
         CloverMissionStatusResponseDto response = CloverMissionStatusResponseDto.builder()
                 .userMissionId(missionRecord.getId())
                 .missionTitle(missionRecord.getMissionTitle())
-                .missionStatus(missionRecord.getMissionStatus())
+                .cloverMissionStatus(missionRecord.getCloverMissionStatus())
                 .assignedDate(missionRecord.getAssignedDate())
                 .build();
 

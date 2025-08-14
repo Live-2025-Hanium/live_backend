@@ -75,7 +75,7 @@ public class MissionRecord extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MissionStatus missionStatus;
+    private CloverMissionStatus cloverMissionStatus;
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
@@ -105,7 +105,7 @@ public class MissionRecord extends BaseEntity {
                 .missionDescription(cloverMission.getDescription())
                 .missionCategory(cloverMission.getCategory())
                 .missionDifficulty(cloverMission.getDifficulty())
-                .missionStatus(MissionStatus.ASSIGNED) // 클로버 미션 기록을 만들었다는 것은 클로버 미션이 할당되었다는 것
+                .cloverMissionStatus(CloverMissionStatus.ASSIGNED) // 클로버 미션 기록을 만들었다는 것은 클로버 미션이 할당되었다는 것
                 .assignedDate(LocalDate.now());
 
         // 클로버 미션 타입에 따라 클로버 서브 타입 정보 저장하고 목표치가 있다면 저장, 초기 진행 상황도 0으로 초기화
@@ -136,7 +136,7 @@ public class MissionRecord extends BaseEntity {
                 .missionId(myMission.getId())
                 .missionTitle(myMission.getTitle())
                 .assignedDate(LocalDate.now())
-                .missionStatus(MissionStatus.STARTED)
+                .cloverMissionStatus(CloverMissionStatus.STARTED)
                 .build();
     }
 
@@ -169,10 +169,10 @@ public class MissionRecord extends BaseEntity {
      * ASSIGNED 또는 PAUSED 상태일 때만 시작할 수 있습니다.
      */
     public void startMission() {
-        if (this.missionStatus != MissionStatus.ASSIGNED && this.missionStatus != MissionStatus.PAUSED) {
+        if (this.cloverMissionStatus != CloverMissionStatus.ASSIGNED && this.cloverMissionStatus != CloverMissionStatus.PAUSED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
-        this.missionStatus = MissionStatus.STARTED;
+        this.cloverMissionStatus = CloverMissionStatus.STARTED;
     }
 
     /**
@@ -180,10 +180,10 @@ public class MissionRecord extends BaseEntity {
      * STARTED 상태일 때만 중지할 수 있습니다.
      */
     public void pauseMission() {
-        if (this.missionStatus != MissionStatus.STARTED) {
+        if (this.cloverMissionStatus != CloverMissionStatus.STARTED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
-        this.missionStatus = MissionStatus.PAUSED;
+        this.cloverMissionStatus = CloverMissionStatus.PAUSED;
     }
 
     /**
@@ -191,10 +191,10 @@ public class MissionRecord extends BaseEntity {
      * STARTED 상태일 때만 완료할 수 있습니다.
      */
     public void completeMission() {
-        if (this.missionStatus != MissionStatus.STARTED) {
+        if (this.cloverMissionStatus != CloverMissionStatus.STARTED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
-        this.missionStatus = MissionStatus.COMPLETED;
+        this.cloverMissionStatus = CloverMissionStatus.COMPLETED;
         this.completedAt = LocalDateTime.now();
     }
 
@@ -224,7 +224,7 @@ public class MissionRecord extends BaseEntity {
     }
 
     private void validateFeedback() {
-        if (this.missionStatus != MissionStatus.COMPLETED) {
+        if (this.cloverMissionStatus != CloverMissionStatus.COMPLETED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
         }
 
