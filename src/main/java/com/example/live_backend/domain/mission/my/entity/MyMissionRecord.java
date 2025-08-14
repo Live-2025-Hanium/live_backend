@@ -1,8 +1,10 @@
 package com.example.live_backend.domain.mission.my.entity;
 
 import com.example.live_backend.domain.memeber.entity.Member;
-import com.example.live_backend.domain.mission.entity.*;
+import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
 import com.example.live_backend.domain.mission.my.Enum.MyMissionStatus;
+import com.example.live_backend.global.error.exception.CustomException;
+import com.example.live_backend.global.error.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,12 +41,21 @@ public class MyMissionRecord {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
-    public static MyMissionRecord from(MyMission myMission) {
+    public static MyMissionRecord from(MyMission myMission, Member member) {
         return MyMissionRecord.builder()
                 .myMission(myMission)
+                .member(member)
                 .assignedDate(LocalDate.now())
                 .myMissionStatus(MyMissionStatus.ASSIGNED)
                 .build();
+    }
+
+    public void completeMission() {
+        if (this.myMissionStatus != MyMissionStatus.ASSIGNED) {
+            throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
+        }
+        this.myMissionStatus = MyMissionStatus.COMPLETED;
+        this.completedAt = LocalDateTime.now();
     }
 }
 

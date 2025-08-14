@@ -1,8 +1,10 @@
 package com.example.live_backend.domain.mission.clover.entity;
 
 import com.example.live_backend.domain.memeber.entity.Member;
-import com.example.live_backend.domain.mission.Enum.*;
-import com.example.live_backend.domain.mission.entity.*;
+import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
+import com.example.live_backend.domain.mission.clover.Enum.CloverType;
+import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
+import com.example.live_backend.domain.mission.clover.Enum.MissionDifficulty;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import jakarta.persistence.*;

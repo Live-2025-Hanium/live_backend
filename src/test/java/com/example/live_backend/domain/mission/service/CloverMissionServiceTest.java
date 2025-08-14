@@ -5,16 +5,22 @@ import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
-import com.example.live_backend.domain.mission.Enum.*;
-import com.example.live_backend.domain.mission.dto.CloverMissionListResponseDto;
-import com.example.live_backend.domain.mission.dto.CloverMissionResponseDto;
-import com.example.live_backend.domain.mission.dto.CloverMissionStatusResponseDto;
-import com.example.live_backend.domain.mission.entity.CloverMission;
-import com.example.live_backend.domain.mission.entity.DistanceMission;
+import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
+import com.example.live_backend.domain.mission.clover.Enum.CloverType;
+import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
+import com.example.live_backend.domain.mission.clover.Enum.MissionDifficulty;
+import com.example.live_backend.domain.mission.clover.service.CloverMissionDtoConverter;
+import com.example.live_backend.domain.mission.clover.service.CloverMissionService;
+import com.example.live_backend.domain.mission.clover.service.VectorDBService;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionListResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionRecordResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionStatusResponseDto;
+import com.example.live_backend.domain.mission.clover.entity.CloverMission;
+import com.example.live_backend.domain.mission.clover.entity.DistanceMission;
 import com.example.live_backend.domain.mission.entity.MissionRecord;
-import com.example.live_backend.domain.mission.entity.TimerMission;
-import com.example.live_backend.domain.mission.repository.CloverMissionRepository;
-import com.example.live_backend.domain.mission.repository.MissionRecordRepository;
+import com.example.live_backend.domain.mission.clover.entity.TimerMission;
+import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
+import com.example.live_backend.domain.mission.MissionRecordRepository;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
@@ -195,7 +201,7 @@ class CloverMissionServiceTest {
 
             when(missionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(distanceMission));
 
-            CloverMissionResponseDto expectedDto = CloverMissionResponseDto.builder()
+            CloverMissionRecordResponseDto expectedDto = CloverMissionRecordResponseDto.builder()
                     .userMissionId(userMissionId)
                     .cloverType("DISTANCE")
                     .build();
@@ -203,7 +209,7 @@ class CloverMissionServiceTest {
 
 
             // --- When ---
-            CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
+            CloverMissionRecordResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
             verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
@@ -227,7 +233,7 @@ class CloverMissionServiceTest {
                     .progressInSeconds(200)
                     .build();
 
-            CloverMissionResponseDto expectedDto = CloverMissionResponseDto.builder()
+            CloverMissionRecordResponseDto expectedDto = CloverMissionRecordResponseDto.builder()
                     .userMissionId(userMissionId)
                     .cloverType("TIMER")
                     .build();
@@ -236,7 +242,7 @@ class CloverMissionServiceTest {
             when(cloverMissionDtoConverter.convert(any(MissionRecord.class))).thenReturn(expectedDto);
 
             // --- When ---
-            CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
+            CloverMissionRecordResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
             verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
@@ -258,7 +264,7 @@ class CloverMissionServiceTest {
                     .targetAddress(address)
                     .build();
 
-            CloverMissionResponseDto expectedDto = CloverMissionResponseDto.builder()
+            CloverMissionRecordResponseDto expectedDto = CloverMissionRecordResponseDto.builder()
                     .userMissionId(userMissionId)
                     .cloverType("VISIT")
                     .targetAddress(address)
@@ -268,7 +274,7 @@ class CloverMissionServiceTest {
             when(cloverMissionDtoConverter.convert(any(MissionRecord.class))).thenReturn(expectedDto);
 
             // --- When ---
-            CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
+            CloverMissionRecordResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
             verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
@@ -290,7 +296,7 @@ class CloverMissionServiceTest {
                     .illustrationUrl(imageUrl)
                     .build();
 
-            CloverMissionResponseDto expectedDto = CloverMissionResponseDto.builder()
+            CloverMissionRecordResponseDto expectedDto = CloverMissionRecordResponseDto.builder()
                     .userMissionId(userMissionId)
                     .cloverType("PHOTO")
                     .illustrationUrl(imageUrl)
@@ -300,7 +306,7 @@ class CloverMissionServiceTest {
             when(cloverMissionDtoConverter.convert(any(MissionRecord.class))).thenReturn(expectedDto);
 
             // --- When ---
-            CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
+            CloverMissionRecordResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
             verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
