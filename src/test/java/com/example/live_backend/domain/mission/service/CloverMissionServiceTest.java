@@ -11,6 +11,7 @@ import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.clover.Enum.MissionDifficulty;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionListResponseDto;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionRecordResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionResponseDto;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionStatusResponseDto;
 import com.example.live_backend.domain.mission.clover.entity.CloverMission;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
@@ -196,7 +197,7 @@ class CloverMissionServiceTest {
             when(cloverMissionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(distanceMission));
 
             // --- When ---
-            CloverMissionRecordResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
+            CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
             verify(cloverMissionRecordRepository).findByIdWithMember(eq(userMissionId));
@@ -222,7 +223,7 @@ class CloverMissionServiceTest {
             when(cloverMissionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(timerMission));
 
             // --- When ---
-            CloverMissionRecordResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
+            CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
             verify(cloverMissionRecordRepository).findByIdWithMember(eq(userMissionId));
@@ -247,7 +248,7 @@ class CloverMissionServiceTest {
             when(cloverMissionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(visitMission));
 
             // --- When ---
-            CloverMissionRecordResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
+            CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
             verify(cloverMissionRecordRepository).findByIdWithMember(eq(userMissionId));
@@ -271,7 +272,7 @@ class CloverMissionServiceTest {
             when(cloverMissionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(photoMission));
 
             // --- When ---
-            CloverMissionRecordResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
+            CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
             verify(cloverMissionRecordRepository).findByIdWithMember(eq(userMissionId));
@@ -314,7 +315,7 @@ class CloverMissionServiceTest {
             CloverMissionStatusResponseDto result = cloverMissionService.startCloverMission(userMissionId, userId);
 
             // --- Then ---
-            assertThat(result.getCloverMissionStatus()).isEqualTo(CloverMissionStatus.STARTED);
+            assertThat(result.getMissionStatus()).isEqualTo(CloverMissionStatus.STARTED);
         }
 
         @Test
@@ -381,7 +382,7 @@ class CloverMissionServiceTest {
             CloverMissionStatusResponseDto result = cloverMissionService.pauseCloverMission(userMissionId, userId);
 
             // --- Then ---
-            assertThat(result.getCloverMissionStatus()).isEqualTo(CloverMissionStatus.PAUSED);
+            assertThat(result.getMissionStatus()).isEqualTo(CloverMissionStatus.PAUSED);
         }
 
         @Test
@@ -414,7 +415,7 @@ class CloverMissionServiceTest {
             CloverMissionStatusResponseDto result = cloverMissionService.completeCloverMission(userMissionId, userId);
 
             // --- Then ---
-            assertThat(result.getCloverMissionStatus()).isEqualTo(CloverMissionStatus.COMPLETED);
+            assertThat(result.getMissionStatus()).isEqualTo(CloverMissionStatus.COMPLETED);
         }
 
         @Test

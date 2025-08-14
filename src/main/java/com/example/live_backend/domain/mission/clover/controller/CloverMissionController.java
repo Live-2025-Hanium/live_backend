@@ -1,7 +1,7 @@
 package com.example.live_backend.domain.mission.clover.controller;
 
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionListResponseDto;
-import com.example.live_backend.domain.mission.clover.dto.CloverMissionRecordResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionResponseDto;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionStatusResponseDto;
 import com.example.live_backend.domain.mission.clover.service.CloverMissionService;
 import com.example.live_backend.global.error.response.ResponseHandler;
@@ -36,12 +36,12 @@ public class CloverMissionController {
 	@GetMapping("/{userMissionId}")
 	@Operation(summary = "클로버 미션(1개) 상세 조회 ",
 			description = "클로버 미션 1개의 상세 정보를 조회합니다.")
-	public ResponseHandler<CloverMissionRecordResponseDto> getCloverMissionInfo(
+	public ResponseHandler<CloverMissionResponseDto> getCloverMissionInfo(
 			@PathVariable Long userMissionId,
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
 		Long userId = userDetails.getMemberId();
-		CloverMissionRecordResponseDto response = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
+		CloverMissionResponseDto response = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
 		return ResponseHandler.success(response);
 	}

@@ -4,14 +4,14 @@ import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.clover.Enum.MissionDifficulty;
 import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
-import com.example.live_backend.global.error.exception.CustomException;
-import com.example.live_backend.global.error.exception.ErrorCode;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
@@ -28,9 +28,12 @@ public class CloverMissionRecordResponseDto {
 
     @Schema(description = "미션 제목", example = "동료에게 안부 인사하기")
     private String missionTitle;
-    
+
     @Schema(description = "미션 수행 상태", example = "ASSIGNED / STARTED / PAUSED / COMPLETED")
-    private CloverMissionStatus cloverMissionStatus;
+    private CloverMissionStatus missionStatus;
+
+    @Schema(description = "완료 시간", example = "2023-12-25T10:30:00")
+    private LocalDateTime completedAt;
 
     @Schema(description = "미션 카테고리", example = "EASY")
     private MissionCategory missionCategory;
@@ -38,67 +41,27 @@ public class CloverMissionRecordResponseDto {
     @Schema(description = "미션 난이도", example = "EASY")
     private MissionDifficulty missionDifficulty;
 
-    @Schema(description = "타이머 미션 남은 시간", example = "10:30")
-    private String remainingTime;
+    @Schema(description = "피드백 코멘트", example = "미션을 완료하면서 정말 뿌듯했습니다!")
+    private String feedbackComment;
 
-    @Schema(description = "거리 미션 남은 거리", example = "500")
-    private Integer remainingDistance;
+    @Schema(description = "체감 난이도", example = "EASY")
+    private MissionDifficulty feedbackDifficulty;
 
-    @Schema(description = "방문 미션 주소", example = "주소정보")
-    private String targetAddress;
-
-    @Schema(description = "일러스트레이션 주소", example = "S3 URL")
-    private String illustrationUrl;
+    @Schema(description = "인증샷 이미지 URL", example = "https://s3.amazonaws.com/bucket/mission-certification/image.jpg")
+    private String imageUrl;
 
     public static CloverMissionRecordResponseDto from(CloverMissionRecord missionRecord) {
-        CloverMissionRecordResponseDto.CloverMissionRecordResponseDtoBuilder builder = CloverMissionRecordResponseDto.builder()
+        return CloverMissionRecordResponseDto.builder()
                 .userMissionId(missionRecord.getId())
-                .cloverType(String.valueOf(missionRecord.getCloverType()))
                 .missionTitle(missionRecord.getMissionTitle())
-                .cloverMissionStatus(missionRecord.getCloverMissionStatus())
+                .cloverType(String.valueOf(missionRecord.getCloverType()))
+                .missionStatus(missionRecord.getCloverMissionStatus())
+                .completedAt(missionRecord.getCompletedAt())
+                .missionCategory(missionRecord.getMissionCategory())
                 .missionDifficulty(missionRecord.getMissionDifficulty())
-                .missionCategory(missionRecord.getMissionCategory());
-
-        switch (missionRecord.getCloverType()) {
-            case DISTANCE:
-                addDistanceInfo(builder, missionRecord);
-                break;
-            case TIMER:
-                addTimerInfo(builder, missionRecord);
-                break;
-            case VISIT:
-                addVisitInfo(builder, missionRecord);
-                break;
-            case PHOTO:
-                addPhotoInfo(builder, missionRecord);
-                break;
-            default:
-                throw new CustomException(ErrorCode.UNSUPPORTED_CLOVER_TYPE);
-        }
-
-        return builder.build();
-    }
-
-    private static void addDistanceInfo(CloverMissionRecordResponseDto.CloverMissionRecordResponseDtoBuilder builder, CloverMissionRecord missionRecord) {
-        int remainingDistance = missionRecord.getRequiredMeters() - missionRecord.getProgressInMeters();
-        builder.remainingDistance(Math.max(0, remainingDistance));
-    }
-
-    private static void addTimerInfo(CloverMissionRecordResponseDto.CloverMissionRecordResponseDtoBuilder builder, CloverMissionRecord missionRecord) {
-        int remainingSeconds = missionRecord.getRequiredSeconds() - missionRecord.getProgressInSeconds();
-        remainingSeconds = Math.max(0, remainingSeconds);
-
-        int minutes = remainingSeconds / 60;
-        int seconds = remainingSeconds % 60;
-        String formattedTime = String.format("%02d:%02d", minutes, seconds);
-        builder.remainingTime(formattedTime);
-    }
-
-    private static void addVisitInfo(CloverMissionRecordResponseDto.CloverMissionRecordResponseDtoBuilder builder, CloverMissionRecord missionRecord) {
-        builder.targetAddress(missionRecord.getTargetAddress());
-    }
-
-    private static void addPhotoInfo(CloverMissionRecordResponseDto.CloverMissionRecordResponseDtoBuilder builder, CloverMissionRecord missionRecord) {
-        builder.illustrationUrl(missionRecord.getIllustrationUrl());
+                .feedbackComment(missionRecord.getFeedbackComment())
+                .feedbackDifficulty(missionRecord.getFeedbackDifficulty())
+                .imageUrl(missionRecord.getImageUrl())
+                .build();
     }
 }

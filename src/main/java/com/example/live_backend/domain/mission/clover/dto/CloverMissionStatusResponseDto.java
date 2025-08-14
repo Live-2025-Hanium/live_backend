@@ -23,7 +23,7 @@ public class CloverMissionStatusResponseDto {
     private String missionTitle;
 
     @Schema(description = "미션 진행 상태", example = "STARTED")
-    private CloverMissionStatus cloverMissionStatus;
+    private CloverMissionStatus missionStatus;
 
     @Schema(description = "미션 할당 날짜", example = "2025-11-13")
     private LocalDate assignedDate;
@@ -32,7 +32,7 @@ public class CloverMissionStatusResponseDto {
         return CloverMissionStatusResponseDto.builder()
                 .userMissionId(cloverMissionRecord.getMissionId())
                 .missionTitle(cloverMissionRecord.getMissionTitle())
-                .cloverMissionStatus(cloverMissionRecord.getCloverMissionStatus())
+                .missionStatus(cloverMissionRecord.getCloverMissionStatus())
                 .assignedDate(cloverMissionRecord.getAssignedDate())
                 .build();
     }

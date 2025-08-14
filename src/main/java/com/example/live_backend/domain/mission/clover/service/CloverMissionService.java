@@ -4,6 +4,7 @@ import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionListResponseDto;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionRecordResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionResponseDto;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionStatusResponseDto;
 import com.example.live_backend.domain.mission.clover.entity.CloverMission;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
@@ -66,11 +67,11 @@ public class CloverMissionService {
     }
 
     @Transactional(readOnly = true)
-    public CloverMissionRecordResponseDto getCloverMissionInfo(Long userMissionId, Long userId) {
+    public CloverMissionResponseDto getCloverMissionInfo(Long userMissionId, Long userId) {
 
         CloverMissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId, userId);
 
-        return CloverMissionRecordResponseDto.from(missionRecord);
+        return CloverMissionResponseDto.from(missionRecord);
     }
 
     @Transactional

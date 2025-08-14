@@ -40,7 +40,7 @@ public class CloverMissionListResponseDto {
         private CloverType cloverType;
 
         @Schema(description = "미션 수행 상태", example = "ASSIGNED / STARTED / PAUSED / COMPLETED")
-        private CloverMissionStatus cloverMissionStatus;
+        private CloverMissionStatus missionStatus;
 
         @Schema(description = "미션 난이도", example = "VERY_EASY / EASY / NORMAL / HARD / VERY_HARD")
         private MissionDifficulty missionDifficulty;
@@ -61,7 +61,7 @@ public class CloverMissionListResponseDto {
                         .userMissionId(record.getId())
                         .missionTitle(record.getMissionTitle())
                         .cloverType(record.getCloverType())
-                        .cloverMissionStatus(record.getCloverMissionStatus())
+                        .missionStatus(record.getCloverMissionStatus())
                         .missionDifficulty(record.getMissionDifficulty())
                         .missionCategory(record.getMissionCategory())
                         .build())
