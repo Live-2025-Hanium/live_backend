@@ -1,7 +1,7 @@
 package com.example.live_backend.domain.board.controller;
 
-import com.example.live_backend.config.TestTokenServiceConfig;
 import com.example.live_backend.config.WithMockPrincipalDetails;
+import com.example.live_backend.domain.auth.jwt.JwtTokenValidator;
 import com.example.live_backend.domain.board.dto.request.CommentCreateRequestDto;
 import com.example.live_backend.domain.board.dto.request.CommentUpdateRequestDto;
 import com.example.live_backend.domain.board.service.CommentService;
@@ -19,10 +19,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.test.context.support.WithAnonymousUser;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -35,7 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = CommentController.class)
-@Import({TestTokenServiceConfig.class, com.example.live_backend.global.error.exception.GlobalExceptionHandler.class})
+@Import(com.example.live_backend.global.error.exception.GlobalExceptionHandler.class)
 @AutoConfigureMockMvc(addFilters = false)
 @DisplayName("CommentController 테스트")
 class CommentControllerTest {
@@ -48,6 +45,9 @@ class CommentControllerTest {
 
 	@MockBean
 	private MemberRepository memberRepository;
+	
+	@MockBean
+	private JwtTokenValidator jwtTokenValidator;
 
 	@Autowired
 	private ObjectMapper objectMapper;
@@ -56,7 +56,7 @@ class CommentControllerTest {
 
 	@BeforeEach
 	void setUp() throws Exception {
-		// 테스트용 Member 생성
+
 		testMember = Member.builder()
 			.oauthId("test-oauth-id")
 			.email("test@example.com")
@@ -66,13 +66,11 @@ class CommentControllerTest {
 				.profileImageUrl("http://test.com/profile.jpg")
 				.build())
 			.build();
-			
-		// 리플렉션을 사용하여 ID 설정
+
 		java.lang.reflect.Field idField = Member.class.getDeclaredField("id");
 		idField.setAccessible(true);
 		idField.set(testMember, 2L);
 
-		// MemberRepository mock 설정
 		when(memberRepository.findById(2L)).thenReturn(Optional.of(testMember));
 	}
 
