@@ -140,7 +140,7 @@ public class CloverMissionService {
 
     private MissionRecord findAndVerifyMissionRecord(Long userMissionId, Long userId) {
 
-        MissionRecord findByUserMissionId = missionRecordRepository.findByIdWithUser(userMissionId)
+        MissionRecord findByUserMissionId = missionRecordRepository.findByIdWithMember(userMissionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MISSION_NOT_FOUND));
 
         if (!findByUserMissionId.getMember().getId().equals(userId)) {

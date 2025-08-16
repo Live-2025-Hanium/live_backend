@@ -26,6 +26,11 @@ public enum ErrorCode {
 	INVALID_UPLOAD_TYPE(BAD_REQUEST, "업로드 타입이 일치하지 않습니다."),
 	INVALID_CLOVER_TYPE(BAD_REQUEST, "지원하지 않는 클로버 타입입니다."),
 	INVALID_REQUEST(BAD_REQUEST, "잘못된 요청입니다."),
+	FAILED_TO_CONVERT_TO_JSON(BAD_REQUEST, "JSON로 변환에 실패했습니다."),
+	FAILED_TO_CONVERT_FROM_JSON(BAD_REQUEST, "JSON으로부터 변환에 실패했습니다."),
+	MISSION_EXPIRED(BAD_REQUEST, "미션 완료할 수 있는 날짜가 아닙니다."),
+	INVALID_MISSION_TYPE(BAD_REQUEST, "미션 타입이 일치하지 않습니다."),
+	IMAGE_URL_REQUIRED(BAD_REQUEST, "PHOTO 미션에는 인증샷이 필요합니다."),
 
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),
@@ -39,6 +44,8 @@ public enum ErrorCode {
 	MISSION_FORBIDDEN(FORBIDDEN, "미션을 변경할 권한이 없습니다."),
 	REGISTRATION_DENIED(FORBIDDEN, "미션을 등록할 권한이 없습니다."),
 	ACCESS_FORBIDDEN(FORBIDDEN, "접근 권한이 없습니다."),
+	MISSION_UPDATE_DENIED(FORBIDDEN, "미션을 수정할 권한이 없습니다."),
+	MISSION_DELETE_DENIED(FORBIDDEN, "미션을 삭제할 권한이 없습니다."),
 
 	/* ------------------ 404 NOT_FOUND: 리소스 없음 ------------------ */
 	USER_NOT_FOUND(NOT_FOUND, "존재하지 않는 사용자입니다."),

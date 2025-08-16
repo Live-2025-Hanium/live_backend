@@ -1,15 +1,22 @@
 package com.example.live_backend.domain.mission.repository;
 
+import com.example.live_backend.domain.mission.Enum.MissionType;
 import com.example.live_backend.domain.mission.entity.MissionRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface MissionRecordRepository extends JpaRepository<MissionRecord, Long> {
+
+    List<MissionRecord> findByMemberIdAndAssignedDateAndMissionType(
+            Long memberId,
+            LocalDate assignedDate,
+            MissionType missionType);
 
     /**
      * 특정 사용자의 오늘 만들어진 클로버 미션들(3개) 조회
@@ -26,6 +33,14 @@ public interface MissionRecordRepository extends JpaRepository<MissionRecord, Lo
     );
 
     @Query("SELECT mr FROM MissionRecord mr JOIN FETCH mr.member WHERE mr.id = :id")
-    Optional<MissionRecord> findByIdWithUser(@Param("id") Long id);
+    Optional<MissionRecord> findByIdWithMember(@Param("id") Long id);
+
+    /**
+     * MissionRecord, MyMission 조인 조회
+     */
+    @Query("SELECT mr, mm FROM MissionRecord mr " +
+            "LEFT JOIN FETCH MyMission mm ON mr.missionId = mm.id " +
+            "WHERE mr.missionType = 'MY' AND mr.member.id = :memberId")
+    List<Object[]> findMissionRecordsWithMyMission(@Param("memberId") Long memberId);
 
 }
