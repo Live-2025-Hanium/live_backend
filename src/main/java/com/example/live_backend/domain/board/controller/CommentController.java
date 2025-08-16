@@ -46,6 +46,10 @@ public class CommentController implements CommentControllerDocs {
             @PathVariable Long boardId,
             @Valid @RequestBody CommentCreateRequestDto requestDto,
             @AuthenticationPrincipal PrincipalDetails userDetails) {
+        if (userDetails == null) {
+            throw new com.example.live_backend.global.error.exception.CustomException(
+                com.example.live_backend.global.error.exception.ErrorCode.DENIED_UNAUTHORIZED_USER);
+        }
         Long commentId = commentService.createComment(boardId, requestDto, userDetails.getMemberId());
         return ResponseHandler.success(commentId);
     }
@@ -58,6 +62,10 @@ public class CommentController implements CommentControllerDocs {
             @PathVariable Long parentCommentId,
             @Valid @RequestBody CommentCreateRequestDto requestDto,
             @AuthenticationPrincipal PrincipalDetails userDetails) {
+        if (userDetails == null) {
+            throw new com.example.live_backend.global.error.exception.CustomException(
+                com.example.live_backend.global.error.exception.ErrorCode.DENIED_UNAUTHORIZED_USER);
+        }
         Long replyId = commentService.createReply(boardId, parentCommentId, requestDto, userDetails.getMemberId());
         return ResponseHandler.success(replyId);
     }
@@ -69,6 +77,10 @@ public class CommentController implements CommentControllerDocs {
             @PathVariable Long commentId,
             @Valid @RequestBody CommentUpdateRequestDto requestDto,
             @AuthenticationPrincipal PrincipalDetails userDetails) {
+        if (userDetails == null) {
+            throw new com.example.live_backend.global.error.exception.CustomException(
+                com.example.live_backend.global.error.exception.ErrorCode.DENIED_UNAUTHORIZED_USER);
+        }
         commentService.updateComment(commentId, requestDto, userDetails.getMemberId());
         return ResponseHandler.success(null);
     }
@@ -79,6 +91,10 @@ public class CommentController implements CommentControllerDocs {
     public ResponseHandler<Void> deleteComment(
             @PathVariable Long commentId,
             @AuthenticationPrincipal PrincipalDetails userDetails) {
+        if (userDetails == null) {
+            throw new com.example.live_backend.global.error.exception.CustomException(
+                com.example.live_backend.global.error.exception.ErrorCode.DENIED_UNAUTHORIZED_USER);
+        }
         commentService.deleteComment(commentId, userDetails.getMemberId());
         return ResponseHandler.success(null);
     }
@@ -89,6 +105,10 @@ public class CommentController implements CommentControllerDocs {
     public ResponseHandler<Void> toggleCommentLike(
             @PathVariable Long commentId,
             @AuthenticationPrincipal PrincipalDetails userDetails) {
+        if (userDetails == null) {
+            throw new com.example.live_backend.global.error.exception.CustomException(
+                com.example.live_backend.global.error.exception.ErrorCode.DENIED_UNAUTHORIZED_USER);
+        }
         commentService.toggleCommentLike(commentId, userDetails.getMemberId());
         return ResponseHandler.success(null);
     }
