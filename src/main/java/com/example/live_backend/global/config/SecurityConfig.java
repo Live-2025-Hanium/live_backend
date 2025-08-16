@@ -70,6 +70,8 @@ public class SecurityConfig {
 					"/api/auth/refresh",
 					"/api/members/nickname/check"
 				).permitAll()
+				// 댓글 조회는 누구나 가능
+				.requestMatchers(org.springframework.http.HttpMethod.GET, "/api/boards/**/comments").permitAll()
 				.anyRequest().authenticated()
 			);
 		return http.build();
