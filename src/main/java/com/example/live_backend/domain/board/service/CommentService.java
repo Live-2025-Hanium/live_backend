@@ -17,8 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,24 +29,103 @@ public class CommentService {
     private final CommentLikeRepository commentLikeRepository;
     private final BoardRepository boardRepository;
     private final MemberRepository memberRepository;
-    private final CommentQueryService commentQueryService;
     private final CommentLikeService commentLikeService;
-    private final CommentDtoAssembler commentDtoAssembler;
 
     /**
-     * 게시글의 댓글 목록 조회
+     * 게시글의 댓글 목록 조회 - DTO 중심으로 즉시 변환
      */
     public List<CommentResponseDto> getCommentsByBoardId(Long boardId, Long memberId) {
-
-        CommentQueryService.CommentStructure commentStructure = 
-                commentQueryService.getCommentStructure(boardId);
+        // 1. 부모 댓글 조회
+        List<Comment> parentComments = commentRepository.findParentCommentsByBoardId(boardId);
         
-        if (commentStructure.isEmpty()) {
+        if (parentComments.isEmpty()) {
             return List.of();
         }
+        
+        // 2. 부모 댓글 ID 추출
+        List<Long> parentCommentIds = parentComments.stream()
+                .map(Comment::getId)
+                .toList();
+        
+        // 3. 대댓글 일괄 조회 및 맵핑
+        List<Comment> allReplies = parentCommentIds.stream()
+                .flatMap(parentId -> commentRepository.findRepliesByParentCommentId(parentId).stream())
+                .toList();
+        
+        Map<Long, List<Comment>> repliesMap = allReplies.stream()
+                .collect(Collectors.groupingBy(reply -> reply.getParentComment().getId()));
+        
+        // 4. 모든 댓글 ID 수집 (좋아요 조회용)
+        Set<Long> allCommentIds = new HashSet<>();
+        parentComments.forEach(comment -> allCommentIds.add(comment.getId()));
+        allReplies.forEach(reply -> allCommentIds.add(reply.getId()));
+        
+        // 5. 좋아요 정보 일괄 조회
         CommentLikeService.CommentLikeMetadata likeMetadata = 
-                commentLikeService.getCommentLikeMetadata(commentStructure.getAllCommentIds(), memberId);
-        return commentDtoAssembler.assembleCommentDtos(commentStructure, likeMetadata, memberId);
+                commentLikeService.getCommentLikeMetadata(new ArrayList<>(allCommentIds), memberId);
+        
+        // 6. Entity를 DTO로 즉시 변환하여 반환
+        return parentComments.stream()
+                .map(parentComment -> {
+                    // 대댓글 DTO 변환
+                    List<CommentResponseDto> replyDtos = repliesMap.getOrDefault(parentComment.getId(), List.of())
+                            .stream()
+                            .map(reply -> createCommentDto(reply, likeMetadata, memberId))
+                            .toList();
+                    
+                    // 부모 댓글 DTO 변환 (대댓글 포함)
+                    return createCommentDto(parentComment, likeMetadata, memberId, replyDtos);
+                })
+                .toList();
+    }
+    
+    /**
+     * Comment Entity를 CommentResponseDto로 변환 (대댓글용)
+     */
+    private CommentResponseDto createCommentDto(
+            Comment comment,
+            CommentLikeService.CommentLikeMetadata likeMetadata,
+            Long currentUserId) {
+        
+        String authorNickname = comment.getAuthor().getProfile() != null ? 
+                comment.getAuthor().getProfile().getNickname() : "알 수 없음";
+        
+        return new CommentResponseDto(
+                comment,
+                authorNickname,
+                likeMetadata.getLikeCount(comment.getId()),
+                likeMetadata.isLiked(comment.getId()),
+                isMyComment(comment, currentUserId)
+        );
+    }
+    
+    /**
+     * Comment Entity를 CommentResponseDto로 변환 (부모 댓글용)
+     */
+    private CommentResponseDto createCommentDto(
+            Comment comment,
+            CommentLikeService.CommentLikeMetadata likeMetadata,
+            Long currentUserId,
+            List<CommentResponseDto> replies) {
+        
+        String authorNickname = comment.getAuthor().getProfile() != null ? 
+                comment.getAuthor().getProfile().getNickname() : "알 수 없음";
+        
+        return new CommentResponseDto(
+                comment,
+                authorNickname,
+                likeMetadata.getLikeCount(comment.getId()),
+                likeMetadata.isLiked(comment.getId()),
+                isMyComment(comment, currentUserId),
+                replies
+        );
+    }
+    
+    /**
+     * 댓글 작성자 확인
+     */
+    private boolean isMyComment(Comment comment, Long currentUserId) {
+        return currentUserId != null && comment.getAuthor().getId().equals(currentUserId);
     }
 
     /**
