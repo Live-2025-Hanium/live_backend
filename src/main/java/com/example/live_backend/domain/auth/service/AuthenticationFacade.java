@@ -33,7 +33,7 @@ public class AuthenticationFacade {
 
         refreshTokenService.saveRefreshToken(user.getId(), tokens.refreshToken());
 
-        LoginResponseDto response = LoginResponseDto.from(user);
+        LoginResponseDto response = LoginResponseDto.from(user, tokens.accessToken(), tokens.refreshToken());
 
         return new LoginResult(response, tokens);
     }

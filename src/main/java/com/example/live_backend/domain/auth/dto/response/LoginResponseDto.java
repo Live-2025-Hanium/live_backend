@@ -10,8 +10,10 @@ import lombok.Getter;
 public class LoginResponseDto {
     private UserInfoDto user;
     private boolean isNewUser;
+    private String accessToken;
+    private String refreshToken;
 
-    public static LoginResponseDto from(AuthUserDto user) {
+    public static LoginResponseDto from(AuthUserDto user, String accessToken, String refreshToken) {
         UserInfoDto userInfo = UserInfoDto.builder()
             .id(user.getId())
             .email(user.getEmail())
@@ -23,6 +25,8 @@ public class LoginResponseDto {
         return LoginResponseDto.builder()
             .user(userInfo)
             .isNewUser(user.isNewUser())
+            .accessToken(accessToken)
+            .refreshToken(refreshToken)
             .build();
     }
 
