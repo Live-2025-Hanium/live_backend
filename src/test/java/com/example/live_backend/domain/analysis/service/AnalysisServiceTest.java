@@ -1,10 +1,12 @@
 package com.example.live_backend.domain.analysis.service;
 
+import com.example.live_backend.domain.analysis.controller.dto.MonthlyGrowthResponseDto;
 import com.example.live_backend.domain.analysis.controller.dto.MonthlyParticipationResponseDto;
 import com.example.live_backend.domain.analysis.controller.dto.WeeklyMissionSummaryResponseDto;
 import com.example.live_backend.domain.analysis.controller.dto.DailyCompletedMissionsResponseDto;
 import com.example.live_backend.domain.analysis.controller.service.AnalysisService;
 import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
+import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -250,6 +252,101 @@ class AnalysisServiceTest {
                     eq(CloverMissionStatus.COMPLETED),
                     eq(date)
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("getMonthlyGrowthTop3()")
+    class GetMonthlyGrowthTop3 {
+
+        @Test
+        @DisplayName("성공 - 전월/당월 카테고리 집계로 TOP3 및 순위/증가율 계산")
+        void returnsTop3WithRanksAndPercentages() {
+            // Given
+            Long memberId = 99L;
+            YearMonth ym = YearMonth.of(2025, 8);
+
+            List<Object[]> currRows = List.of(
+                    new Object[]{MissionCategory.ENVIRONMENT, 7L},   // +40%
+                    new Object[]{MissionCategory.RELATIONSHIP, 13L}, // +30%
+                    new Object[]{MissionCategory.HEALTH, 15L},       // +25%
+                    new Object[]{MissionCategory.COMMUNICATION, 5L}  // -50% (10->5)
+            );
+
+            List<Object[]> prevRows = List.of(
+                    new Object[]{MissionCategory.ENVIRONMENT, 5L},
+                    new Object[]{MissionCategory.RELATIONSHIP, 10L},
+                    new Object[]{MissionCategory.HEALTH, 12L},
+                    new Object[]{MissionCategory.COMMUNICATION, 10L}
+            );
+
+            given(cloverMissionRecordRepository.countCompletedByCategoryInPeriod(
+                    eq(memberId), eq(CloverMissionStatus.COMPLETED), any(LocalDateTime.class), any(LocalDateTime.class)
+            )).willReturn(currRows)
+                    .willReturn(prevRows);
+
+            // When
+            MonthlyGrowthResponseDto result = analysisService.getMonthlyGrowthTop3(memberId, ym);
+
+            // Then
+            assertThat(result.getPreviousMonth()).isEqualTo(7);
+            assertThat(result.getCurrentMonth()).isEqualTo(8);
+            assertThat(result.getGrowthSummary().size()).isEqualTo(3);
+
+            assertThat(result.getGrowthSummary().get(0).getRank()).isEqualTo(1);
+            assertThat(result.getGrowthSummary().get(0).getCategoryName()).isEqualTo(
+                    com.example.live_backend.domain.mission.clover.Enum.MissionCategory.ENVIRONMENT.getInKr()
+            );
+            assertThat(result.getGrowthSummary().get(0).getGrowthPercentage()).isEqualTo(40.0);
+
+            assertThat(result.getGrowthSummary().get(1).getRank()).isEqualTo(2);
+            assertThat(result.getGrowthSummary().get(1).getCategoryName()).isEqualTo(
+                    com.example.live_backend.domain.mission.clover.Enum.MissionCategory.RELATIONSHIP.getInKr()
+            );
+            assertThat(result.getGrowthSummary().get(1).getGrowthPercentage()).isEqualTo(30.0);
+
+            assertThat(result.getGrowthSummary().get(2).getRank()).isEqualTo(3);
+            assertThat(result.getGrowthSummary().get(2).getCategoryName()).isEqualTo(
+                    com.example.live_backend.domain.mission.clover.Enum.MissionCategory.HEALTH.getInKr()
+            );
+            assertThat(result.getGrowthSummary().get(2).getGrowthPercentage()).isEqualTo(25.0);
+        }
+
+        @Test
+        @DisplayName("레포지토리 호출 기간 검증 - 당월 후 전월 순으로 호출")
+        void repositoryCalledWithCorrectPeriods() {
+
+            // Given
+            Long memberId = 100L;
+            YearMonth ym = YearMonth.of(2025, 8);
+
+            given(cloverMissionRecordRepository.countCompletedByCategoryInPeriod(
+                    eq(memberId), eq(CloverMissionStatus.COMPLETED), any(LocalDateTime.class), any(LocalDateTime.class)
+            )).willReturn(List.of()) 
+                    .willReturn(List.of()); 
+
+            // When
+            analysisService.getMonthlyGrowthTop3(memberId, ym);
+
+            ArgumentCaptor<LocalDateTime> startCap = ArgumentCaptor.forClass(LocalDateTime.class);
+            ArgumentCaptor<LocalDateTime> endCap = ArgumentCaptor.forClass(LocalDateTime.class);
+
+            verify(cloverMissionRecordRepository, org.mockito.Mockito.times(2))
+                    .countCompletedByCategoryInPeriod(eq(memberId), eq(CloverMissionStatus.COMPLETED), startCap.capture(), endCap.capture());
+
+            List<LocalDateTime> starts = startCap.getAllValues();
+            List<LocalDateTime> ends = endCap.getAllValues();
+
+            LocalDateTime currStart = ym.atDay(1).atStartOfDay();
+            LocalDateTime currEnd = ym.atEndOfMonth().atTime(LocalTime.MAX);
+            YearMonth prev = ym.minusMonths(1);
+            LocalDateTime prevStart = prev.atDay(1).atStartOfDay();
+            LocalDateTime prevEnd = prev.atEndOfMonth().atTime(LocalTime.MAX);
+
+            assertThat(starts.get(0)).isEqualTo(currStart);
+            assertThat(ends.get(0)).isEqualTo(currEnd);
+            assertThat(starts.get(1)).isEqualTo(prevStart);
+            assertThat(ends.get(1)).isEqualTo(prevEnd);
         }
     }
 }

@@ -56,4 +56,13 @@ public interface CloverMissionRecordRepository extends JpaRepository<CloverMissi
                                                   @Param("status") CloverMissionStatus status,
                                                   @Param("date") LocalDate date);
 
+    @Query("SELECT cmr.missionCategory, COUNT(cmr) FROM CloverMissionRecord cmr " +
+            "WHERE cmr.member.id = :memberId AND cmr.cloverMissionStatus = :status " +
+            "AND cmr.completedAt BETWEEN :start AND :end " +
+            "GROUP BY cmr.missionCategory")
+    List<Object[]> countCompletedByCategoryInPeriod(@Param("memberId") Long memberId,
+                                                    @Param("status") CloverMissionStatus status,
+                                                    @Param("start") LocalDateTime start,
+                                                    @Param("end") LocalDateTime end);
+
 }

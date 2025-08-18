@@ -1,6 +1,7 @@
 package com.example.live_backend.domain.analysis.controller.controller;
 
 import com.example.live_backend.domain.analysis.controller.Enum.AnalysisQueryType;
+import com.example.live_backend.domain.analysis.controller.dto.MonthlyGrowthResponseDto;
 import com.example.live_backend.domain.analysis.controller.dto.MonthlyParticipationResponseDto;
 import com.example.live_backend.domain.analysis.controller.service.AnalysisService;
 import com.example.live_backend.global.error.response.ResponseHandler;
@@ -52,5 +53,17 @@ public class AnalysisController {
             case WEEKLY -> ResponseHandler.success(analysisService.getWeeklySummary(memberId, date));
             case DAILY -> ResponseHandler.success(analysisService.getDailyCompleted(memberId, date));
         };
+    }
+
+    @GetMapping("/monthly-growth")
+    @Operation(summary = "전월 대비 TOP3 성장 카테고리 조회", description = "현재 월 기준 전월 대비 성장한 카테고리 TOP3")
+    public ResponseHandler<MonthlyGrowthResponseDto> getMonthlyGrowth(
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ) {
+
+        Long memberId = userDetails.getMemberId();
+        YearMonth ym = YearMonth.now();
+
+        return ResponseHandler.success(analysisService.getMonthlyGrowthTop3(memberId, ym));
     }
 }

@@ -2,6 +2,7 @@ package com.example.live_backend.domain.analysis.controller;
 
 import com.example.live_backend.domain.analysis.controller.controller.AnalysisController;
 import com.example.live_backend.domain.analysis.controller.dto.DailyCompletedMissionsResponseDto;
+import com.example.live_backend.domain.analysis.controller.dto.MonthlyGrowthResponseDto;
 import com.example.live_backend.domain.analysis.controller.dto.MonthlyParticipationResponseDto;
 import com.example.live_backend.domain.analysis.controller.dto.WeeklyMissionSummaryResponseDto;
 import com.example.live_backend.domain.analysis.controller.service.AnalysisService;
@@ -144,6 +145,47 @@ class AnalysisControllerTest {
             CustomException ex = assertThrows(CustomException.class,
                     () -> analysisController.getMissions(date, null, member));
             assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.QUERY_TYPE_REQUIRED);
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/analysis/monthly-growth")
+    class GetMonthlyGrowth {
+
+        @Test
+        @DisplayName("성공 및 서비스 위임 확인 - 전월 대비 TOP3 성장 카테고리")
+        void returnsSuccessAndDelegatesToService() {
+            // Given
+            YearMonth expectedYm = YearMonth.now();
+
+            MonthlyGrowthResponseDto.GrowthSummary g1 =
+                    MonthlyGrowthResponseDto.GrowthSummary.builder()
+                            .rank(1)
+                            .categoryName("환경 바꾸기")
+                            .previousMonthCount(5)
+                            .currentMonthCount(7)
+                            .growthPercentage(40.0)
+                            .build();
+
+            MonthlyGrowthResponseDto dto =
+                    MonthlyGrowthResponseDto.builder()
+                            .previousMonth(expectedYm.minusMonths(1).getMonthValue())
+                            .currentMonth(expectedYm.getMonthValue())
+                            .growthSummary(java.util.List.of(g1))
+                            .build();
+
+            given(analysisService.getMonthlyGrowthTop3(eq(MEMBER_ID), any(YearMonth.class))).willReturn(dto);
+
+            // When
+            ResponseHandler<MonthlyGrowthResponseDto> response = analysisController.getMonthlyGrowth(member);
+
+            // Then
+            assertThat(response.isSuccess()).isTrue();
+            assertThat(response.getData()).isEqualTo(dto);
+
+            ArgumentCaptor<YearMonth> ymCaptor = ArgumentCaptor.forClass(YearMonth.class);
+            verify(analysisService).getMonthlyGrowthTop3(eq(MEMBER_ID), ymCaptor.capture());
+            assertThat(ymCaptor.getValue()).isEqualTo(expectedYm);
         }
     }
 }

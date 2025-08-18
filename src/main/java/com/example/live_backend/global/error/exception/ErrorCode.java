@@ -32,6 +32,7 @@ public enum ErrorCode {
 	IMAGE_URL_REQUIRED(BAD_REQUEST, "PHOTO 미션에는 인증샷이 필요합니다."),
 	INVALID_QUERY_TYPE(BAD_REQUEST, "잘못된 쿼리 타입입니다."),
 	QUERY_TYPE_REQUIRED(BAD_REQUEST, "쿼리 타입은 필수 입력값입니다."),
+	INVALID_CATEGORY(BAD_REQUEST, "잘못된 카테고리입니다."),
 
 	/* ------------------ 401 UNAUTHORIZED : 인증 관련 오류 ------------------ */
 	DENIED_UNAUTHORIZED_USER(UNAUTHORIZED, "로그인되지 않은 유저의 접근입니다."),

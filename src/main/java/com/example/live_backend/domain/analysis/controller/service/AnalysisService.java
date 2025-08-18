@@ -1,19 +1,20 @@
 package com.example.live_backend.domain.analysis.controller.service;
 
 import com.example.live_backend.domain.analysis.controller.dto.DailyCompletedMissionsResponseDto;
+import com.example.live_backend.domain.analysis.controller.dto.MonthlyGrowthResponseDto;
 import com.example.live_backend.domain.analysis.controller.dto.MonthlyParticipationResponseDto;
 import com.example.live_backend.domain.analysis.controller.dto.WeeklyMissionSummaryResponseDto;
 import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
+import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
-import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -60,5 +61,36 @@ public class AnalysisService {
         );
 
         return DailyCompletedMissionsResponseDto.from(date, completed);
+    }
+
+    public MonthlyGrowthResponseDto getMonthlyGrowthTop3(Long memberId, YearMonth ym) {
+        YearMonth prev = ym.minusMonths(1);
+
+        LocalDateTime currStartDateTime = ym.atDay(1).atStartOfDay();
+        LocalDateTime currEndDateTime = ym.atEndOfMonth().atTime(LocalTime.MAX);
+
+        LocalDateTime prevStartDateTime = prev.atDay(1).atStartOfDay();
+        LocalDateTime prevEndDateTime = prev.atEndOfMonth().atTime(LocalTime.MAX);
+
+        Map<MissionCategory, Long> current = toCategoryCountMap(
+                cloverMissionRecordRepository.countCompletedByCategoryInPeriod(
+                        memberId, CloverMissionStatus.COMPLETED, currStartDateTime, currEndDateTime
+                )
+        );
+        Map<MissionCategory, Long> previous = toCategoryCountMap(
+                cloverMissionRecordRepository.countCompletedByCategoryInPeriod(
+                        memberId, CloverMissionStatus.COMPLETED, prevStartDateTime, prevEndDateTime
+                )
+        );
+
+        return MonthlyGrowthResponseDto.from(ym, previous, current);
+    }
+
+    private Map<MissionCategory, Long> toCategoryCountMap(List<Object[]> rows) {
+        Map<MissionCategory, Long> map = new EnumMap<>(MissionCategory.class);
+        for (Object[] row : rows) {
+            map.put((MissionCategory) row[0], (Long) row[1]);
+        }
+        return map;
     }
 }
