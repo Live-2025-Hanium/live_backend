@@ -3,6 +3,8 @@ package com.example.live_backend.domain.mission.clover.service;
 import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.mission.clover.dto.AdminRegisterCloverMissionRequestDto;
 import com.example.live_backend.domain.mission.clover.dto.AdminRegisterCloverMissionResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionCreateRequestDto;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionVectorDataDto;
 import com.example.live_backend.domain.mission.clover.entity.CloverMission;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
 import com.example.live_backend.global.error.exception.CustomException;
@@ -30,17 +32,21 @@ public class CloverAdminService {
             throw new CustomException(ErrorCode.REGISTRATION_DENIED);
         }
 
-        CloverMission newMission = CloverMission.from(request);
+        CloverMissionCreateRequestDto createDto = request.getCloverMissionCreateRequestDto();
+        CloverMissionVectorDataDto vectorDto = request.getCloverMissionVectorDataDto();
+
+        CloverMission newMission = CloverMission.from(createDto);
 
         CloverMission savedMission = cloverMissionRepository.save(newMission);
 
         // document로 저장할 텍스트 생성
+        // document로 저장할 텍스트 생성
         String vectorDocument = String.format(
                 "미션 제목: %s, 미션 설명: %s, 도움을 줄 수 있는 사용자의 특성: %s, 기대 효과: %s",
-                request.getMissionTitle(),
-                request.getActivityDescription(),
-                request.getRelatedFeature(),
-                request.getExpectedEffect()
+                createDto.getMissionTitle(),
+                vectorDto.getActivityDescription(),
+                vectorDto.getRelatedFeature(),
+                vectorDto.getExpectedEffect()
         );
 
         // metadata 생성
@@ -49,7 +55,7 @@ public class CloverAdminService {
                 "mission_title", savedMission.getTitle(),
                 "mission_category", savedMission.getCategory().name(),
                 "mission_difficulty", savedMission.getDifficulty().name(),
-                "target_user_type", request.getTargetUserType().name()
+                "target_user_type", vectorDto.getTargetUserType().name()
         );
 
         vectorStore.add(List.of(new Document(vectorDocument, metadata)));
@@ -60,7 +66,7 @@ public class CloverAdminService {
                 .description(newMission.getDescription())
                 .missionCategory(newMission.getCategory())
                 .missionDifficulty(newMission.getDifficulty())
-                .targetUserType(request.getTargetUserType())
+                .targetUserType(vectorDto.getTargetUserType())
                 .vectorDocument(vectorDocument)
                 .build();
     }
