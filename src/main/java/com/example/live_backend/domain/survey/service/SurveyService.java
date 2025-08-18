@@ -67,14 +67,11 @@ public class SurveyService {
                 .orElseThrow(() -> new CustomException(ErrorCode.SURVEY_NOT_FOUND, 
                     "질문을 찾을 수 없습니다. 질문 번호: " + dto.getQuestionNumber()));
 
-            SurveyQuestionOption selectedOption = null;
-            if (question.getQuestionType() == SurveyQuestion.QuestionType.SINGLE_CHOICE || 
-                question.getQuestionType() == SurveyQuestion.QuestionType.MULTIPLE_CHOICE) {
-                selectedOption = question.getOptions().stream()
-                    .filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
-                    .findFirst()
-                    .orElse(null);
-            }
+            // 선택된 옵션 찾기
+            SurveyQuestionOption selectedOption = question.getOptions().stream()
+                .filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
+                .findFirst()
+                .orElse(null);
             
             SurveyAnswer answer = SurveyAnswer.builder()
                 .surveyQuestion(question)

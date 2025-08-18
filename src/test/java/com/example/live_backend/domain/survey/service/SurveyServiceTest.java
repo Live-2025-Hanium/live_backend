@@ -100,7 +100,6 @@ class SurveyServiceTest {
 			given(mockQuestion.getId()).willReturn((long) i);
 			given(mockQuestion.getQuestionNumber()).willReturn(i);
 			given(mockQuestion.getQuestionText()).willReturn("Question " + i);
-			given(mockQuestion.getQuestionType()).willReturn(SurveyQuestion.QuestionType.SINGLE_CHOICE);
 
 			List<SurveyQuestionOption> mockOptions = new java.util.ArrayList<>();
 			for (int j = 1; j <= 5; j++) {

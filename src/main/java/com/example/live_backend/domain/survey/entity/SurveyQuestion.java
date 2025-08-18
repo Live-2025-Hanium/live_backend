@@ -26,9 +26,6 @@ public class SurveyQuestion extends BaseEntity {
     @Column(name = "question_text", nullable = false, length = 500)
     private String questionText;
 
-    @Column(name = "question_type", nullable = false, length = 20)
-    @Enumerated(EnumType.STRING)
-    private QuestionType questionType;
 
     @Column(name = "is_required", nullable = false)
     private boolean isRequired;
@@ -41,11 +38,10 @@ public class SurveyQuestion extends BaseEntity {
     private List<SurveyQuestionOption> options = new ArrayList<>();
 
     @Builder
-    public SurveyQuestion(Integer questionNumber, String questionText, QuestionType questionType, 
+    public SurveyQuestion(Integer questionNumber, String questionText, 
                          boolean isRequired, boolean isActive) {
         this.questionNumber = questionNumber;
         this.questionText = questionText;
-        this.questionType = questionType;
         this.isRequired = isRequired;
         this.isActive = isActive;
     }
@@ -55,18 +51,9 @@ public class SurveyQuestion extends BaseEntity {
         option.setSurveyQuestion(this);
     }
 
-    public void updateQuestion(String questionText, QuestionType questionType, 
-                              boolean isRequired, boolean isActive) {
+    public void updateQuestion(String questionText, boolean isRequired, boolean isActive) {
         this.questionText = questionText;
-        this.questionType = questionType;
         this.isRequired = isRequired;
         this.isActive = isActive;
-    }
-
-    public enum QuestionType {
-        SINGLE_CHOICE,
-        MULTIPLE_CHOICE,
-        TEXT,
-        SCALE
     }
 }

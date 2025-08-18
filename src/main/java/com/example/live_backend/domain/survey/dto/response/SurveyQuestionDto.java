@@ -14,7 +14,6 @@ public class SurveyQuestionDto {
     private Long id;
     private Integer questionNumber;
     private String questionText;
-    private String questionType;
     private boolean isRequired;
     private List<SurveyQuestionOptionDto> options;
     
@@ -23,7 +22,6 @@ public class SurveyQuestionDto {
                 .id(question.getId())
                 .questionNumber(question.getQuestionNumber())
                 .questionText(question.getQuestionText())
-                .questionType(question.getQuestionType().name())
                 .isRequired(question.isRequired())
                 .options(question.getOptions().stream()
                         .filter(option -> option.isActive())
