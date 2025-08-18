@@ -5,16 +5,22 @@ import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
-import com.example.live_backend.domain.mission.Enum.*;
-import com.example.live_backend.domain.mission.dto.CloverMissionListResponseDto;
-import com.example.live_backend.domain.mission.dto.CloverMissionResponseDto;
-import com.example.live_backend.domain.mission.dto.CloverMissionStatusResponseDto;
-import com.example.live_backend.domain.mission.entity.CloverMission;
-import com.example.live_backend.domain.mission.entity.DistanceMission;
-import com.example.live_backend.domain.mission.entity.MissionRecord;
-import com.example.live_backend.domain.mission.entity.TimerMission;
-import com.example.live_backend.domain.mission.repository.CloverMissionRepository;
-import com.example.live_backend.domain.mission.repository.MissionRecordRepository;
+import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
+import com.example.live_backend.domain.mission.clover.Enum.CloverType;
+import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
+import com.example.live_backend.domain.mission.clover.Enum.MissionDifficulty;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionListResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionRecordResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.CloverMissionStatusResponseDto;
+import com.example.live_backend.domain.mission.clover.entity.CloverMission;
+import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
+import com.example.live_backend.domain.mission.clover.entity.DistanceMission;
+import com.example.live_backend.domain.mission.clover.entity.TimerMission;
+import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
+import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
+import com.example.live_backend.domain.mission.clover.service.CloverMissionService;
+import com.example.live_backend.domain.mission.clover.service.VectorDBService;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,14 +33,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,10 +51,7 @@ class CloverMissionServiceTest {
     private CloverMissionService cloverMissionService;
 
     @Mock
-    private MissionRecordRepository missionRecordRepository;
-
-    @Mock
-    private CloverMissionDtoConverter cloverMissionDtoConverter;
+    private CloverMissionRecordRepository cloverMissionRecordRepository;
 
     @Mock
     private MemberRepository memberRepository;
@@ -67,14 +70,13 @@ class CloverMissionServiceTest {
     void setUp() {
 
         mockUser = Member.builder()
-            .email("mockuser@example.com")
-            .oauthId("test-oauth-id")
-            .role(Role.USER)
-            .profile(new Profile("Mockuser", "https://example.com/profile.jpg"))
-            .gender(Gender.FEMALE)
-            .build();
+                .email("mockuser@example.com")
+                .oauthId("test-oauth-id")
+                .role(Role.USER)
+                .profile(new Profile("Mockuser", "https://example.com/profile.jpg"))
+                .gender(Gender.FEMALE)
+                .build();
 
-        // mockUser 객체의 id 필드에 1L를 할당
         ReflectionTestUtils.setField(mockUser, "id", userId);
     }
 
@@ -89,13 +91,13 @@ class CloverMissionServiceTest {
             // --- Given ---
             when(memberRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 
-            List<MissionRecord> existingMissions = List.of(
-                    createTestMissionRecord(101L, MissionStatus.ASSIGNED, mockUser),
-                    createTestMissionRecord(102L, MissionStatus.STARTED, mockUser),
-                    createTestMissionRecord(103L, MissionStatus.PAUSED, mockUser),
-                    createTestMissionRecord(104L, MissionStatus.COMPLETED, mockUser)
+            List<CloverMissionRecord> existingMissions = List.of(
+                    createTestMissionRecord(101L, CloverMissionStatus.ASSIGNED, mockUser),
+                    createTestMissionRecord(102L, CloverMissionStatus.STARTED, mockUser),
+                    createTestMissionRecord(103L, CloverMissionStatus.PAUSED, mockUser),
+                    createTestMissionRecord(104L, CloverMissionStatus.COMPLETED, mockUser)
             );
-            when(missionRecordRepository.findCloverMissions(eq(userId), any(LocalDateTime.class)))
+            when(cloverMissionRecordRepository.findCloverMissionsList(eq(userId), any(LocalDate.class)))
                     .thenReturn(existingMissions);
 
             // --- When ---
@@ -108,7 +110,7 @@ class CloverMissionServiceTest {
 
             verify(vectorDBService, never()).searchSimilarMissionsIds(anyString(), anyInt(), anyList());
             verify(cloverMissionRepository, never()).findAllById(any());
-            verify(missionRecordRepository, never()).saveAll(any());
+            verify(cloverMissionRecordRepository, never()).saveAll(any());
         }
 
         @Test
@@ -117,8 +119,7 @@ class CloverMissionServiceTest {
 
             // --- Given ---
             when(memberRepository.findById(userId)).thenReturn(Optional.of(mockUser));
-
-            when(missionRecordRepository.findCloverMissions(eq(userId), any(LocalDateTime.class)))
+            when(cloverMissionRecordRepository.findCloverMissionsList(eq(userId), any(LocalDate.class)))
                     .thenReturn(Collections.emptyList());
 
             List<Long> missionIdsFromVectorDB = List.of(1L, 2L);
@@ -141,10 +142,10 @@ class CloverMissionServiceTest {
             when(cloverMissionRepository.findAllById(missionIdsFromVectorDB))
                     .thenReturn(foundMissions);
 
-            List<MissionRecord> savedMissions = foundMissions.stream()
-                    .map(mission -> MissionRecord.fromCloverMission(mission, mockUser))
+            List<CloverMissionRecord> savedMissions = foundMissions.stream()
+                    .map(mission -> CloverMissionRecord.from(mission, mockUser))
                     .toList();
-            when(missionRecordRepository.saveAll(anyList())).thenReturn(savedMissions);
+            when(cloverMissionRecordRepository.saveAll(anyList())).thenReturn(savedMissions);
 
             // --- When ---
             CloverMissionListResponseDto result = cloverMissionService.getCloverMissionList(userId);
@@ -156,7 +157,7 @@ class CloverMissionServiceTest {
 
             verify(vectorDBService, times(1)).searchSimilarMissionsIds(anyString(), eq(3), anyList());
             verify(cloverMissionRepository, times(1)).findAllById(missionIdsFromVectorDB);
-            verify(missionRecordRepository, times(1)).saveAll(anyList());
+            verify(cloverMissionRecordRepository, times(1)).saveAll(anyList());
         }
 
         @Test
@@ -184,30 +185,22 @@ class CloverMissionServiceTest {
         void getDistanceMissionInfo() {
 
             // --- Given ---
-            MissionRecord distanceMission = MissionRecord.builder()
-                    .id(userMissionId)
+            CloverMissionRecord distanceMission = CloverMissionRecord.builder()
                     .member(mockUser)
                     .cloverType(CloverType.DISTANCE)
                     .requiredMeters(1000)
                     .progressInMeters(300)
                     .missionTitle("테스트 미션")
                     .build();
+            ReflectionTestUtils.setField(distanceMission, "id", userMissionId);
 
-            when(missionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(distanceMission));
-
-            CloverMissionResponseDto expectedDto = CloverMissionResponseDto.builder()
-                    .userMissionId(userMissionId)
-                    .cloverType("DISTANCE")
-                    .build();
-            when(cloverMissionDtoConverter.convert(any(MissionRecord.class))).thenReturn(expectedDto);
-
+            when(cloverMissionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(distanceMission));
 
             // --- When ---
             CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
-            verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
-            verify(cloverMissionDtoConverter).convert(eq(distanceMission));
+            verify(cloverMissionRecordRepository).findByIdWithMember(eq(userMissionId));
 
             assertThat(actualDto).isNotNull();
             assertThat(actualDto.getUserMissionId()).isEqualTo(userMissionId);
@@ -219,30 +212,24 @@ class CloverMissionServiceTest {
         void getTimerMissionInfo() {
 
             // --- Given ---
-            MissionRecord timerMission = MissionRecord.builder()
-                    .id(userMissionId)
+            CloverMissionRecord timerMission = CloverMissionRecord.builder()
                     .member(mockUser)
                     .cloverType(CloverType.TIMER)
                     .requiredSeconds(600)
                     .progressInSeconds(200)
                     .build();
+            ReflectionTestUtils.setField(timerMission, "id", userMissionId);
 
-            CloverMissionResponseDto expectedDto = CloverMissionResponseDto.builder()
-                    .userMissionId(userMissionId)
-                    .cloverType("TIMER")
-                    .build();
-
-            when(missionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(timerMission));
-            when(cloverMissionDtoConverter.convert(any(MissionRecord.class))).thenReturn(expectedDto);
+            when(cloverMissionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(timerMission));
 
             // --- When ---
             CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
-            verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
-            verify(cloverMissionDtoConverter).convert(eq(timerMission));
+            verify(cloverMissionRecordRepository).findByIdWithMember(eq(userMissionId));
             assertThat(actualDto).isNotNull();
             assertThat(actualDto.getUserMissionId()).isEqualTo(userMissionId);
+            assertThat(actualDto.getCloverType()).isEqualTo("TIMER");
         }
 
         @Test
@@ -251,28 +238,20 @@ class CloverMissionServiceTest {
 
             // --- Given ---
             String address = "서울시 강남구 테헤란로";
-            MissionRecord visitMission = MissionRecord.builder()
-                    .id(userMissionId)
+            CloverMissionRecord visitMission = CloverMissionRecord.builder()
                     .member(mockUser)
                     .cloverType(CloverType.VISIT)
                     .targetAddress(address)
                     .build();
+            ReflectionTestUtils.setField(visitMission, "id", userMissionId);
 
-            CloverMissionResponseDto expectedDto = CloverMissionResponseDto.builder()
-                    .userMissionId(userMissionId)
-                    .cloverType("VISIT")
-                    .targetAddress(address)
-                    .build();
-
-            when(missionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(visitMission));
-            when(cloverMissionDtoConverter.convert(any(MissionRecord.class))).thenReturn(expectedDto);
+            when(cloverMissionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(visitMission));
 
             // --- When ---
             CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
-            verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
-            verify(cloverMissionDtoConverter).convert(eq(visitMission));
+            verify(cloverMissionRecordRepository).findByIdWithMember(eq(userMissionId));
             assertThat(actualDto).isNotNull();
             assertThat(actualDto.getTargetAddress()).isEqualTo(address);
         }
@@ -283,28 +262,20 @@ class CloverMissionServiceTest {
 
             // --- Given ---
             String imageUrl = "S3 URL";
-            MissionRecord photoMission = MissionRecord.builder()
-                    .id(userMissionId)
-                    .member(mockUser) // 소유자 정보 추가
+            CloverMissionRecord photoMission = CloverMissionRecord.builder()
+                    .member(mockUser)
                     .cloverType(CloverType.PHOTO)
                     .illustrationUrl(imageUrl)
                     .build();
+            ReflectionTestUtils.setField(photoMission, "id", userMissionId);
 
-            CloverMissionResponseDto expectedDto = CloverMissionResponseDto.builder()
-                    .userMissionId(userMissionId)
-                    .cloverType("PHOTO")
-                    .illustrationUrl(imageUrl)
-                    .build();
-
-            when(missionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(photoMission));
-            when(cloverMissionDtoConverter.convert(any(MissionRecord.class))).thenReturn(expectedDto);
+            when(cloverMissionRecordRepository.findByIdWithMember(eq(userMissionId))).thenReturn(Optional.of(photoMission));
 
             // --- When ---
             CloverMissionResponseDto actualDto = cloverMissionService.getCloverMissionInfo(userMissionId, userId);
 
             // --- Then ---
-            verify(missionRecordRepository).findByIdWithMember(eq(userMissionId));
-            verify(cloverMissionDtoConverter).convert(eq(photoMission));
+            verify(cloverMissionRecordRepository).findByIdWithMember(eq(userMissionId));
             assertThat(actualDto).isNotNull();
             assertThat(actualDto.getIllustrationUrl()).isEqualTo(imageUrl);
         }
@@ -315,7 +286,7 @@ class CloverMissionServiceTest {
 
             // --- Given ---
             Long nonExistentId = 999L;
-            when(missionRecordRepository.findByIdWithMember(eq(nonExistentId))).thenReturn(Optional.empty());
+            when(cloverMissionRecordRepository.findByIdWithMember(eq(nonExistentId))).thenReturn(Optional.empty());
 
             // --- When & Then ---
             CustomException e = assertThrows(CustomException.class, () -> {
@@ -323,28 +294,28 @@ class CloverMissionServiceTest {
             });
 
             assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MISSION_NOT_FOUND);
-            verify(missionRecordRepository).findByIdWithMember(eq(nonExistentId));
+            verify(cloverMissionRecordRepository).findByIdWithMember(eq(nonExistentId));
         }
     }
 
     @Nested
     @DisplayName("클로버 미션 상태 변경")
-    class ChangeCloverMissionStatus {
+    class ChangeCloverCloverMissionStatus {
 
         @Test
         @DisplayName("성공 - 미션 상태 변경 (ASSIGNED -> STARTED)")
         void startCloverMission_Success() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.ASSIGNED, mockUser);
+            CloverMissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.ASSIGNED, mockUser);
 
-            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(cloverMissionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When ---
             CloverMissionStatusResponseDto result = cloverMissionService.startCloverMission(userMissionId, userId);
 
             // --- Then ---
-            assertThat(result.getMissionStatus()).isEqualTo(MissionStatus.STARTED);
+            assertThat(result.getMissionStatus()).isEqualTo(CloverMissionStatus.STARTED);
         }
 
         @Test
@@ -352,9 +323,9 @@ class CloverMissionServiceTest {
         void startCloverMission_Fail_InvalidStatus() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.STARTED, mockUser);
+            CloverMissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.STARTED, mockUser);
 
-            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(cloverMissionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
@@ -369,11 +340,11 @@ class CloverMissionServiceTest {
         void startCloverMission_Fail_Forbidden() {
 
             // --- Given ---
-            Long anotherUserId = 2L; // 현재 로그인한 사용자 (1L이 아님)
+            Long anotherUserId = 2L;
 
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.ASSIGNED, mockUser);
+            CloverMissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.ASSIGNED, mockUser);
 
-            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(cloverMissionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
@@ -388,11 +359,11 @@ class CloverMissionServiceTest {
         void changeMissionStatus_Fail_MissionNotFound() {
 
             // --- Given ---
-            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.empty());
+            when(cloverMissionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.empty());
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
-                cloverMissionService.startCloverMission(999L, userId); // 존재하지 않는 ID
+                cloverMissionService.startCloverMission(999L, userId);
             });
 
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MISSION_NOT_FOUND);
@@ -403,15 +374,15 @@ class CloverMissionServiceTest {
         void pauseCloverMission_Success() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.STARTED, mockUser);
+            CloverMissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.STARTED, mockUser);
 
-            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(cloverMissionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When ---
             CloverMissionStatusResponseDto result = cloverMissionService.pauseCloverMission(userMissionId, userId);
 
             // --- Then ---
-            assertThat(result.getMissionStatus()).isEqualTo(MissionStatus.PAUSED);
+            assertThat(result.getMissionStatus()).isEqualTo(CloverMissionStatus.PAUSED);
         }
 
         @Test
@@ -419,13 +390,13 @@ class CloverMissionServiceTest {
         void pauseCloverMission_Fail_InvalidStatus() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.COMPLETED, mockUser);
+            CloverMissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.COMPLETED, mockUser);
 
-            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(cloverMissionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
-                cloverMissionService.startCloverMission(userMissionId, userId);
+                cloverMissionService.pauseCloverMission(userMissionId, userId);
             });
 
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_MISSION_STATUS);
@@ -436,15 +407,15 @@ class CloverMissionServiceTest {
         void completeCloverMission_Success() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.STARTED, mockUser);
+            CloverMissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.STARTED, mockUser);
 
-            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(cloverMissionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When ---
             CloverMissionStatusResponseDto result = cloverMissionService.completeCloverMission(userMissionId, userId);
 
             // --- Then ---
-            assertThat(result.getMissionStatus()).isEqualTo(MissionStatus.COMPLETED);
+            assertThat(result.getMissionStatus()).isEqualTo(CloverMissionStatus.COMPLETED);
         }
 
         @Test
@@ -452,10 +423,9 @@ class CloverMissionServiceTest {
         void completeCloverMission_Fail_InvalidStatus() {
 
             // --- Given ---
-            MissionRecord assignedMission = createTestMissionRecord(userMissionId, MissionStatus.PAUSED, mockUser);
+            CloverMissionRecord assignedMission = createTestMissionRecord(userMissionId, CloverMissionStatus.PAUSED, mockUser);
 
-
-            when(missionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
+            when(cloverMissionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
@@ -476,13 +446,13 @@ class CloverMissionServiceTest {
             // --- Given ---
             when(memberRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 
-            MissionRecord existingRecord1 = createTestMissionRecord(201L, MissionStatus.COMPLETED, mockUser);
+            CloverMissionRecord existingRecord1 = createTestMissionRecord(201L, CloverMissionStatus.COMPLETED, mockUser);
             ReflectionTestUtils.setField(existingRecord1, "missionId", 101L);
-            MissionRecord existingRecord2 = createTestMissionRecord(202L, MissionStatus.ASSIGNED, mockUser);
+            CloverMissionRecord existingRecord2 = createTestMissionRecord(202L, CloverMissionStatus.ASSIGNED, mockUser);
             ReflectionTestUtils.setField(existingRecord2, "missionId", 102L);
 
-            List<MissionRecord> todayMissions = List.of(existingRecord1, existingRecord2);
-            when(missionRecordRepository.findCloverMissions(eq(userId), any(LocalDateTime.class)))
+            List<CloverMissionRecord> todayMissions = List.of(existingRecord1, existingRecord2);
+            when(cloverMissionRecordRepository.findCloverMissionsList(eq(userId), any(LocalDate.class)))
                     .thenReturn(todayMissions);
 
             List<Long> excludedIds = List.of(101L, 102L);
@@ -497,10 +467,10 @@ class CloverMissionServiceTest {
             List<CloverMission> foundMissions = List.of(newMission1, newMission2);
             when(cloverMissionRepository.findAllById(newMissionIds)).thenReturn(foundMissions);
 
-            List<MissionRecord> savedNewRecords = foundMissions.stream()
-                    .map(mission -> MissionRecord.fromCloverMission(mission, mockUser))
+            List<CloverMissionRecord> savedNewRecords = foundMissions.stream()
+                    .map(mission -> CloverMissionRecord.from(mission, mockUser))
                     .toList();
-            when(missionRecordRepository.saveAll(anyList())).thenReturn(savedNewRecords);
+            when(cloverMissionRecordRepository.saveAll(anyList())).thenReturn(savedNewRecords);
 
             // --- When ---
             CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(userId);
@@ -526,17 +496,16 @@ class CloverMissionServiceTest {
     }
 
     /**
-     * MissionRecord 를 생성하는 헬퍼 메서드
+     * CloverMissionRecord 를 생성하는 헬퍼 메서드
      * @param userMissionId 미션 기록 ID
      * @param status 테스트에 필요한 미션 상태
      * @param user 미션 소유자
-     * @return 생성된 MissionRecord 객체
+     * @return 생성된 CloverMissionRecord 객체
      */
-        private MissionRecord createTestMissionRecord(Long userMissionId, MissionStatus status, Member user) {
-        MissionRecord mission = MissionRecord.builder()
+    private CloverMissionRecord createTestMissionRecord(Long userMissionId, CloverMissionStatus status, Member user) {
+        CloverMissionRecord mission = CloverMissionRecord.builder()
                 .member(user)
-                .missionStatus(status) // 파라미터로 받은 상태를 설정
-                .missionType(MissionType.CLOVER)
+                .cloverMissionStatus(status)
                 .missionId(100L)
                 .missionTitle("테스트 미션")
                 .missionCategory(MissionCategory.RELATIONSHIP)
