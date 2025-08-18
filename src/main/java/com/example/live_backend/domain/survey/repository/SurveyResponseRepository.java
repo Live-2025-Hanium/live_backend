@@ -4,13 +4,12 @@ import com.example.live_backend.domain.survey.entity.SurveyResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
+
 public interface SurveyResponseRepository extends JpaRepository<SurveyResponse, Long> {
     
     /**
@@ -30,8 +29,4 @@ public interface SurveyResponseRepository extends JpaRepository<SurveyResponse, 
      */
     Long countByMember_Id(Long memberId);
 
-    /**
-     * 특정 회원의 가장 최근 설문 응답 조회
-     */
-    Optional<SurveyResponse> findFirstByMember_IdOrderByCreatedAtDesc(Long memberId);
 } 

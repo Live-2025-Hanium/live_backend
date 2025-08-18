@@ -72,7 +72,6 @@ class SurveyServiceTest {
 
 		org.mockito.Mockito.doNothing().when(mockMember).updateLastSurveySubmittedAt(any(LocalDateTime.class));
 
-		// 기본 mock 설정
 		given(securityUtil.getCurrentUserId()).willReturn(MOCK_USER_ID);
 		given(memberRepository.findById(MOCK_USER_ID)).willReturn(Optional.of(mockMember));
 		

@@ -48,7 +48,6 @@ public class SurveyService {
         Long currentUserId = securityUtil.getCurrentUserId();
         log.info("설문 응답 제출 시작 - 인증된 사용자 ID: {}", currentUserId);
 
-        // 현재 사용자의 Member 엔티티 조회
         Member member = memberRepository.findById(currentUserId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -64,12 +63,10 @@ public class SurveyService {
             .build();
 
         for (var dto : answers) {
-            // 질문 조회
             SurveyQuestion question = surveyQuestionRepository.findByQuestionNumber(dto.getQuestionNumber())
                 .orElseThrow(() -> new CustomException(ErrorCode.SURVEY_NOT_FOUND, 
                     "질문을 찾을 수 없습니다. 질문 번호: " + dto.getQuestionNumber()));
-            
-            // 선택지가 있는 경우 옵션 조회
+
             SurveyQuestionOption selectedOption = null;
             if (question.getQuestionType() == SurveyQuestion.QuestionType.SINGLE_CHOICE || 
                 question.getQuestionType() == SurveyQuestion.QuestionType.MULTIPLE_CHOICE) {
@@ -88,8 +85,7 @@ public class SurveyService {
         }
 
         SurveyResponse saved = surveyResponseRepository.save(surveyResponse);
-        
-        // Member의 마지막 설문 제출 일시 업데이트
+
         member.updateLastSurveySubmittedAt(saved.getCreatedAt());
         
         log.info("설문 응답 제출 완료 - 응답 ID: {}, 사용자 ID: {}", saved.getId(), currentUserId);
