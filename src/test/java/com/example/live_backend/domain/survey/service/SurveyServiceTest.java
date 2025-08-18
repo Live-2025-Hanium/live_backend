@@ -10,7 +10,11 @@ import com.example.live_backend.domain.survey.dto.response.SurveySubmissionRespo
 import com.example.live_backend.domain.survey.dto.response.SurveyResponseListDto;
 import com.example.live_backend.domain.survey.entity.SurveyAnswer;
 import com.example.live_backend.domain.survey.entity.SurveyResponse;
+import com.example.live_backend.domain.survey.entity.SurveyQuestion;
+import com.example.live_backend.domain.survey.entity.SurveyQuestionOption;
 import com.example.live_backend.domain.survey.repository.SurveyResponseRepository;
+import com.example.live_backend.domain.survey.repository.SurveyQuestionRepository;
+import com.example.live_backend.domain.survey.repository.SurveyQuestionOptionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -41,6 +45,12 @@ class SurveyServiceTest {
 	private SurveyResponseRepository surveyResponseRepository;
 
 	@Mock
+	private SurveyQuestionRepository surveyQuestionRepository;
+
+	@Mock
+	private SurveyQuestionOptionRepository surveyQuestionOptionRepository;
+
+	@Mock
 	private MemberRepository memberRepository;
 
 	@Mock
@@ -56,10 +66,10 @@ class SurveyServiceTest {
 
 	@BeforeEach
 	void initFixtures() {
-		// mockMember 먼저 초기화
+
 		mockMember = org.mockito.Mockito.mock(Member.class);
 		given(mockMember.getId()).willReturn(MOCK_USER_ID);
-		// void 메서드는 doNothing()으로 설정
+
 		org.mockito.Mockito.doNothing().when(mockMember).updateLastSurveySubmittedAt(any(LocalDateTime.class));
 
 		// 기본 mock 설정
@@ -85,16 +95,44 @@ class SurveyServiceTest {
 		);
 		validRequest = new SurveySubmissionDto(answers);
 
+
+		for (int i = 1; i <= 15; i++) {
+			SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
+			given(mockQuestion.getId()).willReturn((long) i);
+			given(mockQuestion.getQuestionNumber()).willReturn(i);
+			given(mockQuestion.getQuestionText()).willReturn("Question " + i);
+			given(mockQuestion.getQuestionType()).willReturn(SurveyQuestion.QuestionType.SINGLE_CHOICE);
+
+			List<SurveyQuestionOption> mockOptions = new java.util.ArrayList<>();
+			for (int j = 1; j <= 5; j++) {
+				SurveyQuestionOption mockOption = org.mockito.Mockito.mock(SurveyQuestionOption.class);
+				given(mockOption.getId()).willReturn((long) (i * 10 + j));
+				given(mockOption.getOptionNumber()).willReturn(j);
+				given(mockOption.getOptionText()).willReturn("Option " + j);
+				mockOptions.add(mockOption);
+			}
+			given(mockQuestion.getOptions()).willReturn(mockOptions);
+			given(surveyQuestionRepository.findByQuestionNumber(i)).willReturn(Optional.of(mockQuestion));
+		}
+
 		mockSurveyResponse = SurveyResponse.builder()
 			.member(mockMember)
 			.build();
 
 		setField(mockSurveyResponse, "id", 100L);
 		setField(mockSurveyResponse, "createdAt", LocalDateTime.now());
+
 		answers.forEach(dto -> {
+			SurveyQuestion mockQuestion = surveyQuestionRepository.findByQuestionNumber(dto.getQuestionNumber()).orElse(null);
+			SurveyQuestionOption mockOption = mockQuestion != null ? 
+				mockQuestion.getOptions().stream()
+					.filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
+					.findFirst().orElse(null) : null;
+			
 			SurveyAnswer answer = SurveyAnswer.builder()
-				.questionNumber(dto.getQuestionNumber())
-				.answerNumber(dto.getAnswerNumber())
+				.surveyQuestion(mockQuestion)
+				.selectedOption(mockOption)
+				.numberAnswer(dto.getAnswerNumber())
 				.build();
 			mockSurveyResponse.addAnswer(answer);
 		});
@@ -112,12 +150,17 @@ class SurveyServiceTest {
 			SurveyResponse savedResponse = org.mockito.Mockito.mock(SurveyResponse.class);
 			given(savedResponse.getId()).willReturn(123L);
 			given(savedResponse.getCreatedAt()).willReturn(expectedTime);
-			given(savedResponse.getAnswers()).willReturn(validRequest.getAnswers().stream().map(dto -> 
-				SurveyAnswer.builder()
-					.questionNumber(dto.getQuestionNumber())
-					.answerNumber(dto.getAnswerNumber())
-					.build()
-			).toList());
+			List<SurveyAnswer> savedAnswers = new java.util.ArrayList<>();
+			for (var dto : validRequest.getAnswers()) {
+				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
+				given(mockQuestion.getQuestionNumber()).willReturn(dto.getQuestionNumber());
+				SurveyAnswer answer = SurveyAnswer.builder()
+					.surveyQuestion(mockQuestion)
+					.numberAnswer(dto.getAnswerNumber())
+					.build();
+				savedAnswers.add(answer);
+			}
+			given(savedResponse.getAnswers()).willReturn(savedAnswers);
 			
 			given(surveyResponseRepository.save(any(SurveyResponse.class))).willReturn(savedResponse);
 
@@ -367,7 +410,6 @@ class SurveyServiceTest {
 		}
 	}
 
-	// 리팩토링: Spring ReflectionUtils를 활용해서 private 필드 세팅했습니다.
 	private void setField(Object target, String fieldName, Object value) {
 		var field = ReflectionUtils.findField(target.getClass(), fieldName);
 		if (field == null) {
