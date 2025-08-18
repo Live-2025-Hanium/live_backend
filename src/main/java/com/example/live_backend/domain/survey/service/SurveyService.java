@@ -10,7 +10,11 @@ import com.example.live_backend.domain.survey.dto.response.SurveySubmissionRespo
 import com.example.live_backend.domain.survey.dto.response.SurveyResponseListDto;
 import com.example.live_backend.domain.survey.entity.SurveyAnswer;
 import com.example.live_backend.domain.survey.entity.SurveyResponse;
+import com.example.live_backend.domain.survey.entity.SurveyQuestion;
+import com.example.live_backend.domain.survey.entity.SurveyQuestionOption;
 import com.example.live_backend.domain.survey.repository.SurveyResponseRepository;
+import com.example.live_backend.domain.survey.repository.SurveyQuestionRepository;
+import com.example.live_backend.domain.survey.repository.SurveyQuestionOptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +33,8 @@ import java.util.stream.Collectors;
 public class SurveyService {
 
     private final SurveyResponseRepository surveyResponseRepository;
+    private final SurveyQuestionRepository surveyQuestionRepository;
+    private final SurveyQuestionOptionRepository surveyQuestionOptionRepository;
     private final MemberRepository memberRepository;
     private final SecurityUtil securityUtil;
     
@@ -58,9 +64,25 @@ public class SurveyService {
             .build();
 
         for (var dto : answers) {
+            // 질문 조회
+            SurveyQuestion question = surveyQuestionRepository.findByQuestionNumber(dto.getQuestionNumber())
+                .orElseThrow(() -> new CustomException(ErrorCode.SURVEY_NOT_FOUND, 
+                    "질문을 찾을 수 없습니다. 질문 번호: " + dto.getQuestionNumber()));
+            
+            // 선택지가 있는 경우 옵션 조회
+            SurveyQuestionOption selectedOption = null;
+            if (question.getQuestionType() == SurveyQuestion.QuestionType.SINGLE_CHOICE || 
+                question.getQuestionType() == SurveyQuestion.QuestionType.MULTIPLE_CHOICE) {
+                selectedOption = question.getOptions().stream()
+                    .filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
+                    .findFirst()
+                    .orElse(null);
+            }
+            
             SurveyAnswer answer = SurveyAnswer.builder()
-                .questionNumber(dto.getQuestionNumber())
-                .answerNumber(dto.getAnswerNumber())
+                .surveyQuestion(question)
+                .selectedOption(selectedOption)
+                .numberAnswer(dto.getAnswerNumber())
                 .build();
             surveyResponse.addAnswer(answer);
         }

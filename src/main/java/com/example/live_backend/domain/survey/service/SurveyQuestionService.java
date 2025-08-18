@@ -43,7 +43,7 @@ public class SurveyQuestionService {
     public SurveyQuestionDto getQuestionByNumber(Integer questionNumber) {
         log.info("질문 조회 - 질문 번호: {}", questionNumber);
         SurveyQuestion question = questionRepository.findByQuestionNumber(questionNumber)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "질문을 찾을 수 없습니다"));
+                .orElseThrow(() -> new CustomException(ErrorCode.SURVEY_NOT_FOUND, "질문을 찾을 수 없습니다"));
         return SurveyQuestionDto.from(question);
     }
     
@@ -56,7 +56,7 @@ public class SurveyQuestionService {
         
         // 질문 번호 중복 체크
         if (questionRepository.existsByQuestionNumber(request.getQuestionNumber())) {
-            throw new CustomException(ErrorCode.DUPLICATE_RESOURCE, 
+            throw new CustomException(ErrorCode.INVALID_INPUT, 
                     "이미 존재하는 질문 번호입니다: " + request.getQuestionNumber());
         }
         
@@ -95,7 +95,7 @@ public class SurveyQuestionService {
         log.info("질문 수정 - ID: {}", questionId);
         
         SurveyQuestion question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "질문을 찾을 수 없습니다"));
+                .orElseThrow(() -> new CustomException(ErrorCode.SURVEY_NOT_FOUND, "질문을 찾을 수 없습니다"));
         
         question.updateQuestion(
                 request.getQuestionText(),
@@ -118,7 +118,7 @@ public class SurveyQuestionService {
         log.info("질문 비활성화 - ID: {}", questionId);
         
         SurveyQuestion question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "질문을 찾을 수 없습니다"));
+                .orElseThrow(() -> new CustomException(ErrorCode.SURVEY_NOT_FOUND, "질문을 찾을 수 없습니다"));
         
         question.updateQuestion(
                 question.getQuestionText(),
