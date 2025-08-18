@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SurveyAnswerRepository extends JpaRepository<SurveyAnswer, Long> {
@@ -14,11 +15,17 @@ public interface SurveyAnswerRepository extends JpaRepository<SurveyAnswer, Long
     /**
      * 특정 설문 응답의 모든 답변 조회
      */
-    List<SurveyAnswer> findBySurveyResponseIdOrderByQuestionNumber(Long surveyResponseId);
+    @Query("SELECT sa FROM SurveyAnswer sa JOIN FETCH sa.surveyQuestion WHERE sa.surveyResponse.id = :surveyResponseId ORDER BY sa.surveyQuestion.questionNumber")
+    List<SurveyAnswer> findBySurveyResponseIdWithQuestion(@Param("surveyResponseId") Long surveyResponseId);
     
     /**
-     * 특정 문제에 대한 답변별 통계 (관리자용)
+     * 특정 질문에 대한 답변별 통계 (관리자용)
      */
-    @Query("SELECT sa.answerNumber, COUNT(sa) FROM SurveyAnswer sa WHERE sa.questionNumber = :questionNumber GROUP BY sa.answerNumber ORDER BY sa.answerNumber")
+    @Query("SELECT sa.selectedOption.optionNumber, COUNT(sa) FROM SurveyAnswer sa WHERE sa.surveyQuestion.questionNumber = :questionNumber AND sa.selectedOption IS NOT NULL GROUP BY sa.selectedOption.optionNumber ORDER BY sa.selectedOption.optionNumber")
     List<Object[]> getAnswerStatsByQuestionNumber(@Param("questionNumber") Integer questionNumber);
+    
+    /**
+     * 특정 응답과 질문에 대한 답변 조회
+     */
+    Optional<SurveyAnswer> findBySurveyResponseIdAndSurveyQuestionId(Long surveyResponseId, Long questionId);
 } 
