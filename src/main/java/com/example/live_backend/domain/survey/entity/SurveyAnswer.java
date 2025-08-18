@@ -21,16 +21,35 @@ public class SurveyAnswer extends BaseEntity {
     @JoinColumn(name = "survey_response_id", nullable = false)
     private SurveyResponse surveyResponse;
 
-    @Column(name = "question_number", nullable = false)
-    private Integer questionNumber;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id", nullable = false)
+    private SurveyQuestion surveyQuestion;
 
-    @Column(name = "answer_number", nullable = false)
-    private Integer answerNumber;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "selected_option_id")
+    private SurveyQuestionOption selectedOption;
+
+    @Column(name = "text_answer", columnDefinition = "TEXT")
+    private String textAnswer;
+
+    @Column(name = "number_answer")
+    private Integer numberAnswer;
 
     @Builder
-    public SurveyAnswer(Integer questionNumber, Integer answerNumber) {
-        this.questionNumber = questionNumber;
-        this.answerNumber = answerNumber;
+    public SurveyAnswer(SurveyQuestion surveyQuestion, SurveyQuestionOption selectedOption,
+                        String textAnswer, Integer numberAnswer) {
+        this.surveyQuestion = surveyQuestion;
+        this.selectedOption = selectedOption;
+        this.textAnswer = textAnswer;
+        this.numberAnswer = numberAnswer;
+    }
+
+    public Integer getQuestionNumber() {
+        return surveyQuestion != null ? surveyQuestion.getQuestionNumber() : null;
+    }
+
+    public Integer getAnswerNumber() {
+        return selectedOption != null ? selectedOption.getOptionNumber() : numberAnswer;
     }
 
     protected void setSurveyResponse(SurveyResponse surveyResponse) {
