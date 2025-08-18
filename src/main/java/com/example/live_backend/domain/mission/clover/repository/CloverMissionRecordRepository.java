@@ -1,12 +1,13 @@
 package com.example.live_backend.domain.mission.clover.repository;
 
-import com.example.live_backend.domain.mission.clover.entity.CloverMission;
+import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,4 +26,18 @@ public interface CloverMissionRecordRepository extends JpaRepository<CloverMissi
 
     @Query("SELECT cmr FROM CloverMissionRecord cmr JOIN FETCH cmr.member WHERE cmr.id = :id")
     Optional<CloverMissionRecord> findByIdWithMember(@Param("id") Long id);
+
+    @Query("SELECT COUNT(cmr) FROM CloverMissionRecord cmr " +
+            "WHERE cmr.member.id = :memberId AND cmr.assignedDate BETWEEN :start AND :end")
+    long countAssignedInPeriod(@Param("memberId") Long memberId,
+                               @Param("start") LocalDate start,
+                               @Param("end") LocalDate end);
+
+    @Query("SELECT COUNT(cmr) FROM CloverMissionRecord cmr " +
+            "WHERE cmr.member.id = :memberId AND cmr.cloverMissionStatus = :status " +
+            "AND cmr.completedAt BETWEEN :start AND :end")
+    long countCompletedInPeriod(@Param("memberId") Long memberId,
+                                @Param("status") CloverMissionStatus status,
+                                @Param("start") LocalDateTime start,
+                                @Param("end") LocalDateTime end);
 }
