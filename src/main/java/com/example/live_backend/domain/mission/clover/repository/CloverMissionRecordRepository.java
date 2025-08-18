@@ -40,4 +40,20 @@ public interface CloverMissionRecordRepository extends JpaRepository<CloverMissi
                                 @Param("status") CloverMissionStatus status,
                                 @Param("start") LocalDateTime start,
                                 @Param("end") LocalDateTime end);
+
+    @Query("SELECT cmr FROM CloverMissionRecord cmr " +
+            "WHERE cmr.member.id = :memberId AND cmr.cloverMissionStatus = :status " +
+            "AND cmr.completedAt BETWEEN :start AND :end ORDER BY cmr.completedAt ASC")
+    List<CloverMissionRecord> findCompletedInPeriod(@Param("memberId") Long memberId,
+                                                    @Param("status") CloverMissionStatus status,
+                                                    @Param("start") LocalDateTime start,
+                                                    @Param("end") LocalDateTime end);
+
+    @Query("SELECT cmr FROM CloverMissionRecord cmr " +
+            "WHERE cmr.member.id = :memberId AND cmr.cloverMissionStatus = :status " +
+            "AND DATE(cmr.completedAt) = DATE(:date) ORDER BY cmr.completedAt ASC")
+    List<CloverMissionRecord> findCompletedOnDate(@Param("memberId") Long memberId,
+                                                  @Param("status") CloverMissionStatus status,
+                                                  @Param("date") LocalDate date);
+
 }
