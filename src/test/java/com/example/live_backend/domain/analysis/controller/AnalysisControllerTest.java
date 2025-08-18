@@ -1,11 +1,10 @@
 package com.example.live_backend.domain.analysis.controller;
 
-import com.example.live_backend.domain.analysis.controller.controller.AnalysisController;
-import com.example.live_backend.domain.analysis.controller.dto.DailyCompletedMissionsResponseDto;
-import com.example.live_backend.domain.analysis.controller.dto.MonthlyGrowthResponseDto;
-import com.example.live_backend.domain.analysis.controller.dto.MonthlyParticipationResponseDto;
-import com.example.live_backend.domain.analysis.controller.dto.WeeklyMissionSummaryResponseDto;
-import com.example.live_backend.domain.analysis.controller.service.AnalysisService;
+import com.example.live_backend.domain.analysis.dto.DailyCompletedMissionsResponseDto;
+import com.example.live_backend.domain.analysis.dto.MonthlyGrowthResponseDto;
+import com.example.live_backend.domain.analysis.dto.MonthlyParticipationResponseDto;
+import com.example.live_backend.domain.analysis.dto.WeeklyMissionSummaryResponseDto;
+import com.example.live_backend.domain.analysis.service.AnalysisService;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.global.error.response.ResponseHandler;

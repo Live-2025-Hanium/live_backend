@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.analysis.controller.dto;
+package com.example.live_backend.domain.analysis.dto;
 
 import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import lombok.Builder;

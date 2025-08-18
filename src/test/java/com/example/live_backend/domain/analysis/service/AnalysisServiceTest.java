@@ -1,10 +1,9 @@
 package com.example.live_backend.domain.analysis.service;
 
-import com.example.live_backend.domain.analysis.controller.dto.MonthlyGrowthResponseDto;
-import com.example.live_backend.domain.analysis.controller.dto.MonthlyParticipationResponseDto;
-import com.example.live_backend.domain.analysis.controller.dto.WeeklyMissionSummaryResponseDto;
-import com.example.live_backend.domain.analysis.controller.dto.DailyCompletedMissionsResponseDto;
-import com.example.live_backend.domain.analysis.controller.service.AnalysisService;
+import com.example.live_backend.domain.analysis.dto.MonthlyGrowthResponseDto;
+import com.example.live_backend.domain.analysis.dto.MonthlyParticipationResponseDto;
+import com.example.live_backend.domain.analysis.dto.WeeklyMissionSummaryResponseDto;
+import com.example.live_backend.domain.analysis.dto.DailyCompletedMissionsResponseDto;
 import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
 import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;

@@ -1,9 +1,9 @@
-package com.example.live_backend.domain.analysis.controller.controller;
+package com.example.live_backend.domain.analysis.controller;
 
-import com.example.live_backend.domain.analysis.controller.Enum.AnalysisQueryType;
-import com.example.live_backend.domain.analysis.controller.dto.MonthlyGrowthResponseDto;
-import com.example.live_backend.domain.analysis.controller.dto.MonthlyParticipationResponseDto;
-import com.example.live_backend.domain.analysis.controller.service.AnalysisService;
+import com.example.live_backend.domain.analysis.Enum.AnalysisQueryType;
+import com.example.live_backend.domain.analysis.dto.MonthlyGrowthResponseDto;
+import com.example.live_backend.domain.analysis.dto.MonthlyParticipationResponseDto;
+import com.example.live_backend.domain.analysis.service.AnalysisService;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
 import io.swagger.v3.oas.annotations.Operation;

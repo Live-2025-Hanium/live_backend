@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.analysis.controller.Enum;
+package com.example.live_backend.domain.analysis.Enum;
 
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
