@@ -27,6 +27,7 @@ import org.springframework.util.ReflectionUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -95,6 +96,7 @@ class SurveyServiceTest {
 		validRequest = new SurveySubmissionDto(answers);
 
 
+		List<SurveyQuestion> allQuestions = new ArrayList<>();
 		for (int i = 1; i <= 15; i++) {
 			SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
 			given(mockQuestion.getId()).willReturn((long) i);
@@ -107,11 +109,16 @@ class SurveyServiceTest {
 				given(mockOption.getId()).willReturn((long) (i * 10 + j));
 				given(mockOption.getOptionNumber()).willReturn(j);
 				given(mockOption.getOptionText()).willReturn("Option " + j);
+				given(mockOption.getSurveyQuestion()).willReturn(mockQuestion);
 				mockOptions.add(mockOption);
 			}
 			given(mockQuestion.getOptions()).willReturn(mockOptions);
 			given(surveyQuestionRepository.findByQuestionNumber(i)).willReturn(Optional.of(mockQuestion));
+			allQuestions.add(mockQuestion);
 		}
+		
+		given(surveyQuestionRepository.findByQuestionNumberInWithOptions(any(List.class)))
+			.willReturn(allQuestions);
 
 		mockSurveyResponse = SurveyResponse.builder()
 			.member(mockMember)
