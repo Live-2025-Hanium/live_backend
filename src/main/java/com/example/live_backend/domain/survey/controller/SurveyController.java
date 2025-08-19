@@ -58,7 +58,7 @@ public class SurveyController {
 		SurveyResponseListDto.UserSurveyResponseListDto response = surveyService.getUserSurveyResponses(userId);
 
 		return ResponseHandler.success(response);
-	}
+	}그러면 목록 조회할때
 
 	@GetMapping("/admin/responses")
 	@PreAuthorize("hasRole('ADMIN')")

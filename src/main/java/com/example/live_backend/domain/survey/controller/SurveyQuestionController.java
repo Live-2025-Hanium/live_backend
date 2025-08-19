@@ -31,14 +31,6 @@ public class SurveyQuestionController {
         return ResponseEntity.ok(questions);
     }
     
-    @GetMapping("/{questionNumber}")
-    @Operation(summary = "특정 질문 조회", description = "질문 번호로 특정 질문을 조회합니다")
-    public ResponseEntity<SurveyQuestionDto> getQuestionByNumber(
-            @Parameter(description = "질문 번호") @PathVariable Integer questionNumber) {
-        SurveyQuestionDto question = surveyQuestionService.getQuestionByNumber(questionNumber);
-        return ResponseEntity.ok(question);
-    }
-    
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "새 질문 생성", description = "새로운 설문 질문을 생성합니다 (관리자 전용)")

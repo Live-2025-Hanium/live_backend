@@ -38,16 +38,6 @@ public class SurveyQuestionService {
     }
     
     /**
-     * 질문 번호로 질문 조회
-     */
-    public SurveyQuestionDto getQuestionByNumber(Integer questionNumber) {
-        log.info("질문 조회 - 질문 번호: {}", questionNumber);
-        SurveyQuestion question = questionRepository.findByQuestionNumber(questionNumber)
-                .orElseThrow(() -> new CustomException(ErrorCode.SURVEY_NOT_FOUND, "질문을 찾을 수 없습니다"));
-        return SurveyQuestionDto.from(question);
-    }
-    
-    /**
      * 새로운 질문 생성
      */
     @Transactional
