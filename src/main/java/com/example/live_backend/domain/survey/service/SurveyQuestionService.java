@@ -11,6 +11,8 @@ import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,9 +28,7 @@ public class SurveyQuestionService {
     private final SurveyQuestionRepository questionRepository;
     private final SurveyQuestionOptionRepository optionRepository;
     
-    /**
-     * 모든 활성 질문 조회
-     */
+    @Cacheable(value = "activeQuestions", unless = "#result.isEmpty()")
     public List<SurveyQuestionDto> getAllActiveQuestions() {
         log.info("활성 설문 질문 목록 조회");
         List<SurveyQuestion> questions = questionRepository.findActiveQuestionsWithOptions();
@@ -37,9 +37,7 @@ public class SurveyQuestionService {
                 .collect(Collectors.toList());
     }
     
-    /**
-     * 새로운 질문 생성
-     */
+    @CacheEvict(value = "activeQuestions", allEntries = true)
     @Transactional
     public SurveyQuestionDto createQuestion(CreateQuestionRequest request) {
         log.info("새 질문 생성 - 질문 번호: {}", request.getQuestionNumber());
@@ -76,9 +74,7 @@ public class SurveyQuestionService {
         return SurveyQuestionDto.from(saved);
     }
     
-    /**
-     * 질문 수정
-     */
+    @CacheEvict(value = "activeQuestions", allEntries = true)
     @Transactional
     public SurveyQuestionDto updateQuestion(Long questionId, UpdateQuestionRequest request) {
         log.info("질문 수정 - ID: {}", questionId);
@@ -98,9 +94,7 @@ public class SurveyQuestionService {
         return SurveyQuestionDto.from(updated);
     }
     
-    /**
-     * 질문 삭제 (비활성화)
-     */
+    @CacheEvict(value = "activeQuestions", allEntries = true)
     @Transactional
     public void deactivateQuestion(Long questionId) {
         log.info("질문 비활성화 - ID: {}", questionId);

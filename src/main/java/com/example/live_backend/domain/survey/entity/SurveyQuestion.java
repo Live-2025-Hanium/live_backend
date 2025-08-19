@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.annotations.BatchSize;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +37,7 @@ public class SurveyQuestion extends BaseEntity {
 
     @OneToMany(mappedBy = "surveyQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("optionNumber ASC")
+    @BatchSize(size = 20)
     private List<SurveyQuestionOption> options = new ArrayList<>();
 
     @Builder

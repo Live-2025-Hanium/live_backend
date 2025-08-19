@@ -7,10 +7,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.annotations.BatchSize;
+
 @Entity
 @Table(name = "survey_answers")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@BatchSize(size = 30)
 public class SurveyAnswer extends BaseEntity {
 
     @Id

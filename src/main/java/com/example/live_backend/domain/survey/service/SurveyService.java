@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -58,16 +59,27 @@ public class SurveyService {
         validateDuplicateQuestions(answers);
         validateMissingQuestions(answers);
 
+        List<Integer> questionNumbers = answers.stream()
+            .map(SurveySubmissionDto.SurveyAnswerDto::getQuestionNumber)
+            .collect(Collectors.toList());
+        
+        Map<Integer, SurveyQuestion> questionMap = surveyQuestionRepository
+            .findByQuestionNumberInWithOptions(questionNumbers)
+            .stream()
+            .collect(Collectors.toMap(SurveyQuestion::getQuestionNumber, q -> q));
+
+        if (questionMap.size() != answers.size()) {
+            throw new CustomException(ErrorCode.SURVEY_NOT_FOUND, 
+                "일부 질문을 찾을 수 없습니다. 요청: " + answers.size() + ", 조회: " + questionMap.size());
+        }
+
         SurveyResponse surveyResponse = SurveyResponse.builder()
             .member(member)
             .build();
 
         for (var dto : answers) {
-            SurveyQuestion question = surveyQuestionRepository.findByQuestionNumber(dto.getQuestionNumber())
-                .orElseThrow(() -> new CustomException(ErrorCode.SURVEY_NOT_FOUND, 
-                    "질문을 찾을 수 없습니다. 질문 번호: " + dto.getQuestionNumber()));
-
-            // 선택된 옵션 찾기
+            SurveyQuestion question = questionMap.get(dto.getQuestionNumber());
+            
             SurveyQuestionOption selectedOption = question.getOptions().stream()
                 .filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
                 .findFirst()
