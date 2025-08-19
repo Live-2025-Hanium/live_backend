@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -20,21 +19,21 @@ public class MyMissionRecordResponseDto {
     private Long userMissionId;
     private String missionTitle;
     private MyMissionStatus myMissionStatus;
-    private List<String> scheduledTime;
+    private String scheduledTime;
     private RepeatType repeatType;
 
     public static MyMissionRecordResponseDto from(MyMissionRecord myMissionRecord) {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-        List<String> formattedTimes = myMissionRecord.getMyMission().getScheduledTime().stream()
-                .map(time -> time.format(formatter))
-                .toList();
+        String formattedTime = myMissionRecord.getMyMission().getScheduledTime() != null
+                ? myMissionRecord.getMyMission().getScheduledTime().format(formatter)
+                : null;
 
         return MyMissionRecordResponseDto.builder()
                 .userMissionId(myMissionRecord.getId())
                 .missionTitle(myMissionRecord.getMyMission().getTitle())
                 .myMissionStatus(myMissionRecord.getMyMissionStatus())
-                .scheduledTime(formattedTimes)
+                .scheduledTime(formattedTime)
                 .repeatType(myMissionRecord.getMyMission().getRepeatType())
                 .build();
     }

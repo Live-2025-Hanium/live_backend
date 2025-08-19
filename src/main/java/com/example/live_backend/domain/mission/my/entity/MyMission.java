@@ -2,7 +2,6 @@ package com.example.live_backend.domain.mission.my.entity;
 
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.mission.my.dto.MyMissionRequestDto;
-import com.example.live_backend.domain.mission.my.util.LocalTimeListConverter;
 import com.example.live_backend.domain.mission.my.Enum.RepeatType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,8 +11,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -43,9 +40,8 @@ public class MyMission {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Convert(converter = LocalTimeListConverter.class)
-    @Column(name = "scheduled_time", columnDefinition = "json")
-    private List<LocalTime> scheduledTime = new ArrayList<>();
+    @Column(name = "scheduled_time")
+    private LocalTime scheduledTime;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "repeat_type", nullable = false)
@@ -69,8 +65,7 @@ public class MyMission {
         this.endDate = dto.getEndDate();
 
         if (dto.getScheduledTime() != null) {
-            this.scheduledTime.clear();
-            this.scheduledTime.addAll(dto.getScheduledTime());
+            this.scheduledTime = dto.getScheduledTime();
         }
 
         if (dto.getRepeatType() != null) {
