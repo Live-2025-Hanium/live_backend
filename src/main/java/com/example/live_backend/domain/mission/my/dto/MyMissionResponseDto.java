@@ -1,12 +1,12 @@
 package com.example.live_backend.domain.mission.my.dto;
 
+import com.example.live_backend.domain.mission.my.Enum.RepeatType;
 import com.example.live_backend.domain.mission.my.entity.MyMission;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -22,12 +22,9 @@ public class MyMissionResponseDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private List<String> scheduledTime;
-    private List<DayOfWeek> repeatDays;
+    private RepeatType repeatType;
     private boolean isActive;
 
-    /**
-     * MyMission 엔티티를 MyMissionResponseDto 로 변환하는 팩토리 메서드
-     */
     public static MyMissionResponseDto from(MyMission myMission) {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
@@ -41,7 +38,7 @@ public class MyMissionResponseDto {
                 .startDate(myMission.getStartDate())
                 .endDate(myMission.getEndDate())
                 .scheduledTime(formattedTimes)
-                .repeatDays(myMission.getRepeatDays())
+                .repeatType(myMission.getRepeatType())
                 .isActive(myMission.isActive())
                 .build();
     }

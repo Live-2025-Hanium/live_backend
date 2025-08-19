@@ -2,15 +2,14 @@ package com.example.live_backend.domain.mission.my.entity;
 
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.mission.my.dto.MyMissionRequestDto;
-import com.example.live_backend.domain.mission.my.util.DayOfWeekListConverter;
 import com.example.live_backend.domain.mission.my.util.LocalTimeListConverter;
+import com.example.live_backend.domain.mission.my.Enum.RepeatType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -48,9 +47,9 @@ public class MyMission {
     @Column(name = "scheduled_time", columnDefinition = "json")
     private List<LocalTime> scheduledTime = new ArrayList<>();
 
-    @Convert(converter = DayOfWeekListConverter.class)
-    @Column(name = "repeat_days", columnDefinition = "json")
-    private List<DayOfWeek> repeatDays = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
+    @Column(name = "repeat_type", nullable = false)
+    private RepeatType repeatType;
 
     public static MyMission from(MyMissionRequestDto dto, Member member) {
         return MyMission.builder()
@@ -60,7 +59,7 @@ public class MyMission {
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
                 .scheduledTime(dto.getScheduledTime())
-                .repeatDays(dto.getRepeatDays())
+                .repeatType(dto.getRepeatType() != null ? dto.getRepeatType() : RepeatType.EVERYDAY)
                 .build();
     }
 
@@ -74,9 +73,8 @@ public class MyMission {
             this.scheduledTime.addAll(dto.getScheduledTime());
         }
 
-        if (dto.getRepeatDays() != null) {
-            this.repeatDays.clear();
-            this.repeatDays.addAll(dto.getRepeatDays());
+        if (dto.getRepeatType() != null) {
+            this.repeatType = dto.getRepeatType();
         }
     }
 }

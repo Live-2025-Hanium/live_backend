@@ -1,10 +1,10 @@
 package com.example.live_backend.domain.mission.my.dto;
 
+import com.example.live_backend.domain.mission.my.Enum.RepeatType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -25,6 +25,6 @@ public class MyMissionRequestDto {
     @Schema(description = "미션 수행 시간(알림)", example = "[\"09:00\", \"10:00\", \"11:00\"]")
     private List<LocalTime> scheduledTime;
 
-    @Schema(description = "미션 수행일(반복 요일)", example = "[\"MONDAY\", \"SUNDAY\"]")
-    private List<DayOfWeek> repeatDays;
+    @Schema(description = "미션 반복 타입", example = "EVERYDAY, WEEKDAY, WEEKEND")
+    private RepeatType repeatType;
 }

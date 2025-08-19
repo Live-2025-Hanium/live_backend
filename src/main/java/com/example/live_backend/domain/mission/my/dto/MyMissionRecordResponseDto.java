@@ -1,6 +1,6 @@
 package com.example.live_backend.domain.mission.my.dto;
 
-import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
+import com.example.live_backend.domain.mission.my.Enum.RepeatType;
 import com.example.live_backend.domain.mission.my.Enum.MyMissionStatus;
 import com.example.live_backend.domain.mission.my.entity.MyMissionRecord;
 import lombok.AllArgsConstructor;
@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.DayOfWeek;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -22,7 +21,7 @@ public class MyMissionRecordResponseDto {
     private String missionTitle;
     private MyMissionStatus myMissionStatus;
     private List<String> scheduledTime;
-    private List<DayOfWeek> repeatDays;
+    private RepeatType repeatType;
 
     public static MyMissionRecordResponseDto from(MyMissionRecord myMissionRecord) {
 
@@ -36,7 +35,7 @@ public class MyMissionRecordResponseDto {
                 .missionTitle(myMissionRecord.getMyMission().getTitle())
                 .myMissionStatus(myMissionRecord.getMyMissionStatus())
                 .scheduledTime(formattedTimes)
-                .repeatDays(myMissionRecord.getMyMission().getRepeatDays())
+                .repeatType(myMissionRecord.getMyMission().getRepeatType())
                 .build();
     }
 }
