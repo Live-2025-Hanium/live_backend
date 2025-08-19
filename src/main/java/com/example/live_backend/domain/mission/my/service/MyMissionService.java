@@ -142,11 +142,26 @@ public class MyMissionService {
             throw new CustomException(ErrorCode.MISSION_FORBIDDEN);
         }
 
-        MyMission myMission = myMissionRepository.findById(myMissionRecord.getMyMission().getId())
+        myMissionRepository.findById(myMissionRecord.getMyMission().getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.MISSION_NOT_FOUND));
 
         myMissionRecord.completeMission();
 
         return MyMissionRecordResponseDto.from(myMissionRecord);
+    }
+
+    @Transactional
+    public MyMissionResponseDto changeActive(Long memberId, Long myMissionId, boolean active) {
+
+        MyMission myMission = myMissionRepository.findById(myMissionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MISSION_NOT_FOUND));
+
+        if (!myMission.getMember().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.MISSION_UPDATE_DENIED);
+        }
+
+        myMission.changeActive(active);
+
+        return MyMissionResponseDto.from(myMission);
     }
 }

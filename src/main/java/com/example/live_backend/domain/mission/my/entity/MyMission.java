@@ -72,4 +72,8 @@ public class MyMission {
             this.repeatType = dto.getRepeatType();
         }
     }
+
+    public void changeActive(boolean isActive) {
+        this.isActive = isActive;
+    }
 }
