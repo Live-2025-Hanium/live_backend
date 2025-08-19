@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -28,6 +29,7 @@ public class SurveyController {
 	private final SurveyService surveyService;
 
 	@PostMapping("/submit")
+	@PreAuthorize("hasRole('USER')")
 	@Operation(summary = "설문 응답 제출 ",
 		description = "설문 응답을 제출 합니다. 15문제에 대한 설문을 모두 작성한 뒤 응답 제출을 합니다. ")
 	public ResponseHandler<SurveySubmissionResponseDto> submitSurvey(
@@ -45,6 +47,7 @@ public class SurveyController {
 	아래는 admin용 api 입니다.
 	*/
 	@GetMapping("/admin/users/{userId}/responses")
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(summary = "사용자별 설문 응답 조회", description = "특정 사용자의 설문 응답 목록과 총 응답 횟수를 조회합니다. (관리자용)")
 	public ResponseHandler<SurveyResponseListDto.UserSurveyResponseListDto> getUserSurveyResponses(
 		@Parameter(description = "사용자 ID", example = "1")
@@ -58,6 +61,7 @@ public class SurveyController {
 	}
 
 	@GetMapping("/admin/responses")
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(summary = "기간별 설문 응답 조회", description = "특정 기간의 모든 설문 응답을 조회합니다. (관리자용)")
 	public ResponseHandler<List<SurveyResponseListDto>> getSurveyResponsesByPeriod(
 		@Parameter(description = "시작 날짜", example = "2024-01-01")
