@@ -10,7 +10,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.example.live_backend.global.security.annotation.AuthenticatedApi;
+import com.example.live_backend.global.security.annotation.AdminApi;
+import com.example.live_backend.global.security.PrincipalDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -26,13 +29,14 @@ public class SurveyController implements SurveyControllerDocs {
 
 	@Override
 	@PostMapping("/submit")
-	@PreAuthorize("hasRole('USER')")
+	@AuthenticatedApi(reason = "설문 제출은 로그인한 사용자만 가능합니다")
 	public ResponseHandler<SurveySubmissionResponseDto> submitSurvey(
-		@Valid @RequestBody SurveySubmissionDto request) {
+		@Valid @RequestBody SurveySubmissionDto request,
+		@AuthenticationPrincipal PrincipalDetails userDetails) {
 
 		log.info("설문 응답 제출 요청 - 답변 수: {}", request.getAnswers().size());
 
-		SurveySubmissionResponseDto response = surveyService.submitSurvey(request);
+		SurveySubmissionResponseDto response = surveyService.submitSurvey(request, userDetails.getMemberId());
 
 		return ResponseHandler.success(response);
 	}
@@ -40,7 +44,7 @@ public class SurveyController implements SurveyControllerDocs {
 
 	@Override
 	@GetMapping("/admin/users/{userId}/responses")
-	@PreAuthorize("hasRole('ADMIN')")
+	@AdminApi(reason = "사용자별 설문 응답 조회는 관리자만 가능합니다")
 	public ResponseHandler<SurveyResponseListDto.UserSurveyResponseListDto> getUserSurveyResponses(
 		@PathVariable Long userId) {
 
@@ -53,7 +57,7 @@ public class SurveyController implements SurveyControllerDocs {
 
 	@Override
 	@GetMapping("/admin/responses")
-	@PreAuthorize("hasRole('ADMIN')")
+	@AdminApi(reason = "기간별 설문 응답 조회는 관리자만 가능합니다")
 	public ResponseHandler<List<SurveyResponseListDto>> getSurveyResponsesByPeriod(
 		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
 		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {

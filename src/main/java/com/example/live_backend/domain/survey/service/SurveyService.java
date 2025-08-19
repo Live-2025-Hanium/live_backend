@@ -2,7 +2,6 @@ package com.example.live_backend.domain.survey.service;
 
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
-import com.example.live_backend.global.security.SecurityUtil;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.survey.dto.request.SurveySubmissionDto;
@@ -37,19 +36,17 @@ public class SurveyService {
     private final SurveyQuestionRepository surveyQuestionRepository;
     private final SurveyQuestionOptionRepository surveyQuestionOptionRepository;
     private final MemberRepository memberRepository;
-    private final SecurityUtil securityUtil;
-    
+
     private static final int TOTAL_QUESTIONS = 15;
     private static final int MIN_ANSWER_NUMBER = 1;
     private static final int MAX_ANSWER_NUMBER = 15;
 
 
     @Transactional
-    public SurveySubmissionResponseDto submitSurvey(SurveySubmissionDto request) {
-        Long currentUserId = securityUtil.getCurrentUserId();
-        log.info("설문 응답 제출 시작 - 인증된 사용자 ID: {}", currentUserId);
+    public SurveySubmissionResponseDto submitSurvey(SurveySubmissionDto request, Long memberId) {
+        log.info("설문 응답 제출 시작 - 인증된 사용자 ID: {}", memberId);
 
-        Member member = memberRepository.findById(currentUserId)
+        Member member = memberRepository.findById(memberId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         List<SurveySubmissionDto.SurveyAnswerDto> answers = request.getAnswers();
@@ -97,7 +94,7 @@ public class SurveyService {
 
         member.updateLastSurveySubmittedAt(saved.getCreatedAt());
         
-        log.info("설문 응답 제출 완료 - 응답 ID: {}, 사용자 ID: {}", saved.getId(), currentUserId);
+        log.info("설문 응답 제출 완료 - 응답 ID: {}, 사용자 ID: {}", saved.getId(), memberId);
 
         return SurveySubmissionResponseDto.builder()
             .responseId(saved.getId())

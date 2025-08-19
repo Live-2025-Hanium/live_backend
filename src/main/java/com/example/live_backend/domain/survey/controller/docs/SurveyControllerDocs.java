@@ -4,6 +4,8 @@ import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.domain.survey.dto.request.SurveySubmissionDto;
 import com.example.live_backend.domain.survey.dto.response.SurveySubmissionResponseDto;
 import com.example.live_backend.domain.survey.dto.response.SurveyResponseListDto;
+import com.example.live_backend.global.security.PrincipalDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -33,7 +35,8 @@ public interface SurveyControllerDocs {
         @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
     ResponseHandler<SurveySubmissionResponseDto> submitSurvey(
-        @Valid @RequestBody SurveySubmissionDto request
+        @Valid @RequestBody SurveySubmissionDto request,
+        @AuthenticationPrincipal PrincipalDetails userDetails
     );
 
     @Operation(summary = "사용자별 설문 응답 조회", 

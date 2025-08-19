@@ -2,7 +2,6 @@ package com.example.live_backend.domain.survey.service;
 
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
-import com.example.live_backend.global.security.SecurityUtil;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.survey.dto.request.SurveySubmissionDto;
@@ -54,9 +53,6 @@ class SurveyServiceTest {
 	@Mock
 	private MemberRepository memberRepository;
 
-	@Mock
-	private SecurityUtil securityUtil;
-
 	@InjectMocks
 	private SurveyService surveyService;
 
@@ -73,7 +69,6 @@ class SurveyServiceTest {
 
 		org.mockito.Mockito.doNothing().when(mockMember).updateLastSurveySubmittedAt(any(LocalDateTime.class));
 
-		given(securityUtil.getCurrentUserId()).willReturn(MOCK_USER_ID);
 		given(memberRepository.findById(MOCK_USER_ID)).willReturn(Optional.of(mockMember));
 		
 		List<SurveySubmissionDto.SurveyAnswerDto> answers = Arrays.asList(
@@ -170,7 +165,7 @@ class SurveyServiceTest {
 			given(surveyResponseRepository.save(any(SurveyResponse.class))).willReturn(savedResponse);
 
 			// when
-			SurveySubmissionResponseDto result = surveyService.submitSurvey(validRequest);
+			SurveySubmissionResponseDto result = surveyService.submitSurvey(validRequest, MOCK_USER_ID);
 
 			// then
 			assertThat(result).isNotNull();
@@ -178,7 +173,6 @@ class SurveyServiceTest {
 			assertThat(result.getSubmittedAt()).isEqualTo(expectedTime);
 			assertThat(result.getTotalAnswers()).isEqualTo(15);
 
-			verify(securityUtil).getCurrentUserId();
 			verify(memberRepository).findById(MOCK_USER_ID);
 			verify(surveyResponseRepository).save(any(SurveyResponse.class));
 			verify(mockMember).updateLastSurveySubmittedAt(expectedTime);
@@ -192,7 +186,7 @@ class SurveyServiceTest {
 			SurveySubmissionDto req = new SurveySubmissionDto(insufficient);
 
 			// When & Then
-			Throwable t = catchThrowable(() -> surveyService.submitSurvey(req));
+			Throwable t = catchThrowable(() -> surveyService.submitSurvey(req, MOCK_USER_ID));
 
 			assertThat(t)
 				.isInstanceOf(CustomException.class)
@@ -225,7 +219,7 @@ class SurveyServiceTest {
 			SurveySubmissionDto req = new SurveySubmissionDto(dup);
 
 			// When & Then
-			Throwable t = catchThrowable(() -> surveyService.submitSurvey(req));
+			Throwable t = catchThrowable(() -> surveyService.submitSurvey(req, MOCK_USER_ID));
 
 			assertThat(t)
 				.isInstanceOf(CustomException.class)
@@ -258,7 +252,7 @@ class SurveyServiceTest {
 			SurveySubmissionDto req = new SurveySubmissionDto(missing);
 
 			// When & Then
-			Throwable t = catchThrowable(() -> surveyService.submitSurvey(req));
+			Throwable t = catchThrowable(() -> surveyService.submitSurvey(req, MOCK_USER_ID));
 
 			assertThat(t)
 				.isInstanceOf(CustomException.class)
@@ -291,7 +285,7 @@ class SurveyServiceTest {
 			SurveySubmissionDto req = new SurveySubmissionDto(outOfRange);
 
 			// When & Then
-			Throwable t = catchThrowable(() -> surveyService.submitSurvey(req));
+			Throwable t = catchThrowable(() -> surveyService.submitSurvey(req, MOCK_USER_ID));
 
 			assertThat(t)
 				.isInstanceOf(CustomException.class)
@@ -324,7 +318,7 @@ class SurveyServiceTest {
 			SurveySubmissionDto req = new SurveySubmissionDto(badAnswer);
 
 			// When & Then
-			Throwable t = catchThrowable(() -> surveyService.submitSurvey(req));
+			Throwable t = catchThrowable(() -> surveyService.submitSurvey(req, MOCK_USER_ID));
 
 			assertThat(t)
 				.isInstanceOf(CustomException.class)
@@ -338,7 +332,6 @@ class SurveyServiceTest {
 		void submitSurvey_SecurityContextUserId_Success() {
 			// Given
 			Long expectedId = 999L;
-			given(securityUtil.getCurrentUserId()).willReturn(expectedId);
 			given(memberRepository.findById(expectedId)).willReturn(Optional.of(mockMember));
 			given(mockMember.getId()).willReturn(expectedId);
 			given(surveyResponseRepository.save(any(SurveyResponse.class)))
@@ -351,11 +344,10 @@ class SurveyServiceTest {
 				});
 
 			// When
-			SurveySubmissionResponseDto result = surveyService.submitSurvey(validRequest);
+			SurveySubmissionResponseDto result = surveyService.submitSurvey(validRequest, expectedId);
 
 			// Then
 			assertThat(result.getResponseId()).isEqualTo(200L);
-			verify(securityUtil).getCurrentUserId();
 			verify(surveyResponseRepository).save(any(SurveyResponse.class));
 		}
 	}

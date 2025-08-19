@@ -9,7 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.example.live_backend.global.security.annotation.AdminApi;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class SurveyQuestionController implements SurveyQuestionControllerDocs {
     
     @Override
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminApi(reason = "설문 질문 생성은 관리자만 가능합니다")
     public ResponseEntity<SurveyQuestionDto> createQuestion(
             @Valid @RequestBody CreateQuestionRequest request) {
         SurveyQuestionDto created = surveyQuestionService.createQuestion(request);
@@ -39,7 +39,7 @@ public class SurveyQuestionController implements SurveyQuestionControllerDocs {
     
     @Override
     @PutMapping("/{questionId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminApi(reason = "설문 질문 수정은 관리자만 가능합니다")
     public ResponseEntity<SurveyQuestionDto> updateQuestion(
             @PathVariable Long questionId,
             @Valid @RequestBody UpdateQuestionRequest request) {
@@ -49,7 +49,7 @@ public class SurveyQuestionController implements SurveyQuestionControllerDocs {
     
     @Override
     @DeleteMapping("/{questionId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminApi(reason = "설문 질문 비활성화는 관리자만 가능합니다")
     public ResponseEntity<Void> deactivateQuestion(
             @PathVariable Long questionId) {
         surveyQuestionService.deactivateQuestion(questionId);
