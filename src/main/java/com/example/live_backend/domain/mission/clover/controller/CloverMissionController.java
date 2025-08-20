@@ -1,13 +1,13 @@
 package com.example.live_backend.domain.mission.clover.controller;
 
+import com.example.live_backend.domain.mission.clover.controller.docs.CloverMissionControllerDocs;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionListResponseDto;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionResponseDto;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionStatusResponseDto;
 import com.example.live_backend.domain.mission.clover.service.CloverMissionService;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.example.live_backend.global.security.annotation.AuthenticatedApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,14 +16,14 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/missions/clover")
-@Tag(name = "Clover Mission", description = "클로버 미션 관련 API")
 @Slf4j
-public class CloverMissionController {
+public class CloverMissionController implements CloverMissionControllerDocs {
 
 	private final CloverMissionService cloverMissionService;
 
+	@Override
 	@GetMapping
-	@Operation(summary = "클로버 미션 리스트 조회 ", description = "클로버 미션 리스트를 조회합니다.")
+	@AuthenticatedApi(reason = "클로버 미션 리스트 조회는 로그인한 사용자만 가능합니다")
 	public ResponseHandler<CloverMissionListResponseDto> getCloverMissionList(
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
@@ -33,9 +33,9 @@ public class CloverMissionController {
 		return ResponseHandler.success(response);
 	}
 
+	@Override
 	@GetMapping("/{userMissionId}")
-	@Operation(summary = "클로버 미션(1개) 상세 조회 ",
-			description = "클로버 미션 1개의 상세 정보를 조회합니다.")
+	@AuthenticatedApi(reason = "클로버 미션 상세 조회는 로그인한 사용자만 가능합니다")
 	public ResponseHandler<CloverMissionResponseDto> getCloverMissionInfo(
 			@PathVariable Long userMissionId,
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
@@ -46,8 +46,9 @@ public class CloverMissionController {
 		return ResponseHandler.success(response);
 	}
 
+	@Override
 	@PatchMapping("/{userMissionId}/start")
-	@Operation(summary = "클로버 미션 시작(Started)", description = "클로버 미션을 시작 상태로 변경합니다.")
+	@AuthenticatedApi(reason = "클로버 미션 상태 변경은 로그인한 사용자만 가능합니다")
 	public ResponseHandler<CloverMissionStatusResponseDto> startMission(
 			@PathVariable Long userMissionId,
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
@@ -59,8 +60,9 @@ public class CloverMissionController {
 
 	}
 
+	@Override
 	@PatchMapping("/{userMissionId}/pause")
-	@Operation(summary = "클로버 미션 일시정지(Paused)", description = "클로버 미션을 일시정지 상태로 변경합니다.")
+	@AuthenticatedApi(reason = "클로버 미션 상태 변경은 로그인한 사용자만 가능합니다")
 	public ResponseHandler<CloverMissionStatusResponseDto> pauseMission(
 			@PathVariable Long userMissionId,
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
@@ -71,8 +73,9 @@ public class CloverMissionController {
 		return ResponseHandler.success(response);
 	}
 
+	@Override
 	@PatchMapping("/{userMissionId}/complete")
-	@Operation(summary = "클로버 미션 완료(Completed)", description = "클로버 미션을 완료 상태로 변경합니다.")
+	@AuthenticatedApi(reason = "클로버 미션 상태 변경은 로그인한 사용자만 가능합니다")
 	public ResponseHandler<CloverMissionStatusResponseDto> completeMission(
 			@PathVariable Long userMissionId,
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
@@ -83,8 +86,9 @@ public class CloverMissionController {
 		return ResponseHandler.success(response);
 	}
 
+	@Override
 	@GetMapping("/refill")
-	@Operation(summary = "클로버 리필", description = "클로버 미션을 새롭게 할당합니다.")
+	@AuthenticatedApi(reason = "클로버 미션 리필은 로그인한 사용자만 가능합니다")
 	public ResponseHandler<CloverMissionListResponseDto> refillCloverMission(
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
