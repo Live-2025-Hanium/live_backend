@@ -100,4 +100,18 @@ public class MyMissionController {
 
         return ResponseHandler.success(response);
     }
+
+    @PatchMapping("/{myMissionId}/active")
+    @Operation(summary = "마이 미션 활성/비활성", description = "마이 미션의 토글을 On/Off 설정합니다. (isActive 값을 true/false로 변경)")
+    public ResponseHandler<MyMissionResponseDto> changeActive(
+            @PathVariable Long myMissionId,
+            @RequestParam boolean active,
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ) {
+
+        Long memberId = userDetails.getMemberId();
+        MyMissionResponseDto response = myMissionService.changeActive(memberId, myMissionId, active);
+
+        return ResponseHandler.success(response);
+    }
 }

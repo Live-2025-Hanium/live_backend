@@ -119,10 +119,9 @@ public class MyMissionService {
         DayOfWeek todayOfWeek = today.getDayOfWeek();
 
         boolean isDateValid = !mission.getStartDate().isAfter(today) &&
-                 !mission.getEndDate().isBefore(today);
+                !mission.getEndDate().isBefore(today);
 
-        boolean isRepeatDayValid = mission.getRepeatDays().isEmpty() ||
-                mission.getRepeatDays().contains(todayOfWeek);
+        boolean isRepeatDayValid = mission.getRepeatType().includes(todayOfWeek);
 
         return mission.isActive() && isDateValid && isRepeatDayValid;
     }
@@ -143,11 +142,26 @@ public class MyMissionService {
             throw new CustomException(ErrorCode.MISSION_FORBIDDEN);
         }
 
-        MyMission myMission = myMissionRepository.findById(myMissionRecord.getMyMission().getId())
+        myMissionRepository.findById(myMissionRecord.getMyMission().getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.MISSION_NOT_FOUND));
 
         myMissionRecord.completeMission();
 
         return MyMissionRecordResponseDto.from(myMissionRecord);
+    }
+
+    @Transactional
+    public MyMissionResponseDto changeActive(Long memberId, Long myMissionId, boolean active) {
+
+        MyMission myMission = myMissionRepository.findById(myMissionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MISSION_NOT_FOUND));
+
+        if (!myMission.getMember().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.MISSION_UPDATE_DENIED);
+        }
+
+        myMission.changeActive(active);
+
+        return MyMissionResponseDto.from(myMission);
     }
 }

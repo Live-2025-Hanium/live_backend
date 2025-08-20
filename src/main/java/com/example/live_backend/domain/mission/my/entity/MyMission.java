@@ -2,19 +2,15 @@ package com.example.live_backend.domain.mission.my.entity;
 
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.mission.my.dto.MyMissionRequestDto;
-import com.example.live_backend.domain.mission.my.util.DayOfWeekListConverter;
-import com.example.live_backend.domain.mission.my.util.LocalTimeListConverter;
+import com.example.live_backend.domain.mission.my.Enum.RepeatType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -44,13 +40,12 @@ public class MyMission {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Convert(converter = LocalTimeListConverter.class)
-    @Column(name = "scheduled_time", columnDefinition = "json")
-    private List<LocalTime> scheduledTime = new ArrayList<>();
+    @Column(name = "scheduled_time")
+    private LocalTime scheduledTime;
 
-    @Convert(converter = DayOfWeekListConverter.class)
-    @Column(name = "repeat_days", columnDefinition = "json")
-    private List<DayOfWeek> repeatDays = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
+    @Column(name = "repeat_type", nullable = false)
+    private RepeatType repeatType;
 
     public static MyMission from(MyMissionRequestDto dto, Member member) {
         return MyMission.builder()
@@ -60,7 +55,7 @@ public class MyMission {
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
                 .scheduledTime(dto.getScheduledTime())
-                .repeatDays(dto.getRepeatDays())
+                .repeatType(dto.getRepeatType() != null ? dto.getRepeatType() : RepeatType.EVERYDAY)
                 .build();
     }
 
@@ -70,13 +65,15 @@ public class MyMission {
         this.endDate = dto.getEndDate();
 
         if (dto.getScheduledTime() != null) {
-            this.scheduledTime.clear();
-            this.scheduledTime.addAll(dto.getScheduledTime());
+            this.scheduledTime = dto.getScheduledTime();
         }
 
-        if (dto.getRepeatDays() != null) {
-            this.repeatDays.clear();
-            this.repeatDays.addAll(dto.getRepeatDays());
+        if (dto.getRepeatType() != null) {
+            this.repeatType = dto.getRepeatType();
         }
+    }
+
+    public void changeActive(boolean isActive) {
+        this.isActive = isActive;
     }
 }
