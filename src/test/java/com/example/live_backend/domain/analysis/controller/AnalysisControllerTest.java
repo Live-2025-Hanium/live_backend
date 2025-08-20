@@ -5,8 +5,6 @@ import com.example.live_backend.domain.analysis.dto.MonthlyGrowthResponseDto;
 import com.example.live_backend.domain.analysis.dto.MonthlyParticipationResponseDto;
 import com.example.live_backend.domain.analysis.dto.WeeklyMissionSummaryResponseDto;
 import com.example.live_backend.domain.analysis.service.AnalysisService;
-import com.example.live_backend.global.error.exception.CustomException;
-import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +23,6 @@ import java.time.YearMonth;
 import java.util.Collections;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -81,7 +78,7 @@ class AnalysisControllerTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/analysis/missions")
+    @DisplayName("GET /api/v1/analysis/missions (weekly/daily 개별 엔드포인트)")
     class GetMissions {
 
         @Test
@@ -97,7 +94,7 @@ class AnalysisControllerTest {
             given(analysisService.getWeeklySummary(eq(MEMBER_ID), eq(date))).willReturn(dto);
 
             // When
-            ResponseHandler<?> response = analysisController.getMissions(date, "weekly", member);
+            ResponseHandler<WeeklyMissionSummaryResponseDto> response = analysisController.getWeeklyMissions(date, member);
 
             // Then
             assertThat(response.isSuccess()).isTrue();
@@ -114,36 +111,12 @@ class AnalysisControllerTest {
             given(analysisService.getDailyCompleted(eq(MEMBER_ID), eq(date))).willReturn(dto);
 
             // When
-            ResponseHandler<?> response = analysisController.getMissions(date, "daily", member);
+            ResponseHandler<DailyCompletedMissionsResponseDto> response = analysisController.getDailyMissions(date, member);
 
             // Then
             assertThat(response.isSuccess()).isTrue();
             assertThat(response.getData()).isEqualTo(dto);
             verify(analysisService).getDailyCompleted(eq(MEMBER_ID), eq(date));
-        }
-
-        @Test
-        @DisplayName("실패 - 잘못된 type 전달 시 예외 발생")
-        void invalidType_ThrowsCustomException() {
-            // Given
-            LocalDate date = LocalDate.of(2025, 8, 17);
-
-            // When & Then
-            CustomException ex = assertThrows(CustomException.class,
-                    () -> analysisController.getMissions(date, "monthly", member));
-            assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_QUERY_TYPE);
-        }
-
-        @Test
-        @DisplayName("실패 - type 이 없으면 예외 발생")
-        void missingType_ThrowsCustomException() {
-            // Given
-            LocalDate date = LocalDate.of(2025, 8, 18);
-
-            // When & Then
-            CustomException ex = assertThrows(CustomException.class,
-                    () -> analysisController.getMissions(date, null, member));
-            assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.QUERY_TYPE_REQUIRED);
         }
     }
 
