@@ -1,13 +1,13 @@
 package com.example.live_backend.domain.mission.my.controller;
 
+import com.example.live_backend.domain.mission.my.controller.docs.MyMissionControllerDocs;
 import com.example.live_backend.domain.mission.my.dto.MyMissionRecordResponseDto;
 import com.example.live_backend.domain.mission.my.dto.MyMissionRequestDto;
 import com.example.live_backend.domain.mission.my.dto.MyMissionResponseDto;
 import com.example.live_backend.domain.mission.my.service.MyMissionService;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.example.live_backend.global.security.annotation.AuthenticatedApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,14 +18,14 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/missions/my")
-@Tag(name = "My Mission", description = "마이 미션 관련 API")
 @Slf4j
-public class MyMissionController {
+public class MyMissionController implements MyMissionControllerDocs {
 
     private final MyMissionService myMissionService;
 
+    @Override
     @PostMapping
-    @Operation(summary = "마이 미션 생성", description = "마이 미션을 생성합니다.")
+    @AuthenticatedApi(reason = "마이 미션 생성은 로그인한 사용자만 가능합니다")
     public ResponseHandler<MyMissionResponseDto> createMyMission(
             @RequestBody MyMissionRequestDto requestDto,
             @AuthenticationPrincipal PrincipalDetails userDetails
@@ -37,8 +37,9 @@ public class MyMissionController {
         return ResponseHandler.success(response);
     }
 
+    @Override
     @PutMapping("/{myMissionId}")
-    @Operation(summary = "마이 미션 수정", description = "마이 미션을 수정합니다.")
+    @AuthenticatedApi(reason = "마이 미션 수정은 로그인한 사용자만 가능합니다")
     public ResponseHandler<MyMissionResponseDto> updateMyMission(
             @PathVariable Long myMissionId,
             @RequestBody MyMissionRequestDto requestDto,
@@ -51,8 +52,9 @@ public class MyMissionController {
         return ResponseHandler.success(response);
     }
 
+    @Override
     @DeleteMapping("/{myMissionId}")
-    @Operation(summary = "마이 미션 삭제", description = "마이 미션을 삭제합니다.")
+    @AuthenticatedApi(reason = "마이 미션 삭제는 로그인한 사용자만 가능합니다")
     public ResponseHandler<Void> deleteMyMission(
             @PathVariable Long myMissionId,
             @AuthenticationPrincipal PrincipalDetails userDetails
@@ -64,8 +66,9 @@ public class MyMissionController {
         return ResponseHandler.success(null);
     }
 
+    @Override
     @GetMapping
-    @Operation(summary = "마이 미션 전체 리스트 조회", description = "마이 미션 전체 리스트를 조회합니다.")
+    @AuthenticatedApi(reason = "마이 미션 전체 리스트 조회는 로그인한 사용자만 가능합니다")
     public ResponseHandler<List<MyMissionResponseDto>> getMyMissionsList(
             @AuthenticationPrincipal PrincipalDetails userDetails
     ) {
@@ -76,8 +79,9 @@ public class MyMissionController {
         return ResponseHandler.success(response);
     }
 
+    @Override
     @GetMapping("/today")
-    @Operation(summary = "금일 수행해야 하는 마이 미션 리스트 조회", description = "금일 수행할 마이 미션의 전체 리스트를 조회합니다.")
+    @AuthenticatedApi(reason = "금일 수행해야 하는 마이 미션 리스트 조회는 로그인한 사용자만 가능합니다")
     public ResponseHandler<List<MyMissionRecordResponseDto>> getTodayMyMissionsList(
             @AuthenticationPrincipal PrincipalDetails userDetails
     ) {
@@ -88,8 +92,9 @@ public class MyMissionController {
         return ResponseHandler.success(response);
     }
 
+    @Override
     @PatchMapping("/{userMissionId}/complete")
-    @Operation(summary = "마이 미션 수행 완료", description = "금일 수행한 마이 미션의 상태를 완료 처리합니다.")
+    @AuthenticatedApi(reason = "마이 미션 수행 완료 처리는 로그인한 사용자만 가능합니다")
     public ResponseHandler<MyMissionRecordResponseDto> completeMyMission(
             @PathVariable Long userMissionId,
             @AuthenticationPrincipal PrincipalDetails userDetails
@@ -101,8 +106,9 @@ public class MyMissionController {
         return ResponseHandler.success(response);
     }
 
+    @Override
     @PatchMapping("/{myMissionId}/active")
-    @Operation(summary = "마이 미션 활성/비활성", description = "마이 미션의 토글을 On/Off 설정합니다. (isActive 값을 true/false로 변경)")
+    @AuthenticatedApi(reason = "마이 미션 활성/바활성화는 로그인한 사용자만 가능합니다")
     public ResponseHandler<MyMissionResponseDto> changeActive(
             @PathVariable Long myMissionId,
             @RequestParam boolean active,

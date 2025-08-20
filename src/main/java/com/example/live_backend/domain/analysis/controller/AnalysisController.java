@@ -1,6 +1,5 @@
 package com.example.live_backend.domain.analysis.controller;
 
-import com.example.live_backend.domain.analysis.Enum.AnalysisQueryType;
 import com.example.live_backend.domain.analysis.controller.docs.AnalysisControllerDocs;
 import com.example.live_backend.domain.analysis.dto.DailyCompletedMissionsResponseDto;
 import com.example.live_backend.domain.analysis.dto.MonthlyGrowthResponseDto;
@@ -10,7 +9,6 @@ import com.example.live_backend.domain.analysis.service.AnalysisService;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
 import com.example.live_backend.global.security.annotation.AuthenticatedApi;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

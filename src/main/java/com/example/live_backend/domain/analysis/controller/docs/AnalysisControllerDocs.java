@@ -6,10 +6,8 @@ import com.example.live_backend.domain.analysis.dto.MonthlyParticipationResponse
 import com.example.live_backend.domain.analysis.dto.WeeklyMissionSummaryResponseDto;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
-import com.example.live_backend.global.security.annotation.AuthenticatedApi;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
