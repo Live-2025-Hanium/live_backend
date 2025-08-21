@@ -3,7 +3,6 @@ package com.example.live_backend.domain.mission.clover.service;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionListResponseDto;
-import com.example.live_backend.domain.mission.clover.dto.CloverMissionRecordResponseDto;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionResponseDto;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionStatusResponseDto;
 import com.example.live_backend.domain.mission.clover.entity.CloverMission;
@@ -34,28 +33,28 @@ public class CloverMissionService {
     private final CloverMissionRecordRepository cloverMissionRecordRepository;
 
     @Transactional
-    public CloverMissionListResponseDto getCloverMissionList(Long userId) {
+    public CloverMissionListResponseDto getCloverMissionList(Long memberId) {
 
-        Member member = findUser(userId);
+        Member member = findUser(memberId);
         LocalDate today  = LocalDate.now();
-        List<CloverMissionRecord> todayMissions = cloverMissionRecordRepository.findCloverMissionsList(userId, today);
+        List<CloverMissionRecord> todayMissions = cloverMissionRecordRepository.findCloverMissionsList(memberId, today);
 
         // 만약 오늘의 클로버 미션 리스트를 조회했는데 결과가 없다면 미션 할당받는 아래의 로직 수행
         if (todayMissions.isEmpty()) {
             List<CloverMissionRecord> newMissions = assignNewCloverMissions(member, emptyList());
-            return CloverMissionListResponseDto.of(userId, newMissions);
+            return CloverMissionListResponseDto.of(memberId, newMissions);
         }
 
-        return CloverMissionListResponseDto.of(userId, todayMissions);
+        return CloverMissionListResponseDto.of(memberId, todayMissions);
     }
 
     @Transactional
-    public CloverMissionListResponseDto assignCloverMissionList(Long userId) {
+    public CloverMissionListResponseDto assignCloverMissionList(Long memberId) {
 
-        Member member = findUser(userId);
+        Member member = findUser(memberId);
         LocalDate today  = LocalDate.now();
 
-        List<CloverMissionRecord> todayAllMissions = cloverMissionRecordRepository.findCloverMissionsList(userId, today);
+        List<CloverMissionRecord> todayAllMissions = cloverMissionRecordRepository.findCloverMissionsList(memberId, today);
 
         List<Long> excludedMissionIds = todayAllMissions.stream()
                 .map(CloverMissionRecord::getMissionId)
@@ -63,21 +62,21 @@ public class CloverMissionService {
 
         List<CloverMissionRecord> newMissions = assignNewCloverMissions(member, excludedMissionIds);
 
-        return CloverMissionListResponseDto.of(userId, newMissions);
+        return CloverMissionListResponseDto.of(memberId, newMissions);
     }
 
     @Transactional(readOnly = true)
-    public CloverMissionResponseDto getCloverMissionInfo(Long userMissionId, Long userId) {
+    public CloverMissionResponseDto getCloverMissionInfo(Long userMissionId, Long memberId) {
 
-        CloverMissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId, userId);
+        CloverMissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId, memberId);
 
         return CloverMissionResponseDto.from(missionRecord);
     }
 
     @Transactional
-    public CloverMissionStatusResponseDto startCloverMission(Long userMissionId, Long userId) {
+    public CloverMissionStatusResponseDto startCloverMission(Long userMissionId, Long memberId) {
 
-        CloverMissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId, userId);
+        CloverMissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId, memberId);
 
         missionRecord.startMission();
 
@@ -85,9 +84,9 @@ public class CloverMissionService {
     }
 
     @Transactional
-    public CloverMissionStatusResponseDto pauseCloverMission(Long userMissionId, Long userId) {
+    public CloverMissionStatusResponseDto pauseCloverMission(Long userMissionId, Long memberId) {
 
-        CloverMissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId,userId);
+        CloverMissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId,memberId);
 
         missionRecord.pauseMission();
 
@@ -95,21 +94,21 @@ public class CloverMissionService {
     }
 
     @Transactional
-    public CloverMissionStatusResponseDto completeCloverMission(Long userMissionId, Long userId) {
+    public CloverMissionStatusResponseDto completeCloverMission(Long userMissionId, Long memberId) {
 
-        CloverMissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId, userId);
+        CloverMissionRecord missionRecord = findAndVerifyMissionRecord(userMissionId, memberId);
 
         missionRecord.completeMission();
 
         return CloverMissionStatusResponseDto.from(missionRecord);
     }
 
-    private CloverMissionRecord findAndVerifyMissionRecord(Long userMissionId, Long userId) {
+    private CloverMissionRecord findAndVerifyMissionRecord(Long userMissionId, Long memberId) {
 
         CloverMissionRecord findByUserMissionId = cloverMissionRecordRepository.findByIdWithMember(userMissionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MISSION_NOT_FOUND));
 
-        if (!findByUserMissionId.getMember().getId().equals(userId)) {
+        if (!findByUserMissionId.getMember().getId().equals(memberId)) {
             throw new CustomException(ErrorCode.MISSION_FORBIDDEN);
         }
 
@@ -131,8 +130,8 @@ public class CloverMissionService {
         return cloverMissionRecordRepository.saveAll(newMissionRecordList);
     }
 
-    private Member findUser(Long userId) {
-        return memberRepository.findById(userId)
+    private Member findUser(Long memberId) {
+        return memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 }
