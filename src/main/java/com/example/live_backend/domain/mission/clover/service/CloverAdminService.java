@@ -1,14 +1,11 @@
 package com.example.live_backend.domain.mission.clover.service;
 
-import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.mission.clover.dto.AdminRegisterCloverMissionRequestDto;
 import com.example.live_backend.domain.mission.clover.dto.AdminRegisterCloverMissionResponseDto;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionCreateRequestDto;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionVectorDataDto;
 import com.example.live_backend.domain.mission.clover.entity.CloverMission;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
-import com.example.live_backend.global.error.exception.CustomException;
-import com.example.live_backend.global.error.exception.ErrorCode;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
@@ -26,11 +23,7 @@ public class CloverAdminService {
     private final VectorStore vectorStore;
 
     @Transactional
-    public AdminRegisterCloverMissionResponseDto registerCloverMission(AdminRegisterCloverMissionRequestDto request, String role) {
-
-        if (!role.equals(String.valueOf(Role.ADMIN))) {
-            throw new CustomException(ErrorCode.REGISTRATION_DENIED);
-        }
+    public AdminRegisterCloverMissionResponseDto registerCloverMission(AdminRegisterCloverMissionRequestDto request) {
 
         CloverMissionCreateRequestDto createDto = request.getCloverMissionCreateRequestDto();
         CloverMissionVectorDataDto vectorDto = request.getCloverMissionVectorDataDto();

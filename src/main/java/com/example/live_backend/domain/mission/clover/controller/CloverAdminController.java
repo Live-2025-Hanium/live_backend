@@ -27,8 +27,7 @@ public class CloverAdminController implements CloverAdminControllerDocs {
             @RequestBody AdminRegisterCloverMissionRequestDto requestDto,
             @AuthenticationPrincipal PrincipalDetails userDetails) {
 
-        String role = userDetails.getRole();
-        AdminRegisterCloverMissionResponseDto response = cloverAdminService.registerCloverMission(requestDto, role);
+        AdminRegisterCloverMissionResponseDto response = cloverAdminService.registerCloverMission(requestDto);
 
         return ResponseHandler.success(response);
     }
