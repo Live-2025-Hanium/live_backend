@@ -5,10 +5,9 @@ import com.example.live_backend.domain.survey.dto.request.CreateQuestionRequest;
 import com.example.live_backend.domain.survey.dto.request.UpdateQuestionRequest;
 import com.example.live_backend.domain.survey.dto.response.SurveyQuestionDto;
 import com.example.live_backend.domain.survey.service.SurveyQuestionService;
+import com.example.live_backend.global.error.response.ResponseHandler;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import com.example.live_backend.global.security.annotation.AdminApi;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,36 +22,36 @@ public class SurveyQuestionController implements SurveyQuestionControllerDocs {
     
     @Override
     @GetMapping
-    public ResponseEntity<List<SurveyQuestionDto>> getAllActiveQuestions() {
+    public ResponseHandler<List<SurveyQuestionDto>> getAllActiveQuestions() {
         List<SurveyQuestionDto> questions = surveyQuestionService.getAllActiveQuestions();
-        return ResponseEntity.ok(questions);
+        return ResponseHandler.success(questions);
     }
     
     @Override
     @PostMapping
     @AdminApi(reason = "설문 질문 생성은 관리자만 가능합니다")
-    public ResponseEntity<SurveyQuestionDto> createQuestion(
+    public ResponseHandler<SurveyQuestionDto> createQuestion(
             @Valid @RequestBody CreateQuestionRequest request) {
         SurveyQuestionDto created = surveyQuestionService.createQuestion(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseHandler.success(created);
     }
     
     @Override
     @PutMapping("/{questionId}")
     @AdminApi(reason = "설문 질문 수정은 관리자만 가능합니다")
-    public ResponseEntity<SurveyQuestionDto> updateQuestion(
+    public ResponseHandler<SurveyQuestionDto> updateQuestion(
             @PathVariable Long questionId,
             @Valid @RequestBody UpdateQuestionRequest request) {
         SurveyQuestionDto updated = surveyQuestionService.updateQuestion(questionId, request);
-        return ResponseEntity.ok(updated);
+        return ResponseHandler.success(updated);
     }
     
     @Override
     @DeleteMapping("/{questionId}")
     @AdminApi(reason = "설문 질문 비활성화는 관리자만 가능합니다")
-    public ResponseEntity<Void> deactivateQuestion(
+    public ResponseHandler<Void> deactivateQuestion(
             @PathVariable Long questionId) {
         surveyQuestionService.deactivateQuestion(questionId);
-        return ResponseEntity.noContent().build();
+        return ResponseHandler.success(null);
     }
 }
