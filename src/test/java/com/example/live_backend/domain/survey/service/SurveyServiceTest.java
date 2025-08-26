@@ -24,7 +24,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.util.ReflectionUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -146,6 +145,15 @@ class SurveyServiceTest {
 		@DisplayName("정상적인 설문 제출 - 성공")
 		void givenValidRequest_whenSubmitSurvey_thenSuccessfulSubmission() {
 			// given
+			List<SurveyQuestion> activeQuestions = new ArrayList<>();
+			for (int i = 1; i <= 15; i++) {
+				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
+				given(mockQuestion.getQuestionNumber()).willReturn(i);
+				given(mockQuestion.isActive()).willReturn(true);
+				activeQuestions.add(mockQuestion);
+			}
+			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
+			
 			LocalDateTime expectedTime = LocalDateTime.now();
 			SurveyResponse savedResponse = org.mockito.Mockito.mock(SurveyResponse.class);
 			given(savedResponse.getId()).willReturn(123L);
@@ -182,6 +190,15 @@ class SurveyServiceTest {
 		@DisplayName("설문 제출 - 답변 개수 부족 시 예외")
 		void submitSurvey_InsufficientAnswers_ThrowsException() {
 			// Given
+			List<SurveyQuestion> activeQuestions = new ArrayList<>();
+			for (int i = 1; i <= 15; i++) {
+				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
+				given(mockQuestion.getQuestionNumber()).willReturn(i);
+				given(mockQuestion.isActive()).willReturn(true);
+				activeQuestions.add(mockQuestion);
+			}
+			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
+			
 			List<SurveySubmissionDto.SurveyAnswerDto> insufficient = validRequest.getAnswers().subList(0, 14);
 			SurveySubmissionDto req = new SurveySubmissionDto(insufficient);
 
@@ -199,6 +216,15 @@ class SurveyServiceTest {
 		@DisplayName("설문 제출 - 문제 번호 중복 시 예외")
 		void submitSurvey_DuplicateQuestionNumber_ThrowsException() {
 			// Given
+			List<SurveyQuestion> activeQuestions = new ArrayList<>();
+			for (int i = 1; i <= 15; i++) {
+				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
+				given(mockQuestion.getQuestionNumber()).willReturn(i);
+				given(mockQuestion.isActive()).willReturn(true);
+				activeQuestions.add(mockQuestion);
+			}
+			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
+			
 			List<SurveySubmissionDto.SurveyAnswerDto> dup = Arrays.asList(
 				new SurveySubmissionDto.SurveyAnswerDto(1, 3),
 				new SurveySubmissionDto.SurveyAnswerDto(1, 2),
@@ -229,9 +255,18 @@ class SurveyServiceTest {
 		}
 
 		@Test
-		@DisplayName("설문 제출 - 문제 번호 범위 초과 시 예외 (16번)")
+		@DisplayName("설문 제출 - 비활성 문제 번호 시 예외 (16번)")
 		void submitSurvey_QuestionNumberOutOfRange_ThrowsException() {
-			// Given - 2번 문제를 빼고 16번을 추가하여 15개 답변 유지
+			// Given
+			List<SurveyQuestion> activeQuestions = new ArrayList<>();
+			for (int i = 1; i <= 15; i++) {
+				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
+				given(mockQuestion.getQuestionNumber()).willReturn(i);
+				given(mockQuestion.isActive()).willReturn(true);
+				activeQuestions.add(mockQuestion);
+			}
+			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
+			
 			List<SurveySubmissionDto.SurveyAnswerDto> missing = Arrays.asList(
 				new SurveySubmissionDto.SurveyAnswerDto(1, 3),
 				new SurveySubmissionDto.SurveyAnswerDto(3, 4),
@@ -256,15 +291,24 @@ class SurveyServiceTest {
 
 			assertThat(t)
 				.isInstanceOf(CustomException.class)
-				.hasMessageContaining("문제 번호는 1-15 범위여야 합니다. 입력된 값: 16");
+				.hasMessageContaining("문제 번호 16는 현재 활성화되지 않았거나 존재하지 않습니다");
 			assertThat(((CustomException)t).getErrorCode())
 				.isEqualTo(ErrorCode.INVALID_INPUT);
 		}
 
 		@Test
-		@DisplayName("설문 제출 - 잘못된 문제 번호 범위 시 예외")
+		@DisplayName("설문 제출 - 비활성 문제 번호 시 예외")
 		void submitSurvey_InvalidQuestionNumber_ThrowsException() {
 			// Given
+			List<SurveyQuestion> activeQuestions = new ArrayList<>();
+			for (int i = 1; i <= 15; i++) {
+				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
+				given(mockQuestion.getQuestionNumber()).willReturn(i);
+				given(mockQuestion.isActive()).willReturn(true);
+				activeQuestions.add(mockQuestion);
+			}
+			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
+			
 			List<SurveySubmissionDto.SurveyAnswerDto> outOfRange = Arrays.asList(
 				new SurveySubmissionDto.SurveyAnswerDto(1, 3),
 				new SurveySubmissionDto.SurveyAnswerDto(2, 2),
@@ -289,7 +333,7 @@ class SurveyServiceTest {
 
 			assertThat(t)
 				.isInstanceOf(CustomException.class)
-				.hasMessageContaining("문제 번호는 1-15 범위여야 합니다. 입력된 값: 16");
+				.hasMessageContaining("문제 번호 16는 현재 활성화되지 않았거나 존재하지 않습니다");
 			assertThat(((CustomException)t).getErrorCode())
 				.isEqualTo(ErrorCode.INVALID_INPUT);
 		}
@@ -298,6 +342,15 @@ class SurveyServiceTest {
 		@DisplayName("설문 제출 - 잘못된 답변 번호 범위 시 예외")
 		void submitSurvey_InvalidAnswerNumber_ThrowsException() {
 			// Given
+			List<SurveyQuestion> activeQuestions = new ArrayList<>();
+			for (int i = 1; i <= 15; i++) {
+				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
+				given(mockQuestion.getQuestionNumber()).willReturn(i);
+				given(mockQuestion.isActive()).willReturn(true);
+				activeQuestions.add(mockQuestion);
+			}
+			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
+			
 			List<SurveySubmissionDto.SurveyAnswerDto> badAnswer = Arrays.asList(
 				new SurveySubmissionDto.SurveyAnswerDto(1, 3),
 				new SurveySubmissionDto.SurveyAnswerDto(2, 2),
@@ -322,7 +375,7 @@ class SurveyServiceTest {
 
 			assertThat(t)
 				.isInstanceOf(CustomException.class)
-				.hasMessageContaining("답변 번호는 1-15 범위여야 합니다. 입력된 값: 16");
+				.hasMessageContaining("답변 번호는 1-5 범위여야 합니다. 입력된 값: 16");
 			assertThat(((CustomException)t).getErrorCode())
 				.isEqualTo(ErrorCode.INVALID_INPUT);
 		}
@@ -331,6 +384,15 @@ class SurveyServiceTest {
 		@DisplayName("Spring Security 인증 테스트 - 사용자 ID 추출")
 		void submitSurvey_SecurityContextUserId_Success() {
 			// Given
+			List<SurveyQuestion> activeQuestions = new ArrayList<>();
+			for (int i = 1; i <= 15; i++) {
+				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
+				given(mockQuestion.getQuestionNumber()).willReturn(i);
+				given(mockQuestion.isActive()).willReturn(true);
+				activeQuestions.add(mockQuestion);
+			}
+			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
+			
 			Long expectedId = 999L;
 			given(memberRepository.findById(expectedId)).willReturn(Optional.of(mockMember));
 			given(mockMember.getId()).willReturn(expectedId);
