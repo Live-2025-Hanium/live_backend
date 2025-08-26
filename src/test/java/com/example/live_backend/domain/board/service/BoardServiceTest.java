@@ -26,6 +26,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BoardService 테스트")
@@ -37,6 +38,7 @@ class BoardServiceTest {
 	@Mock private CategoryRepository categoryRepository;
 	@Mock private ImageRepository imageRepository;
 	@Mock private BoardImageRepository boardImageRepository;
+	@Mock private CommentRepository commentRepository; // 누락된 의존성 추가
 
 	@InjectMocks private BoardService boardService;
 
@@ -45,10 +47,14 @@ class BoardServiceTest {
 	private Board board;
 
 	@BeforeEach
-	void setUp() {
+	void setUp() throws Exception {
 		member = mock(Member.class);
 		category = mock(Category.class);
 		board = createBoard(1L, "테스트 제목", "테스트 내용", category, member);
+		
+		// Mock 객체들의 ID 설정 (lenient 모드로 설정하여 불필요한 stubbing 경고 방지)
+		lenient().when(member.getId()).thenReturn(1L);
+		lenient().when(category.getId()).thenReturn(1L);
 	}
 
 	@Test @DisplayName("게시글 생성 성공")

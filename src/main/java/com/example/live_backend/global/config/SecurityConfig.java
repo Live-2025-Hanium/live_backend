@@ -64,12 +64,15 @@ public class SecurityConfig {
 			// JWT 필터 적용
 			.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 			// 엔드포인트별 접근 제어
+			// 메타 어노테이션(@PublicApi, @AuthenticatedApi)으로 제어하는 엔드포인트는
+			// 여기서는 authenticated()로 설정하고, 실제 권한은 메서드 레벨에서 결정
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(
 					"/api/auth/kakao/login",
 					"/api/auth/refresh",
 					"/api/members/nickname/check"
 				).permitAll()
+				// 나머지는 기본적으로 인증 필요 (메타 어노테이션이 최종 결정)
 				.anyRequest().authenticated()
 			);
 		return http.build();

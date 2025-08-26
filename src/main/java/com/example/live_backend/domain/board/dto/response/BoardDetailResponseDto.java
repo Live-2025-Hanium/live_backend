@@ -19,12 +19,14 @@ public class BoardDetailResponseDto {
     private final List<ImageResponseDto> images;
     private final String authorNickname;
     private final Long viewCount;
+    private final Long commentCount;
     private final Map<ReactionType, Long> reactionCounts;
     private final List<ReactionType> userReactions;
     private final LocalDateTime createdAt;
     private final LocalDateTime modifiedAt;
 
     public BoardDetailResponseDto(Board board, String authorNickname, 
+                                  Long commentCount,
                                   Map<ReactionType, Long> reactionCounts,
                                   List<ReactionType> userReactions) {
         this.id = board.getId();
@@ -37,6 +39,7 @@ public class BoardDetailResponseDto {
                 .collect(Collectors.toList());
         this.authorNickname = authorNickname;
         this.viewCount = board.getViewCount();
+        this.commentCount = commentCount;
         this.reactionCounts = reactionCounts;
         this.userReactions = userReactions;
         this.createdAt = board.getCreatedAt();
