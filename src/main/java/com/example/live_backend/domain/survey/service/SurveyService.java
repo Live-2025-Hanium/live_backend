@@ -2,7 +2,6 @@ package com.example.live_backend.domain.survey.service;
 
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
-import com.example.live_backend.global.security.SecurityUtil;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.survey.dto.request.SurveySubmissionDto;
@@ -10,7 +9,11 @@ import com.example.live_backend.domain.survey.dto.response.SurveySubmissionRespo
 import com.example.live_backend.domain.survey.dto.response.SurveyResponseListDto;
 import com.example.live_backend.domain.survey.entity.SurveyAnswer;
 import com.example.live_backend.domain.survey.entity.SurveyResponse;
+import com.example.live_backend.domain.survey.entity.SurveyQuestion;
+import com.example.live_backend.domain.survey.entity.SurveyQuestionOption;
 import com.example.live_backend.domain.survey.repository.SurveyResponseRepository;
+import com.example.live_backend.domain.survey.repository.SurveyQuestionRepository;
+import com.example.live_backend.domain.survey.repository.SurveyQuestionOptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,48 +33,65 @@ import java.util.stream.Collectors;
 public class SurveyService {
 
     private final SurveyResponseRepository surveyResponseRepository;
+    private final SurveyQuestionRepository surveyQuestionRepository;
+    private final SurveyQuestionOptionRepository surveyQuestionOptionRepository;
     private final MemberRepository memberRepository;
-    private final SecurityUtil securityUtil;
-    
-    private static final int TOTAL_QUESTIONS = 15;
+
     private static final int MIN_ANSWER_NUMBER = 1;
-    private static final int MAX_ANSWER_NUMBER = 15;
+    private static final int MAX_ANSWER_NUMBER = 5;
 
 
     @Transactional
-    public SurveySubmissionResponseDto submitSurvey(SurveySubmissionDto request) {
-        Long currentUserId = securityUtil.getCurrentUserId();
-        log.info("설문 응답 제출 시작 - 인증된 사용자 ID: {}", currentUserId);
+    public SurveySubmissionResponseDto submitSurvey(SurveySubmissionDto request, Long memberId) {
+        log.info("설문 응답 제출 시작 - 인증된 사용자 ID: {}", memberId);
 
-        // 현재 사용자의 Member 엔티티 조회
-        Member member = memberRepository.findById(currentUserId)
+        Member member = memberRepository.findById(memberId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+        List<SurveyQuestion> activeQuestions = surveyQuestionRepository.findActiveQuestionsWithOptions();
+        
         List<SurveySubmissionDto.SurveyAnswerDto> answers = request.getAnswers();
-        validateAnswerCount(answers);
-        validateQuestionNumberRange(answers);
-        validateAnswerNumberRange(answers);
-        validateDuplicateQuestions(answers);
-        validateMissingQuestions(answers);
+        validateAnswers(answers, activeQuestions);
+
+        List<Integer> questionNumbers = answers.stream()
+            .map(SurveySubmissionDto.SurveyAnswerDto::getQuestionNumber)
+            .collect(Collectors.toList());
+        
+        Map<Integer, SurveyQuestion> questionMap = surveyQuestionRepository
+            .findByQuestionNumberInWithOptions(questionNumbers)
+            .stream()
+            .collect(Collectors.toMap(SurveyQuestion::getQuestionNumber, q -> q));
+
+        if (questionMap.size() != answers.size()) {
+            throw new CustomException(ErrorCode.SURVEY_NOT_FOUND, 
+                "일부 질문을 찾을 수 없습니다. 요청: " + answers.size() + ", 조회: " + questionMap.size());
+        }
 
         SurveyResponse surveyResponse = SurveyResponse.builder()
             .member(member)
             .build();
 
         for (var dto : answers) {
+            SurveyQuestion question = questionMap.get(dto.getQuestionNumber());
+            
+            SurveyQuestionOption selectedOption = question.getOptions().stream()
+                .filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
+                .findFirst()
+                .orElse(null);
+            
             SurveyAnswer answer = SurveyAnswer.builder()
-                .questionNumber(dto.getQuestionNumber())
-                .answerNumber(dto.getAnswerNumber())
+                .surveyQuestion(question)
+                .selectedOption(selectedOption)
+                .numberAnswer(dto.getAnswerNumber())
                 .build();
             surveyResponse.addAnswer(answer);
         }
 
         SurveyResponse saved = surveyResponseRepository.save(surveyResponse);
-        
-        // Member의 마지막 설문 제출 일시 업데이트
+
         member.updateLastSurveySubmittedAt(saved.getCreatedAt());
         
-        log.info("설문 응답 제출 완료 - 응답 ID: {}, 사용자 ID: {}", saved.getId(), currentUserId);
+        log.info("설문 응답 제출 완료 - 응답 ID: {}, 사용자 ID: {}", saved.getId(), memberId);
 
         return SurveySubmissionResponseDto.builder()
             .responseId(saved.getId())
@@ -79,61 +100,53 @@ public class SurveyService {
             .build();
     }
 
-    private void validateAnswerCount(List<SurveySubmissionDto.SurveyAnswerDto> answers) {
-        if (answers.size() != TOTAL_QUESTIONS) {
+    private void validateAnswers(List<SurveySubmissionDto.SurveyAnswerDto> answers, 
+                                 List<SurveyQuestion> activeQuestions) {
+        if (answers.size() != activeQuestions.size()) {
             throw new CustomException(
                 ErrorCode.INVALID_INPUT,
-                String.format("설문 문제는 총 %d개입니다. 현재 답변 개수: %d", TOTAL_QUESTIONS, answers.size())
+                String.format("설문 문제는 총 %d개입니다. 현재 답변 개수: %d", 
+                    activeQuestions.size(), answers.size())
             );
         }
-    }
-
-    private void validateQuestionNumberRange(List<SurveySubmissionDto.SurveyAnswerDto> answers) {
+        
+        Set<Integer> activeQuestionNumbers = activeQuestions.stream()
+            .map(SurveyQuestion::getQuestionNumber)
+            .collect(Collectors.toSet());
+        
+        Set<Integer> answeredQuestions = new HashSet<>();
+        
         for (var dto : answers) {
-            int q = dto.getQuestionNumber();
-            if (q < 1 || q > TOTAL_QUESTIONS) {
+            if (!activeQuestionNumbers.contains(dto.getQuestionNumber())) {
                 throw new CustomException(
                     ErrorCode.INVALID_INPUT,
-                    String.format("문제 번호는 1-%d 범위여야 합니다. 입력된 값: %d", TOTAL_QUESTIONS, q)
+                    String.format("문제 번호 %d는 현재 활성화되지 않았거나 존재하지 않습니다.", 
+                        dto.getQuestionNumber())
                 );
             }
-        }
-    }
-
-    private void validateAnswerNumberRange(List<SurveySubmissionDto.SurveyAnswerDto> answers) {
-        for (var dto : answers) {
-            int a = dto.getAnswerNumber();
-            if (a < MIN_ANSWER_NUMBER || a > MAX_ANSWER_NUMBER) {
-                throw new CustomException(
-                    ErrorCode.INVALID_INPUT,
-                    String.format("답변 번호는 %d-%d 범위여야 합니다. 입력된 값: %d",
-                        MIN_ANSWER_NUMBER, MAX_ANSWER_NUMBER, a)
-                );
-            }
-        }
-    }
-
-    private void validateDuplicateQuestions(List<SurveySubmissionDto.SurveyAnswerDto> answers) {
-        Set<Integer> seen = new HashSet<>();
-        for (var dto : answers) {
-            if (!seen.add(dto.getQuestionNumber())) {
+            
+            if (!answeredQuestions.add(dto.getQuestionNumber())) {
                 throw new CustomException(
                     ErrorCode.INVALID_INPUT,
                     String.format("문제 번호 %d가 중복되었습니다.", dto.getQuestionNumber())
                 );
             }
-        }
-    }
-
-    private void validateMissingQuestions(List<SurveySubmissionDto.SurveyAnswerDto> answers) {
-        Set<Integer> seen = answers.stream()
-            .map(SurveySubmissionDto.SurveyAnswerDto::getQuestionNumber)
-            .collect(Collectors.toSet());
-        for (int i = 1; i <= TOTAL_QUESTIONS; i++) {
-            if (!seen.contains(i)) {
+            
+            if (dto.getAnswerNumber() < MIN_ANSWER_NUMBER || 
+                dto.getAnswerNumber() > MAX_ANSWER_NUMBER) {
                 throw new CustomException(
                     ErrorCode.INVALID_INPUT,
-                    String.format("문제 %d번에 대한 답변이 누락되었습니다.", i)
+                    String.format("답변 번호는 %d-%d 범위여야 합니다. 입력된 값: %d",
+                        MIN_ANSWER_NUMBER, MAX_ANSWER_NUMBER, dto.getAnswerNumber())
+                );
+            }
+        }
+        
+        for (Integer questionNumber : activeQuestionNumbers) {
+            if (!answeredQuestions.contains(questionNumber)) {
+                throw new CustomException(
+                    ErrorCode.INVALID_INPUT,
+                    String.format("문제 %d번에 대한 답변이 누락되었습니다.", questionNumber)
                 );
             }
         }

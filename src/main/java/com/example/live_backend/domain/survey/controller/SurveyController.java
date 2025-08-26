@@ -1,53 +1,51 @@
 package com.example.live_backend.domain.survey.controller;
 
 import com.example.live_backend.global.error.response.ResponseHandler;
+import com.example.live_backend.domain.survey.controller.docs.SurveyControllerDocs;
 import com.example.live_backend.domain.survey.dto.request.SurveySubmissionDto;
 import com.example.live_backend.domain.survey.dto.response.SurveySubmissionResponseDto;
 import com.example.live_backend.domain.survey.dto.response.SurveyResponseListDto;
 import com.example.live_backend.domain.survey.service.SurveyService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import com.example.live_backend.global.security.annotation.AuthenticatedApi;
+import com.example.live_backend.global.security.annotation.AdminApi;
+import com.example.live_backend.global.security.PrincipalDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/surveys")
-@Tag(name = "Survey", description = "설문 관련 API")
 @Slf4j
-public class SurveyController {
+public class SurveyController implements SurveyControllerDocs {
 
 	private final SurveyService surveyService;
 
+	@Override
 	@PostMapping("/submit")
-	@Operation(summary = "설문 응답 제출 ",
-		description = "설문 응답을 제출 합니다. 15문제에 대한 설문을 모두 작성한 뒤 응답 제출을 합니다. ")
+	@AuthenticatedApi(reason = "설문 제출은 로그인한 사용자만 가능합니다")
 	public ResponseHandler<SurveySubmissionResponseDto> submitSurvey(
-		@Valid @RequestBody SurveySubmissionDto request) {
+		@Valid @RequestBody SurveySubmissionDto request,
+		@AuthenticationPrincipal PrincipalDetails userDetails) {
 
 		log.info("설문 응답 제출 요청 - 답변 수: {}", request.getAnswers().size());
 
-		SurveySubmissionResponseDto response = surveyService.submitSurvey(request);
+		SurveySubmissionResponseDto response = surveyService.submitSurvey(request, userDetails.getMemberId());
 
 		return ResponseHandler.success(response);
 	}
 
 
-	/*
-	아래는 admin용 api 입니다.
-	*/
+	@Override
 	@GetMapping("/admin/users/{userId}/responses")
-	@Operation(summary = "사용자별 설문 응답 조회", description = "특정 사용자의 설문 응답 목록과 총 응답 횟수를 조회합니다. (관리자용)")
+	@AdminApi(reason = "사용자별 설문 응답 조회는 관리자만 가능합니다")
 	public ResponseHandler<SurveyResponseListDto.UserSurveyResponseListDto> getUserSurveyResponses(
-		@Parameter(description = "사용자 ID", example = "1")
 		@PathVariable Long userId) {
 
 		log.info("사용자별 설문 응답 조회 요청 - 사용자 ID: {}", userId);
@@ -57,12 +55,11 @@ public class SurveyController {
 		return ResponseHandler.success(response);
 	}
 
+	@Override
 	@GetMapping("/admin/responses")
-	@Operation(summary = "기간별 설문 응답 조회", description = "특정 기간의 모든 설문 응답을 조회합니다. (관리자용)")
+	@AdminApi(reason = "기간별 설문 응답 조회는 관리자만 가능합니다")
 	public ResponseHandler<List<SurveyResponseListDto>> getSurveyResponsesByPeriod(
-		@Parameter(description = "시작 날짜", example = "2024-01-01")
 		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-		@Parameter(description = "종료 날짜", example = "2024-01-31")
 		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
 		log.info("기간별 설문 응답 조회 요청 - 시작: {}, 종료: {}", startDate, endDate);
