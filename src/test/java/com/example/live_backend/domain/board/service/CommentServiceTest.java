@@ -148,7 +148,7 @@ class CommentServiceTest {
         Long memberId = 1L;
         
         given(commentRepository.findParentCommentsByBoardId(boardId)).willReturn(List.of(parentComment));
-        given(commentRepository.findRepliesByParentCommentId(1L)).willReturn(List.of(reply));
+        given(commentRepository.findRepliesByParentCommentIds(List.of(1L))).willReturn(List.of(reply));
         
         CommentLikeService.CommentLikeMetadata metadata = new CommentLikeService.CommentLikeMetadata(
             Map.of(1L, 5L, 2L, 3L),
@@ -166,7 +166,7 @@ class CommentServiceTest {
         assertThat(result.get(0).getReplies().get(0).getContent()).isEqualTo("대댓글");
         
         then(commentRepository).should().findParentCommentsByBoardId(boardId);
-        then(commentRepository).should().findRepliesByParentCommentId(1L);
+        then(commentRepository).should().findRepliesByParentCommentIds(List.of(1L));
         then(commentLikeService).should().getCommentLikeMetadata(anyList(), eq(memberId));
     }
 

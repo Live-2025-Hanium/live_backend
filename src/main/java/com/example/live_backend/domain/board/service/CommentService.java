@@ -42,9 +42,7 @@ public class CommentService {
                 .map(Comment::getId)
                 .toList();
 
-        List<Comment> allReplies = parentCommentIds.stream()
-                .flatMap(parentId -> commentRepository.findRepliesByParentCommentId(parentId).stream())
-                .toList();
+        List<Comment> allReplies = commentRepository.findRepliesByParentCommentIds(parentCommentIds);
         
         Map<Long, List<Comment>> repliesMap = allReplies.stream()
                 .collect(Collectors.groupingBy(reply -> reply.getParentComment().getId()));

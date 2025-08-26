@@ -19,9 +19,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findParentCommentsByBoardId(@Param("boardId") Long boardId);
 
     @Query("SELECT c FROM Comment c JOIN FETCH c.author " +
-           "WHERE c.isDeleted = false AND c.parentComment.id = :parentCommentId " +
+           "WHERE c.isDeleted = false AND c.parentComment.id IN :parentCommentIds " +
            "ORDER BY c.createdAt ASC")
-    List<Comment> findRepliesByParentCommentId(@Param("parentCommentId") Long parentCommentId);
+    List<Comment> findRepliesByParentCommentIds(@Param("parentCommentIds") List<Long> parentCommentIds);
 
     @Query("SELECT COUNT(c) FROM Comment c " +
            "WHERE c.isDeleted = false AND c.board.id = :boardId")
