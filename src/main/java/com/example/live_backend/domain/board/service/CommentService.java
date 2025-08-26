@@ -5,9 +5,7 @@ import com.example.live_backend.domain.board.dto.request.CommentUpdateRequestDto
 import com.example.live_backend.domain.board.dto.response.CommentResponseDto;
 import com.example.live_backend.domain.board.entity.Board;
 import com.example.live_backend.domain.board.entity.Comment;
-import com.example.live_backend.domain.board.entity.CommentLike;
 import com.example.live_backend.domain.board.repository.BoardRepository;
-import com.example.live_backend.domain.board.repository.CommentLikeRepository;
 import com.example.live_backend.domain.board.repository.CommentRepository;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
@@ -26,7 +24,6 @@ import java.util.stream.Collectors;
 public class CommentService {
 
     private final CommentRepository commentRepository;
-    private final CommentLikeRepository commentLikeRepository;
     private final BoardRepository boardRepository;
     private final MemberRepository memberRepository;
     private final CommentLikeService commentLikeService;
@@ -202,20 +199,7 @@ public class CommentService {
         Comment comment = commentRepository.findByIdAndNotDeleted(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
         
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        Optional<CommentLike> existingLike = commentLikeRepository.findByCommentIdAndMemberId(commentId, memberId);
-        
-        if (existingLike.isPresent()) {
-            commentLikeRepository.delete(existingLike.get());
-        } else {
-            CommentLike commentLike = CommentLike.builder()
-                    .comment(comment)
-                    .member(member)
-                    .build();
-            commentLikeRepository.save(commentLike);
-        }
+        commentLikeService.toggleLike(comment, memberId);
     }
 
 

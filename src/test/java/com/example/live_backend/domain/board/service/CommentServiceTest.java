@@ -44,8 +44,6 @@ class CommentServiceTest {
     @Mock
     private CommentRepository commentRepository;
 
-    @Mock
-    private CommentLikeRepository commentLikeRepository;
 
     @Mock
     private BoardRepository boardRepository;
@@ -317,16 +315,12 @@ class CommentServiceTest {
         Long memberId = 1L;
 
         given(commentRepository.findByIdAndNotDeleted(commentId)).willReturn(Optional.of(parentComment));
-        given(memberRepository.findById(memberId)).willReturn(Optional.of(author));
-        given(commentLikeRepository.findByCommentIdAndMemberId(commentId, memberId))
-                .willReturn(Optional.empty());
 
         // when
         commentService.toggleCommentLike(commentId, memberId);
 
         // then
-        then(commentLikeRepository).should().save(any(CommentLike.class));
-        then(commentLikeRepository).should(never()).delete(any(CommentLike.class));
+        then(commentLikeService).should().toggleLike(parentComment, memberId);
     }
 
     @Test
@@ -341,15 +335,11 @@ class CommentServiceTest {
                 .build();
 
         given(commentRepository.findByIdAndNotDeleted(commentId)).willReturn(Optional.of(parentComment));
-        given(memberRepository.findById(memberId)).willReturn(Optional.of(author));
-        given(commentLikeRepository.findByCommentIdAndMemberId(commentId, memberId))
-                .willReturn(Optional.of(existingLike));
 
         // when
         commentService.toggleCommentLike(commentId, memberId);
 
         // then
-        then(commentLikeRepository).should().delete(existingLike);
-        then(commentLikeRepository).should(never()).save(any(CommentLike.class));
+        then(commentLikeService).should().toggleLike(parentComment, memberId);
     }
 } 
