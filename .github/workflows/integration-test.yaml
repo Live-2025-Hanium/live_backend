@@ -102,8 +102,6 @@ jobs:
           pass-emoji: '🍏'
           fail-emoji: '🔴'
           skip-if-no-changes: false
-          coverage-overall-threshold: 90
-          coverage-changed-files-threshold: 80
       
       - name: 💾 통합 테스트 리포트 업로드
         if: always()

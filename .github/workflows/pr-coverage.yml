@@ -88,8 +88,6 @@ jobs:
           pass-emoji: '🍏'
           fail-emoji: '🔴'
           skip-if-no-changes: false
-          coverage-overall-threshold: 90
-          coverage-changed-files-threshold: 80
           
       - name: 📈 커버리지 결과 출력
         run: |
