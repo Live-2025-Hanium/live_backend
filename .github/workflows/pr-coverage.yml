@@ -1,0 +1,107 @@
+name: PR Test Coverage
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  test-coverage:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testdb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -uroot -proot"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: ✅ 소스코드 체크아웃 (서브모듈 포함)
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          token: ${{ secrets.CONFIG_REPO_PAT }}
+      
+      - name: 🔄 live-config를 최신 Master로 업데이트
+        run: |
+          cd live-config
+          git checkout Master
+          git pull origin Master
+          cd ..
+      
+      - name: 📁 설정 yml 파일들 복사
+        run: |
+          mkdir -p ./src/main/resources
+          cp live-config/application-dev.yml ./src/main/resources/
+          cp live-config/application-test.yml ./src/main/resources/
+          cp live-config/common.yml ./src/main/resources/
+          mkdir -p ./src/test/resources
+          cp live-config/application-test.yml ./src/test/resources/
+          cp live-config/common.yml ./src/test/resources/
+      
+      - name: ☕ JDK 21 설정
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      
+      - name: ✅ gradlew 실행 권한 부여
+        run: chmod +x ./gradlew
+      
+      - name: 🔍 MySQL 서비스 연결 대기
+        run: |
+          echo "MySQL 서비스 시작 대기 중..."
+          for i in {1..30}; do
+            if mysqladmin ping -h127.0.0.1 -P3306 -uroot -proot --silent; then
+              echo "✅ MySQL 연결 성공!"
+              break
+            fi
+            echo "MySQL 연결 대기 중... ($i/30)"
+            sleep 2
+          done
+      
+      - name: 🧪 테스트 실행 및 커버리지 리포트 생성
+        run: ./gradlew clean test jacocoTestReport -Pprofile=test
+        
+      - name: 📊 JaCoCo Coverage Comment
+        uses: madrapps/jacoco-report@v1.7.1
+        with:
+          paths: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 80
+          min-coverage-changed-files: 80
+          title: 📊 코드 커버리지 리포트
+          update-comment: true
+          
+      - name: 📈 커버리지 결과 출력
+        run: |
+          echo "## 📊 테스트 커버리지 요약"
+          echo ""
+          echo "JaCoCo 테스트 커버리지 리포트가 PR 코멘트에 추가되었습니다."
+          echo ""
+          echo "### 📁 보고서 위치"
+          echo "- XML: build/reports/jacoco/test/jacocoTestReport.xml"
+          echo "- HTML: build/reports/jacoco/test/html/index.html"
+          
+      - name: 💾 커버리지 리포트 업로드
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: jacoco-coverage-report
+          path: build/reports/jacoco/test/
+          
+      - name: ✅ 커버리지 임계값 체크
+        run: ./gradlew jacocoTestCoverageVerification
