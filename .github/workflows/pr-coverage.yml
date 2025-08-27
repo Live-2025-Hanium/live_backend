@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: ✅ 소스코드 체크아웃 (서브모듈 포함)
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
@@ -53,7 +53,7 @@ jobs:
           cp live-config/common.yml ./src/test/resources/
       
       - name: ☕ JDK 21 설정
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -98,7 +98,7 @@ jobs:
           
       - name: 💾 커버리지 리포트 업로드
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: jacoco-coverage-report
           path: build/reports/jacoco/test/
