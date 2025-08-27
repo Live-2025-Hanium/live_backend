@@ -95,12 +95,15 @@ jobs:
         with:
           paths: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 0
-          min-coverage-changed-files: 0
+          min-coverage-overall: 55
+          min-coverage-changed-files: 55
           title: "📊 통합 테스트 커버리지 리포트"
           update-comment: true
-          pass-emoji: '✅'
-          fail-emoji: '⚠️'
+          pass-emoji: '🍏'
+          fail-emoji: '🔴'
+          skip-if-no-changes: false
+          coverage-overall-threshold: 90
+          coverage-changed-files-threshold: 80
       
       - name: 💾 통합 테스트 리포트 업로드
         if: always()
