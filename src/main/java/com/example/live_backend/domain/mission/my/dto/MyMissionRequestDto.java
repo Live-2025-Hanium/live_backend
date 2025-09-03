@@ -2,6 +2,8 @@ package com.example.live_backend.domain.mission.my.dto;
 
 import com.example.live_backend.domain.mission.my.Enum.RepeatType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +12,8 @@ import java.time.LocalTime;
 
 @Getter
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class MyMissionRequestDto {
 
     @Schema(description = "미션 제목", example = "가족들에게 안부인사하기")
