@@ -3,6 +3,7 @@ package com.example.live_backend.domain.mission.clover.service;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionRecordRequestDto;
 import com.example.live_backend.domain.mission.clover.Enum.CloverType;
 import com.example.live_backend.domain.mission.clover.dto.CloverMissionRecordResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.UserFeedbackForLLMDto;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
 import com.example.live_backend.global.error.exception.CustomException;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -84,5 +87,14 @@ public class CloverMissionRecordService {
         }
 
         return CloverMissionRecordResponseDto.from(missionRecord);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserFeedbackForLLMDto> getRecentMissionRecordsWithFeedback(Long memberId) {
+        List<CloverMissionRecord> recentRecords = missionRecordRepository.findRecentCompletedMissionsWithFeedback(memberId);
+
+        return recentRecords.stream()
+                .map(UserFeedbackForLLMDto::from)
+                .toList();
     }
 }
