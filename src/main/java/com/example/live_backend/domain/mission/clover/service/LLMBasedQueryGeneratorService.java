@@ -27,7 +27,7 @@ public class LLMBasedQueryGeneratorService {
         this.objectMapper = objectMapper;
     }
 
-    private static final String ANALYSIS_PROMPT = """
+    private static final String PROMPT = """
             # [역할 부여]
             당신은 고립·은둔 청년의 사회 복귀를 돕는 전문 심리 코치입니다. 사용자의 최근 활동 흐름과 상태를 분석하여, 다음날의 활동 전략을 수립하는 역할을 맡았습니다. 당신의 목표는 사용자의 최근 성공/실패 패턴을 파악하여 무리하지 않고 점진적으로 성장하도록 돕는 것입니다.
 
@@ -41,8 +41,8 @@ public class LLMBasedQueryGeneratorService {
 
             [출력 데이터 활용 방식]
             	- `negative_keywords`: 미션 추천 시 제외해야 할 키워드들입니다. 사용자가 부담스러워하거나 피하고 싶어하는 요소들을 포함해주세요.
-            	- `expected_effect`: **벡터 데이터베이스 검색 쿼리로 사용됩니다.** 사용자의 현재 상태와 필요에 맞는 미션을 찾기 위한 의미적 검색어를 작성해주세요. 
-            	  이 텍스트는 미션 데이터베이스에서 사용자에게 적합한 미션을 찾는 임베딩 검색에 직접 사용되므로, 구체적이고 검색 친화적으로 작성해주세요.
+            	- `expected_effect`: **벡터 데이터베이스 검색 쿼리로 사용됩니다.** 사용자의 현재 상태와 필요에 맞는 미션을 찾기 위한 의미적 검색어를 단 한문장으로 작성해주세요. 
+            	  피해야 하는 미션의 특징 말고 추천해야 하는 미션의 특징을 작성해주세요. 이 텍스트는 미션 데이터베이스에서 사용자에게 적합한 미션을 찾는 임베딩 검색에 직접 사용되므로, 구체적이고 검색 친화적으로 작성해주세요.
             	  
             [expected_effect 작성 가이드]
             	- 사용자의 현재 심리적/감정적 상태를 반영
@@ -69,27 +69,24 @@ public class LLMBasedQueryGeneratorService {
 
             // JSON 변환
             String missionDataJson = objectMapper.writeValueAsString(requestDto);
-            log.info("User feedback analysis request data: {}", missionDataJson);
 
             // ChatClient를 사용한 구조화된 응답 요청
             LLMProcessingResultDto response = chatClient.prompt()
-                    .user(ANALYSIS_PROMPT.replace("{missionData}", missionDataJson))
+                    .user(PROMPT.replace("{missionData}", missionDataJson))
                     .call()
                     .entity(LLMProcessingResultDto.class);
 
-            log.info("LLM structured response: {}", response);
             return response;
 
         } catch (Exception e) {
-            log.error("Failed to analyze user feedback for recommendation", e);
             return createFallbackResponse();
         }
     }
 
     private LLMProcessingResultDto createFallbackResponse() {
         return LLMProcessingResultDto.builder()
-                .negativeKeywords(List.of("과도한", "무리한", "어려운"))
-                .expectedEffect("사용자의 최근 활동을 고려하여 적절한 수준의 미션을 추천합니다.")
+                .negativeKeywords(List.of())
+                .expectedEffect("가벼운 일상 활동과 간단한 사회적 소통을 통해 점진적으로 성장할 수 있는 기본적인 미션")
                 .build();
     }
 

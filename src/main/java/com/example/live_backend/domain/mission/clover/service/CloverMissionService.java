@@ -2,9 +2,7 @@ package com.example.live_backend.domain.mission.clover.service;
 
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
-import com.example.live_backend.domain.mission.clover.dto.CloverMissionListResponseDto;
-import com.example.live_backend.domain.mission.clover.dto.CloverMissionResponseDto;
-import com.example.live_backend.domain.mission.clover.dto.CloverMissionStatusResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.*;
 import com.example.live_backend.domain.mission.clover.entity.CloverMission;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
@@ -31,6 +29,9 @@ public class CloverMissionService {
     private final MemberRepository memberRepository;
 
     private final CloverMissionRecordRepository cloverMissionRecordRepository;
+
+    private final CloverMissionRecordService cloverMissionRecordService;
+    private final LLMBasedQueryGeneratorService llmBasedQueryGeneratorService;
 
     @Transactional
     public CloverMissionListResponseDto getCloverMissionList(Long memberId) {
@@ -117,12 +118,37 @@ public class CloverMissionService {
 
     private List<CloverMissionRecord> assignNewCloverMissions(Member member, List<Long> excludedIds) {
 
-        // TODO: 향후 실제 설문 요약 로직으로 대체 필요
-        String tempSurveySummary = "집안에서 컴퓨터만 보고 있으니 너무 답답해요. 하늘이나 자연을 보면서 마음을 정화하고 싶고, 산책도 좋아요.";
+        String vectorSearchQuery;
+        List<String> negativeKeywords = List.of(); // 추가 예정
 
-        List<Long> newMissionsIds = vectorDBService.searchSimilarMissionsIds(tempSurveySummary, 3, excludedIds);
+        try {
+            // 1. 사용자의 최근 미션 피드백 3개 조회
+            List<UserFeedbackForLLMDto> recentFeedbacks =
+                    cloverMissionRecordService.getRecentMissionRecordsWithFeedback(member.getId());
+
+            if (!recentFeedbacks.isEmpty()) {
+                // 2. LLM을 통해 사용자 상태 분석 및 벡터 검색 쿼리 생성
+                LLMProcessingResultDto llmResult =
+                        llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(recentFeedbacks);
+
+                vectorSearchQuery = llmResult.getExpectedEffect();
+                negativeKeywords = llmResult.getNegativeKeywords();
+            } else {
+                // 3. 최근 피드백이 없는 경우 기본 쿼리 사용
+                vectorSearchQuery = generateDefaultSearchQuery();
+            }
+
+        } catch (Exception e) {
+            // 4. LLM 처리 실패 시 fallback 처리
+            vectorSearchQuery = generateDefaultSearchQuery();
+        }
+
+        List<Long> newMissionsIds = vectorDBService.searchSimilarMissionsIds(vectorSearchQuery, 3, excludedIds);
 
         List<CloverMission> findMissions = cloverMissionRepository.findAllById(newMissionsIds);
+
+        // TODO: negative keywords 로 미션 필터링 기능 추가 예정
+
         List<CloverMissionRecord> newMissionRecordList = findMissions.stream()
                 .map(cloverMission -> CloverMissionRecord.from(cloverMission, member))
                 .toList();
@@ -133,5 +159,9 @@ public class CloverMissionService {
     private Member findUser(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private String generateDefaultSearchQuery() {
+        return "처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션";
     }
 }
