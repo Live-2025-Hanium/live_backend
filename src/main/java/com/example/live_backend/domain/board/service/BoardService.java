@@ -122,10 +122,7 @@ public class BoardService {
 
         boolean isScraped = false;
         if (memberId != null) {
-            Member member = memberRepository.findById(memberId).orElse(null);
-            if (member != null) {
-                isScraped = scrapRepository.existsByMemberAndBoard(member, board);
-            }
+            isScraped = scrapRepository.existsByMemberIdAndBoardId(memberId, boardId);
         }
 
         return new BoardDetailResponseDto(board, authorNickname, commentCount, reactionCounts, userReactions, isScraped);

@@ -29,24 +29,26 @@ public class ScrapService {
 
     @Transactional
     public boolean toggleScrap(Long memberId, Long boardId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        if (!memberRepository.existsById(memberId)) {
+            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+        }
         
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new CustomException(ErrorCode.BOARD_NOT_FOUND));
-
+        if (!boardRepository.existsById(boardId)) {
+            throw new CustomException(ErrorCode.BOARD_NOT_FOUND);
+        }
+        
+        Board board = boardRepository.findById(boardId).get();
         if (board.getIsDeleted()) {
             throw new CustomException(ErrorCode.BOARD_NOT_FOUND);
         }
 
-        Optional<Scrap> existingScrap = scrapRepository.findByMemberAndBoard(member, board);
+        Optional<Scrap> existingScrap = scrapRepository.findByMemberIdAndBoardId(memberId, boardId);
         
         if (existingScrap.isPresent()) {
-            // 스크랩이 있으면 삭제 (토글 OFF)
             scrapRepository.delete(existingScrap.get());
             return false;
         } else {
-            // 스크랩이 없으면 추가 (토글 ON)
+            Member member = memberRepository.getReferenceById(memberId);
             Scrap scrap = Scrap.builder()
                     .member(member)
                     .board(board)

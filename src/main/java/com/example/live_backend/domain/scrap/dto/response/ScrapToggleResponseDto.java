@@ -10,7 +10,7 @@ public class ScrapToggleResponseDto {
     private final String message;
     
     public static ScrapToggleResponseDto of(boolean isScraped) {
-        String message = isScraped ? "스크랩이 추가되었습니다." : "스크랩이 취소되었습니다.";
+        String message = isScraped ? ScrapMessage.SCRAP_ADDED.getMessage() : ScrapMessage.SCRAP_REMOVED.getMessage();
         return new ScrapToggleResponseDto(isScraped, message);
     }
 }

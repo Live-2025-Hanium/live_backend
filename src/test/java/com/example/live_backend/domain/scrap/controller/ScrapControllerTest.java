@@ -4,6 +4,7 @@ import com.example.live_backend.domain.board.dto.response.BoardListResponseDto;
 import com.example.live_backend.domain.scrap.dto.request.ScrapCursorRequestDto;
 import com.example.live_backend.domain.scrap.dto.request.ScrapDeleteRequestDto;
 import com.example.live_backend.domain.scrap.dto.response.ScrapToggleResponseDto;
+import com.example.live_backend.domain.scrap.dto.response.ScrapMessage;
 import com.example.live_backend.domain.scrap.service.ScrapService;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
@@ -68,7 +69,7 @@ class ScrapControllerTest {
             // then
             assertThat(response.isSuccess()).isTrue();
             assertThat(response.getData().isScraped()).isTrue();
-            assertThat(response.getData().getMessage()).isEqualTo("스크랩이 추가되었습니다.");
+            assertThat(response.getData().getMessage()).isEqualTo(ScrapMessage.SCRAP_ADDED.getMessage());
             verify(scrapService).toggleScrap(TEST_MEMBER_ID, TEST_BOARD_ID);
         }
 
@@ -85,7 +86,7 @@ class ScrapControllerTest {
             // then
             assertThat(response.isSuccess()).isTrue();
             assertThat(response.getData().isScraped()).isFalse();
-            assertThat(response.getData().getMessage()).isEqualTo("스크랩이 취소되었습니다.");
+            assertThat(response.getData().getMessage()).isEqualTo(ScrapMessage.SCRAP_REMOVED.getMessage());
             verify(scrapService).toggleScrap(TEST_MEMBER_ID, TEST_BOARD_ID);
         }
 

@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 
 import static com.example.live_backend.domain.scrap.entity.QScrap.scrap;
 import static com.example.live_backend.domain.board.entity.QBoard.board;
+import static com.example.live_backend.domain.memeber.entity.QMember.member;
+import static com.example.live_backend.domain.board.entity.QCategory.category;
 
 @Repository
 @RequiredArgsConstructor
@@ -22,12 +24,14 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public CursorTemplate<Long, BoardListResponseDto> findScrapsByMemberWithCursor(Member member, Long cursorId, int size) {
+    public CursorTemplate<Long, BoardListResponseDto> findScrapsByMemberWithCursor(Member targetMember, Long cursorId, int size) {
         List<Scrap> scraps = queryFactory
                 .selectFrom(scrap)
                 .join(scrap.board, board).fetchJoin()
+                .join(board.author, member).fetchJoin()
+                .join(board.category, category).fetchJoin()
                 .where(
-                        scrap.member.eq(member),
+                        scrap.member.eq(targetMember),
                         scrap.board.isDeleted.eq(false),
                         cursorCondition(cursorId)
                 )
@@ -46,7 +50,7 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                         s.getBoard().getAuthor().getProfile().getNickname(),
                         0L
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         if (hasNext && !scraps.isEmpty()) {
             Long nextCursor = scraps.get(scraps.size() - 1).getId();

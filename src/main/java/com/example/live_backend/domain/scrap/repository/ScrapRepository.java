@@ -16,6 +16,12 @@ public interface ScrapRepository extends JpaRepository<Scrap, Long>, ScrapReposi
     boolean existsByMemberAndBoard(Member member, Board board);
 
     Optional<Scrap> findByMemberAndBoard(Member member, Board board);
+    
+    @Query("SELECT s FROM Scrap s WHERE s.member.id = :memberId AND s.board.id = :boardId")
+    Optional<Scrap> findByMemberIdAndBoardId(@Param("memberId") Long memberId, @Param("boardId") Long boardId);
+    
+    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Scrap s WHERE s.member.id = :memberId AND s.board.id = :boardId")
+    boolean existsByMemberIdAndBoardId(@Param("memberId") Long memberId, @Param("boardId") Long boardId);
 
     @Modifying
     @Query("DELETE FROM Scrap s WHERE s.member = :member AND s.board.id IN :boardIds")

@@ -95,9 +95,11 @@ class ScrapServiceTest {
         @DisplayName("스크랩이 없는 경우 - 스크랩 추가")
         void toggleScrap_WhenNotScraped_ShouldAddScrap() {
             // given
-            given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+            given(memberRepository.existsById(1L)).willReturn(true);
+            given(boardRepository.existsById(1L)).willReturn(true);
             given(boardRepository.findById(1L)).willReturn(Optional.of(board));
-            given(scrapRepository.findByMemberAndBoard(member, board)).willReturn(Optional.empty());
+            given(scrapRepository.findByMemberIdAndBoardId(1L, 1L)).willReturn(Optional.empty());
+            given(memberRepository.getReferenceById(1L)).willReturn(member);
             given(scrapRepository.save(any(Scrap.class))).willReturn(scrap);
 
             // when
@@ -113,9 +115,10 @@ class ScrapServiceTest {
         @DisplayName("스크랩이 있는 경우 - 스크랩 취소")
         void toggleScrap_WhenAlreadyScraped_ShouldRemoveScrap() {
             // given
-            given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+            given(memberRepository.existsById(1L)).willReturn(true);
+            given(boardRepository.existsById(1L)).willReturn(true);
             given(boardRepository.findById(1L)).willReturn(Optional.of(board));
-            given(scrapRepository.findByMemberAndBoard(member, board)).willReturn(Optional.of(scrap));
+            given(scrapRepository.findByMemberIdAndBoardId(1L, 1L)).willReturn(Optional.of(scrap));
 
             // when
             boolean result = scrapService.toggleScrap(1L, 1L);
@@ -130,14 +133,14 @@ class ScrapServiceTest {
         @DisplayName("존재하지 않는 회원 - 예외 발생")
         void toggleScrap_WhenMemberNotFound_ShouldThrowException() {
             // given
-            given(memberRepository.findById(1L)).willReturn(Optional.empty());
+            given(memberRepository.existsById(1L)).willReturn(false);
 
             // when & then
             assertThatThrownBy(() -> scrapService.toggleScrap(1L, 1L))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_NOT_FOUND);
 
-            verify(boardRepository, never()).findById(anyLong());
+            verify(boardRepository, never()).existsById(anyLong());
             verify(scrapRepository, never()).save(any());
         }
 
@@ -145,8 +148,8 @@ class ScrapServiceTest {
         @DisplayName("존재하지 않는 게시글 - 예외 발생")
         void toggleScrap_WhenBoardNotFound_ShouldThrowException() {
             // given
-            given(memberRepository.findById(1L)).willReturn(Optional.of(member));
-            given(boardRepository.findById(1L)).willReturn(Optional.empty());
+            given(memberRepository.existsById(1L)).willReturn(true);
+            given(boardRepository.existsById(1L)).willReturn(false);
 
             // when & then
             assertThatThrownBy(() -> scrapService.toggleScrap(1L, 1L))
@@ -161,7 +164,8 @@ class ScrapServiceTest {
         void toggleScrap_WhenBoardIsDeleted_ShouldThrowException() {
             // given
             board.delete();
-            given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+            given(memberRepository.existsById(1L)).willReturn(true);
+            given(boardRepository.existsById(1L)).willReturn(true);
             given(boardRepository.findById(1L)).willReturn(Optional.of(board));
 
             // when & then
