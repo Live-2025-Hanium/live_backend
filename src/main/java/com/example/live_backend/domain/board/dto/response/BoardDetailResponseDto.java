@@ -22,13 +22,15 @@ public class BoardDetailResponseDto {
     private final Long commentCount;
     private final Map<ReactionType, Long> reactionCounts;
     private final List<ReactionType> userReactions;
+    private final boolean isScraped;
     private final LocalDateTime createdAt;
     private final LocalDateTime modifiedAt;
 
     public BoardDetailResponseDto(Board board, String authorNickname, 
                                   Long commentCount,
                                   Map<ReactionType, Long> reactionCounts,
-                                  List<ReactionType> userReactions) {
+                                  List<ReactionType> userReactions,
+                                  boolean isScraped) {
         this.id = board.getId();
         this.title = board.getTitle();
         this.content = board.getContent();
@@ -42,6 +44,7 @@ public class BoardDetailResponseDto {
         this.commentCount = commentCount;
         this.reactionCounts = reactionCounts;
         this.userReactions = userReactions;
+        this.isScraped = isScraped;
         this.createdAt = board.getCreatedAt();
         this.modifiedAt = board.getModifiedAt();
     }

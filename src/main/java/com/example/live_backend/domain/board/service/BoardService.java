@@ -22,6 +22,7 @@ import com.example.live_backend.domain.board.repository.BoardImageRepository;
 import com.example.live_backend.domain.board.repository.CommentRepository;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
+import com.example.live_backend.domain.scrap.repository.ScrapRepository;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,7 @@ public class BoardService {
     private final ImageRepository imageRepository;
     private final BoardImageRepository boardImageRepository;
     private final CommentRepository commentRepository;
+    private final ScrapRepository scrapRepository;
 
     /**
      * 게시글 생성 (관리자만 가능)
@@ -118,7 +120,15 @@ public class BoardService {
 
         Long commentCount = commentRepository.countByBoardId(boardId);
 
-        return new BoardDetailResponseDto(board, authorNickname, commentCount, reactionCounts, userReactions);
+        boolean isScraped = false;
+        if (memberId != null) {
+            Member member = memberRepository.findById(memberId).orElse(null);
+            if (member != null) {
+                isScraped = scrapRepository.existsByMemberAndBoard(member, board);
+            }
+        }
+
+        return new BoardDetailResponseDto(board, authorNickname, commentCount, reactionCounts, userReactions, isScraped);
     }
 
     /**
