@@ -57,7 +57,6 @@ class ScrapServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Member 생성
         member = Member.builder()
                 .oauthId("test-oauth-id")
                 .email("test@example.com")
@@ -68,13 +67,11 @@ class ScrapServiceTest {
                 .build();
         ReflectionTestUtils.setField(member, "id", 1L);
 
-        // Category 생성
         category = Category.builder()
                 .name("공지사항")
                 .build();
         ReflectionTestUtils.setField(category, "id", 1L);
 
-        // Board 생성
         board = Board.builder()
                 .title("테스트 게시글")
                 .content("테스트 내용")
@@ -83,7 +80,6 @@ class ScrapServiceTest {
                 .build();
         ReflectionTestUtils.setField(board, "id", 1L);
 
-        // Scrap 생성
         scrap = Scrap.builder()
                 .member(member)
                 .board(board)
