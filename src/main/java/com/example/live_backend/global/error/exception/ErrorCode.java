@@ -58,6 +58,11 @@ public enum ErrorCode {
 	EXAMPLE_NOT_FOUND(NOT_FOUND, "존재하지 않는 예제입니다."),
 	MISSION_NOT_FOUND(NOT_FOUND, "존재하지 않는 미션입니다."),
 	SURVEY_NOT_FOUND(NOT_FOUND, "존재하지 않는 설문입니다."),
+	SCRAP_NOT_FOUND(NOT_FOUND, "존재하지 않는 스크랩입니다."),
+
+	/* ------------------ 409 CONFLICT : 충돌 오류 ------------------ */
+	SCRAP_ALREADY_EXISTS(CONFLICT, "이미 스크랩한 게시글입니다."),
+	INVALID_INPUT_VALUE(CONFLICT, "잘못된 입력값입니다."),
 
 	/* ------------------ 500 INTERNAL_SERVER_ERROR : 서버 오류 ------------------ */
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
