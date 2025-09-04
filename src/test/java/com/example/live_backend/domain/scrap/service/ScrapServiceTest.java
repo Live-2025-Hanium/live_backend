@@ -69,9 +69,10 @@ class ScrapServiceTest {
         ReflectionTestUtils.setField(member, "id", 1L);
 
         // Category 생성
-        category = new Category();
+        category = Category.builder()
+                .name("공지사항")
+                .build();
         ReflectionTestUtils.setField(category, "id", 1L);
-        ReflectionTestUtils.setField(category, "name", "공지사항");
 
         // Board 생성
         board = Board.builder()
