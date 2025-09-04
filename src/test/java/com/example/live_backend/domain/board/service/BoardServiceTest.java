@@ -10,6 +10,7 @@ import com.example.live_backend.domain.board.entity.enums.ReactionType;
 import com.example.live_backend.domain.board.repository.*;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
+import com.example.live_backend.domain.scrap.repository.ScrapRepository;
 import com.example.live_backend.global.error.exception.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +39,8 @@ class BoardServiceTest {
 	@Mock private CategoryRepository categoryRepository;
 	@Mock private ImageRepository imageRepository;
 	@Mock private BoardImageRepository boardImageRepository;
-	@Mock private CommentRepository commentRepository; // 누락된 의존성 추가
+	@Mock private CommentRepository commentRepository;
+	@Mock private ScrapRepository scrapRepository;
 
 	@InjectMocks private BoardService boardService;
 
@@ -137,6 +139,8 @@ class BoardServiceTest {
 		when(boardReactionRepository.countReactionsByBoardId(1L)).thenReturn(List.of());
 		when(boardReactionRepository.findActiveReactionsByBoardIdAndMemberId(1L, 1L))
 			.thenReturn(List.of());
+		when(commentRepository.countByBoardId(1L)).thenReturn(0L);
+		when(scrapRepository.existsByMemberIdAndBoardId(1L, 1L)).thenReturn(false);
 
 		BoardDetailResponseDto resp = boardService.getBoardDetail(1L, 1L);
 
