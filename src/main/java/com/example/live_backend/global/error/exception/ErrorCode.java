@@ -61,7 +61,6 @@ public enum ErrorCode {
 	SCRAP_NOT_FOUND(NOT_FOUND, "존재하지 않는 스크랩입니다."),
 
 	/* ------------------ 409 CONFLICT : 충돌 오류 ------------------ */
-	SCRAP_ALREADY_EXISTS(CONFLICT, "이미 스크랩한 게시글입니다."),
 	INVALID_INPUT_VALUE(CONFLICT, "잘못된 입력값입니다."),
 
 	/* ------------------ 500 INTERNAL_SERVER_ERROR : 서버 오류 ------------------ */
