@@ -260,7 +260,7 @@ public interface ScrapControllerDocs {
                                     "thumbnailImageUrl": "https://example.com/image1.jpg",
                                     "authorNickname": "관리자",
                                     "viewCount": 150,
-                                    "totalReactionCount": 0,
+                                    "totalReactionCount": null,
                                     "createdAt": "2024-01-01T10:00:00"
                                 },
                                 {
@@ -274,7 +274,7 @@ public interface ScrapControllerDocs {
                                     "thumbnailImageUrl": null,
                                     "authorNickname": "정책담당자",
                                     "viewCount": 85,
-                                    "totalReactionCount": 0,
+                                    "totalReactionCount": null,
                                     "createdAt": "2023-12-31T15:30:00"
                                 }
                             ]

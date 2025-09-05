@@ -48,7 +48,7 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                 .map(s -> new BoardListResponseDto(
                         s.getBoard(), 
                         s.getBoard().getAuthor().getProfile().getNickname(),
-                        0L
+                        null  // 스크랩 목록에서는 반응 수를 제공하지 않음
                 ))
                 .toList();
 
