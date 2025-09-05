@@ -12,6 +12,7 @@ import com.example.live_backend.domain.board.repository.CommentRepository;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
+import com.example.live_backend.domain.scrap.repository.ScrapRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,9 @@ class BoardServiceCommentCountTest {
     @Mock
     private CommentRepository commentRepository;
 
+    @Mock
+    private ScrapRepository scrapRepository;
+
     private Board board;
     private Member author;
 
@@ -92,6 +96,7 @@ class BoardServiceCommentCountTest {
         given(boardReactionRepository.countReactionsByBoardId(boardId)).willReturn(List.of());
         given(boardReactionRepository.findActiveReactionsByBoardIdAndMemberId(boardId, memberId)).willReturn(List.of());
         given(commentRepository.countByBoardId(boardId)).willReturn(expectedCommentCount);
+        given(scrapRepository.existsByMemberIdAndBoardId(memberId, boardId)).willReturn(false);
 
         // when
         BoardDetailResponseDto result = boardService.getBoardDetail(boardId, memberId);
@@ -119,6 +124,7 @@ class BoardServiceCommentCountTest {
         given(boardReactionRepository.countReactionsByBoardId(boardId)).willReturn(List.of());
         given(boardReactionRepository.findActiveReactionsByBoardIdAndMemberId(boardId, memberId)).willReturn(List.of());
         given(commentRepository.countByBoardId(boardId)).willReturn(expectedCommentCount);
+        given(scrapRepository.existsByMemberIdAndBoardId(memberId, boardId)).willReturn(false);
 
         // when
         BoardDetailResponseDto result = boardService.getBoardDetail(boardId, memberId);
@@ -140,6 +146,7 @@ class BoardServiceCommentCountTest {
         given(boardReactionRepository.countReactionsByBoardId(boardId)).willReturn(List.of());
         given(boardReactionRepository.findActiveReactionsByBoardIdAndMemberId(boardId, memberId)).willReturn(List.of());
         given(commentRepository.countByBoardId(boardId)).willReturn(5L);
+        given(scrapRepository.existsByMemberIdAndBoardId(memberId, boardId)).willReturn(false);
 
         // when
         BoardDetailResponseDto result = boardService.getBoardDetail(boardId, memberId);
