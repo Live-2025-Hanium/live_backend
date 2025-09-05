@@ -34,11 +34,9 @@ public class ScrapService {
             throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
         }
         
-        if (!boardRepository.existsById(boardId)) {
-            throw new CustomException(ErrorCode.BOARD_NOT_FOUND);
-        }
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BOARD_NOT_FOUND));
         
-        Board board = boardRepository.findById(boardId).get();
         if (board.getIsDeleted()) {
             throw new CustomException(ErrorCode.BOARD_NOT_FOUND);
         }

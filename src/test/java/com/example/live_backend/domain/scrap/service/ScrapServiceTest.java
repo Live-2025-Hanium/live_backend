@@ -97,7 +97,6 @@ class ScrapServiceTest {
         void toggleScrap_WhenNotScraped_ShouldAddScrap() {
             // given
             given(memberRepository.existsById(1L)).willReturn(true);
-            given(boardRepository.existsById(1L)).willReturn(true);
             given(boardRepository.findById(1L)).willReturn(Optional.of(board));
             given(scrapRepository.findByMemberIdAndBoardId(1L, 1L)).willReturn(Optional.empty());
             given(memberRepository.getReferenceById(1L)).willReturn(member);
@@ -117,7 +116,6 @@ class ScrapServiceTest {
         void toggleScrap_WhenAlreadyScraped_ShouldRemoveScrap() {
             // given
             given(memberRepository.existsById(1L)).willReturn(true);
-            given(boardRepository.existsById(1L)).willReturn(true);
             given(boardRepository.findById(1L)).willReturn(Optional.of(board));
             given(scrapRepository.findByMemberIdAndBoardId(1L, 1L)).willReturn(Optional.of(scrap));
 
@@ -141,7 +139,7 @@ class ScrapServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEMBER_NOT_FOUND);
 
-            verify(boardRepository, never()).existsById(anyLong());
+            verify(boardRepository, never()).findById(anyLong());
             verify(scrapRepository, never()).save(any());
         }
 
@@ -150,7 +148,7 @@ class ScrapServiceTest {
         void toggleScrap_WhenBoardNotFound_ShouldThrowException() {
             // given
             given(memberRepository.existsById(1L)).willReturn(true);
-            given(boardRepository.existsById(1L)).willReturn(false);
+            given(boardRepository.findById(1L)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> scrapService.toggleScrap(1L, 1L))
@@ -166,7 +164,6 @@ class ScrapServiceTest {
             // given
             board.delete();
             given(memberRepository.existsById(1L)).willReturn(true);
-            given(boardRepository.existsById(1L)).willReturn(true);
             given(boardRepository.findById(1L)).willReturn(Optional.of(board));
 
             // when & then
