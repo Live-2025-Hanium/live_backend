@@ -16,6 +16,7 @@ import com.example.live_backend.domain.mission.clover.entity.DistanceMission;
 import com.example.live_backend.domain.mission.clover.entity.TimerMission;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
+import com.example.live_backend.domain.mission.clover.repository.CloverMissionVectorRepository;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +54,7 @@ class CloverMissionServiceTest {
     private MemberRepository memberRepository;
 
     @Mock
-    private VectorDBService vectorDBService;
+    private CloverMissionVectorRepository cloverMissionVectorRepository;
 
     @Mock
     private CloverMissionRepository cloverMissionRepository;
@@ -109,7 +110,7 @@ class CloverMissionServiceTest {
             assertThat(result.getUserId()).isEqualTo(TEST_MEMBER_ID);
             assertThat(result.getMissions().size()).isEqualTo(3);
 
-            verify(vectorDBService, never()).searchSimilarMissionsIds(anyString(), anyInt(), anyList());
+            verify(cloverMissionVectorRepository, never()).searchSimilarMissionsIds(anyString(), anyInt(), anyList());
             verify(cloverMissionRepository, never()).findAllById(any());
             verify(cloverMissionRecordRepository, never()).saveAll(any());
         }
@@ -124,7 +125,7 @@ class CloverMissionServiceTest {
                     .willReturn(Collections.emptyList());
 
             List<Long> missionIdsFromVectorDB = List.of(1L, 10L, 20L);
-            given(vectorDBService.searchSimilarMissionsIds(anyString(), anyInt(), anyList()))
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), anyInt(), anyList()))
                     .willReturn(missionIdsFromVectorDB);
 
             DistanceMission mission1 = new DistanceMission(1000);
@@ -162,7 +163,7 @@ class CloverMissionServiceTest {
             assertThat(result.getUserId()).isEqualTo(TEST_MEMBER_ID);
             assertThat(result.getMissions().size()).isEqualTo(3);
 
-            verify(vectorDBService, times(1)).searchSimilarMissionsIds(anyString(), eq(3), anyList());
+            verify(cloverMissionVectorRepository, times(1)).searchSimilarMissionsIds(anyString(), eq(3), anyList());
             verify(cloverMissionRepository, times(1)).findAllById(missionIdsFromVectorDB);
             verify(cloverMissionRecordRepository, times(1)).saveAll(anyList());
         }
@@ -176,7 +177,7 @@ class CloverMissionServiceTest {
             given(cloverMissionRecordRepository.findCloverMissionsList(eq(TEST_MEMBER_ID), any(LocalDate.class)))
                     .willReturn(Collections.emptyList());
 
-            given(vectorDBService.searchSimilarMissionsIds(anyString(), eq(3), anyList()))
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(3), anyList()))
                     .willThrow(new CustomException(ErrorCode.MISSION_NOT_FOUND));
 
             // --- When & Then ---
@@ -568,7 +569,7 @@ class CloverMissionServiceTest {
 
             List<Long> excludedIds = List.of(101L, 102L);
             List<Long> newMissionIds = List.of(103L, 104L);
-            given(vectorDBService.searchSimilarMissionsIds(anyString(), anyInt(), eq(excludedIds)))
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), anyInt(), eq(excludedIds)))
                     .willReturn(newMissionIds);
 
             CloverMission newMission1 = new TimerMission(300);
@@ -631,7 +632,7 @@ class CloverMissionServiceTest {
 
             List<Long> excludedIds = List.of(101L);
             List<Long> newMissionIds = List.of(102L, 103L);
-            given(vectorDBService.searchSimilarMissionsIds(
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(
                     eq("가벼운 사회적 활동으로 자신감을 회복하고 싶어하는 상태"),
                     eq(3),
                     eq(excludedIds)))
@@ -661,7 +662,7 @@ class CloverMissionServiceTest {
 
             verify(cloverMissionRecordService).getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID);
             verify(llmBasedQueryGeneratorService).generateMissionRecommendationStrategy(mockFeedbacks);
-            verify(vectorDBService).searchSimilarMissionsIds(
+            verify(cloverMissionVectorRepository).searchSimilarMissionsIds(
                     eq("가벼운 사회적 활동으로 자신감을 회복하고 싶어하는 상태"),
                     eq(3),
                     eq(excludedIds));
@@ -682,7 +683,7 @@ class CloverMissionServiceTest {
                     .willReturn(Collections.emptyList());
 
             List<Long> newMissionIds = List.of(101L, 102L);
-            given(vectorDBService.searchSimilarMissionsIds(
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(
                     eq("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션"),
                     eq(3),
                     eq(Collections.emptyList())))
@@ -712,7 +713,7 @@ class CloverMissionServiceTest {
 
             verify(cloverMissionRecordService).getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID);
             verify(llmBasedQueryGeneratorService, never()).generateMissionRecommendationStrategy(any());
-            verify(vectorDBService).searchSimilarMissionsIds(
+            verify(cloverMissionVectorRepository).searchSimilarMissionsIds(
                     eq("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션"),
                     eq(3),
                     eq(Collections.emptyList()));
@@ -745,7 +746,7 @@ class CloverMissionServiceTest {
 
             // Fallback 쿼리로 벡터 검색
             List<Long> newMissionIds = List.of(101L, 102L);
-            given(vectorDBService.searchSimilarMissionsIds(
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(
                     eq("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션"),
                     eq(3),
                     eq(Collections.emptyList())))
@@ -775,7 +776,7 @@ class CloverMissionServiceTest {
 
             verify(cloverMissionRecordService).getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID);
             verify(llmBasedQueryGeneratorService).generateMissionRecommendationStrategy(mockFeedbacks);
-            verify(vectorDBService).searchSimilarMissionsIds(
+            verify(cloverMissionVectorRepository).searchSimilarMissionsIds(
                     eq("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션"),
                     eq(3),
                     eq(Collections.emptyList()));
@@ -817,7 +818,7 @@ class CloverMissionServiceTest {
                     .map(CloverMissionRecord::getMissionId)
                     .toList();
 
-            given(vectorDBService.searchSimilarMissionsIds(anyString(), anyInt(), eq(excludedMissionIds)))
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), anyInt(), eq(excludedMissionIds)))
                     .willThrow(new CustomException(ErrorCode.MISSION_NOT_FOUND));
 
             // --- When & Then ---

@@ -7,6 +7,7 @@ import com.example.live_backend.domain.mission.clover.entity.CloverMission;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
+import com.example.live_backend.domain.mission.clover.repository.CloverMissionVectorRepository;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ import static java.util.Collections.emptyList;
 @Slf4j
 public class CloverMissionService {
 
-    private final VectorDBService vectorDBService;
+    private final CloverMissionVectorRepository cloverMissionVectorRepository;
     private final CloverMissionRepository cloverMissionRepository;
     private final MemberRepository memberRepository;
 
@@ -153,7 +154,7 @@ public class CloverMissionService {
     }
 
     private List<CloverMission> findSimilarMissions(String searchQuery, List<Long> excludedIds) {
-        List<Long> missionIds = vectorDBService.searchSimilarMissionsIds(
+        List<Long> missionIds = cloverMissionVectorRepository.searchSimilarMissionsIds(
                 searchQuery,
                 DEFAULT_MISSION_COUNT,
                 excludedIds
