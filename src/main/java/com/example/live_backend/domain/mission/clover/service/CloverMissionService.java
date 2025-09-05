@@ -33,6 +33,8 @@ public class CloverMissionService {
     private final CloverMissionRecordService cloverMissionRecordService;
     private final LLMBasedQueryGeneratorService llmBasedQueryGeneratorService;
 
+    private static final int DEFAULT_MISSION_COUNT = 3;
+
     @Transactional
     public CloverMissionListResponseDto getCloverMissionList(Long memberId) {
 
@@ -118,47 +120,56 @@ public class CloverMissionService {
 
     private List<CloverMissionRecord> assignNewCloverMissions(Member member, List<Long> excludedIds) {
 
-        String vectorSearchQuery;
-        List<String> negativeKeywords = List.of(); // 추가 예정
+        String searchQuery = generateSearchQuery(member.getId());
 
-        try {
-            // 1. 사용자의 최근 미션 피드백 3개 조회
-            List<UserFeedbackForLLMDto> recentFeedbacks =
-                    cloverMissionRecordService.getRecentMissionRecordsWithFeedback(member.getId());
+        List<CloverMission> missions = findSimilarMissions(searchQuery, excludedIds);
 
-            if (!recentFeedbacks.isEmpty()) {
-                // 2. LLM을 통해 사용자 상태 분석 및 벡터 검색 쿼리 생성
-                LLMProcessingResultDto llmResult =
-                        llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(recentFeedbacks);
-
-                vectorSearchQuery = llmResult.getExpectedEffect();
-                negativeKeywords = llmResult.getNegativeKeywords();
-            } else {
-                // 3. 최근 피드백이 없는 경우 기본 쿼리 사용
-                vectorSearchQuery = generateDefaultSearchQuery();
-            }
-
-        } catch (Exception e) {
-            // 4. LLM 처리 실패 시 fallback 처리
-            vectorSearchQuery = generateDefaultSearchQuery();
-        }
-
-        List<Long> newMissionsIds = vectorDBService.searchSimilarMissionsIds(vectorSearchQuery, 3, excludedIds);
-
-        List<CloverMission> findMissions = cloverMissionRepository.findAllById(newMissionsIds);
-
-        // TODO: negative keywords 로 미션 필터링 기능 추가 예정
-
-        List<CloverMissionRecord> newMissionRecordList = findMissions.stream()
-                .map(cloverMission -> CloverMissionRecord.from(cloverMission, member))
-                .toList();
-
-        return cloverMissionRecordRepository.saveAll(newMissionRecordList);
+        return createAndSaveMissionRecords(missions, member);
     }
 
     private Member findUser(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private String generateSearchQuery(Long memberId) {
+        try {
+            List<UserFeedbackForLLMDto> userFeedbackList =
+                    cloverMissionRecordService.getRecentMissionRecordsWithFeedback(memberId);
+
+            if (userFeedbackList.isEmpty()) {
+                return generateDefaultSearchQuery();
+            }
+
+            LLMProcessingResultDto llmResult =
+                    llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(userFeedbackList);
+
+            return llmResult.getExpectedEffect();
+
+        } catch (Exception e) {
+            log.warn("LLM 처리 실패, 기본 쿼리 사용: {}", e.getMessage());
+            return generateDefaultSearchQuery();
+        }
+    }
+
+    private List<CloverMission> findSimilarMissions(String searchQuery, List<Long> excludedIds) {
+        List<Long> missionIds = vectorDBService.searchSimilarMissionsIds(
+                searchQuery,
+                DEFAULT_MISSION_COUNT,
+                excludedIds
+        );
+
+        // TODO: negative keywords 로 미션 필터링 기능 추가 예정
+
+        return cloverMissionRepository.findAllById(missionIds);
+    }
+
+    private List<CloverMissionRecord> createAndSaveMissionRecords(List<CloverMission> missions, Member member) {
+        List<CloverMissionRecord> missionRecords = missions.stream()
+                .map(mission -> CloverMissionRecord.from(mission, member))
+                .toList();
+
+        return cloverMissionRecordRepository.saveAll(missionRecords);
     }
 
     private String generateDefaultSearchQuery() {
