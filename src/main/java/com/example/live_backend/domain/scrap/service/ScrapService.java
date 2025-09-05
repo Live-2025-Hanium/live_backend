@@ -5,6 +5,7 @@ import com.example.live_backend.domain.board.repository.BoardRepository;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.scrap.dto.request.ScrapDeleteRequestDto;
+import com.example.live_backend.domain.scrap.dto.response.ScrapDeleteResponseDto;
 import com.example.live_backend.domain.board.dto.response.BoardListResponseDto;
 import com.example.live_backend.global.page.CursorTemplate;
 import com.example.live_backend.domain.scrap.entity.Scrap;
@@ -59,7 +60,7 @@ public class ScrapService {
     }
 
     @Transactional
-    public void removeScraps(Long memberId, ScrapDeleteRequestDto requestDto) {
+    public ScrapDeleteResponseDto removeScraps(Long memberId, ScrapDeleteRequestDto requestDto) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -68,7 +69,9 @@ public class ScrapService {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        scrapRepository.deleteByMemberAndBoardIds(member, boardIds);
+        int deletedCount = scrapRepository.deleteByMemberAndBoardIds(member, boardIds);
+        
+        return ScrapDeleteResponseDto.of(boardIds.size(), deletedCount);
     }
 
     public CursorTemplate<Long, BoardListResponseDto> getScrapList(Long memberId, Long cursorId, int size) {

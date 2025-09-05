@@ -3,6 +3,7 @@ package com.example.live_backend.domain.scrap.controller.docs;
 import com.example.live_backend.domain.board.dto.response.BoardListResponseDto;
 import com.example.live_backend.domain.scrap.dto.request.ScrapCursorRequestDto;
 import com.example.live_backend.domain.scrap.dto.request.ScrapDeleteRequestDto;
+import com.example.live_backend.domain.scrap.dto.response.ScrapDeleteResponseDto;
 import com.example.live_backend.domain.scrap.dto.response.ScrapToggleResponseDto;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.page.CursorTemplate;
@@ -157,7 +158,10 @@ public interface ScrapControllerDocs {
                         "timestamp": "2024-01-01T12:00:00",
                         "success": true,
                         "message": "SUCCESS",
-                        "data": null,
+                        "data": {
+                            "requestedCount": 5,
+                            "deletedCount": 5
+                        },
                         "error": null
                     }
                     """)
@@ -202,7 +206,7 @@ public interface ScrapControllerDocs {
             )
         )
     })
-    ResponseHandler<Void> removeScraps(
+    ResponseHandler<ScrapDeleteResponseDto> removeScraps(
         @AuthenticationPrincipal PrincipalDetails principalDetails,
         @RequestBody @Valid ScrapDeleteRequestDto requestDto
     );

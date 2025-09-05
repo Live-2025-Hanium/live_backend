@@ -25,6 +25,6 @@ public interface ScrapRepository extends JpaRepository<Scrap, Long>, ScrapReposi
 
     @Modifying
     @Query("DELETE FROM Scrap s WHERE s.member = :member AND s.board.id IN :boardIds")
-    void deleteByMemberAndBoardIds(@Param("member") Member member, @Param("boardIds") List<Long> boardIds);
+    int deleteByMemberAndBoardIds(@Param("member") Member member, @Param("boardIds") List<Long> boardIds);
 
 }

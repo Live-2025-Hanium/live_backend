@@ -4,6 +4,7 @@ import com.example.live_backend.domain.board.dto.response.BoardListResponseDto;
 import com.example.live_backend.domain.scrap.controller.docs.ScrapControllerDocs;
 import com.example.live_backend.domain.scrap.dto.request.ScrapCursorRequestDto;
 import com.example.live_backend.domain.scrap.dto.request.ScrapDeleteRequestDto;
+import com.example.live_backend.domain.scrap.dto.response.ScrapDeleteResponseDto;
 import com.example.live_backend.domain.scrap.dto.response.ScrapToggleResponseDto;
 import com.example.live_backend.domain.scrap.service.ScrapService;
 import com.example.live_backend.global.page.CursorTemplate;
@@ -35,11 +36,11 @@ public class ScrapController implements ScrapControllerDocs {
     @AuthenticatedApi(reason = "스크랩 취소는 로그인한 사용자만 가능합니다")
     @DeleteMapping("/boards")
     @Override
-    public ResponseHandler<Void> removeScraps(
+    public ResponseHandler<ScrapDeleteResponseDto> removeScraps(
             @AuthenticationPrincipal PrincipalDetails principalDetails,
             @RequestBody @Valid ScrapDeleteRequestDto requestDto) {
-        scrapService.removeScraps(principalDetails.getMemberId(), requestDto);
-        return ResponseHandler.success(null);
+        ScrapDeleteResponseDto response = scrapService.removeScraps(principalDetails.getMemberId(), requestDto);
+        return ResponseHandler.success(response);
     }
 
     @AuthenticatedApi(reason = "스크랩 목록 조회는 로그인한 사용자만 가능합니다")

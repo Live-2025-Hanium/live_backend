@@ -8,6 +8,7 @@ import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.scrap.dto.request.ScrapDeleteRequestDto;
+import com.example.live_backend.domain.scrap.dto.response.ScrapDeleteResponseDto;
 import com.example.live_backend.domain.scrap.entity.Scrap;
 import com.example.live_backend.domain.scrap.repository.ScrapRepository;
 import com.example.live_backend.global.error.exception.CustomException;
@@ -190,11 +191,14 @@ class ScrapServiceTest {
             ReflectionTestUtils.setField(requestDto, "boardIds", boardIds);
 
             given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+            given(scrapRepository.deleteByMemberAndBoardIds(member, boardIds)).willReturn(3);
 
             // when
-            scrapService.removeScraps(1L, requestDto);
+            ScrapDeleteResponseDto result = scrapService.removeScraps(1L, requestDto);
 
             // then
+            assertThat(result.getRequestedCount()).isEqualTo(3);
+            assertThat(result.getDeletedCount()).isEqualTo(3);
             verify(scrapRepository).deleteByMemberAndBoardIds(member, boardIds);
         }
 
@@ -230,6 +234,46 @@ class ScrapServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_INPUT_VALUE);
 
             verify(scrapRepository, never()).deleteByMemberAndBoardIds(any(), any());
+        }
+
+        @Test
+        @DisplayName("일부만 삭제된 경우 - 삭제된 개수 반환")
+        void removeScraps_WhenPartiallyDeleted_ShouldReturnDeletedCount() {
+            // given
+            ScrapDeleteRequestDto requestDto = new ScrapDeleteRequestDto();
+            List<Long> boardIds = Arrays.asList(1L, 2L, 3L, 4L, 5L);
+            ReflectionTestUtils.setField(requestDto, "boardIds", boardIds);
+
+            given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+            given(scrapRepository.deleteByMemberAndBoardIds(member, boardIds)).willReturn(2); // 5개 중 2개만 삭제
+
+            // when
+            ScrapDeleteResponseDto result = scrapService.removeScraps(1L, requestDto);
+
+            // then
+            assertThat(result.getRequestedCount()).isEqualTo(5);
+            assertThat(result.getDeletedCount()).isEqualTo(2);
+            verify(scrapRepository).deleteByMemberAndBoardIds(member, boardIds);
+        }
+
+        @Test
+        @DisplayName("아무것도 삭제되지 않은 경우 - 0 반환")
+        void removeScraps_WhenNothingDeleted_ShouldReturnZero() {
+            // given
+            ScrapDeleteRequestDto requestDto = new ScrapDeleteRequestDto();
+            List<Long> boardIds = Arrays.asList(1L, 2L, 3L);
+            ReflectionTestUtils.setField(requestDto, "boardIds", boardIds);
+
+            given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+            given(scrapRepository.deleteByMemberAndBoardIds(member, boardIds)).willReturn(0); // 아무것도 삭제되지 않음
+
+            // when
+            ScrapDeleteResponseDto result = scrapService.removeScraps(1L, requestDto);
+
+            // then
+            assertThat(result.getRequestedCount()).isEqualTo(3);
+            assertThat(result.getDeletedCount()).isEqualTo(0);
+            verify(scrapRepository).deleteByMemberAndBoardIds(member, boardIds);
         }
     }
 

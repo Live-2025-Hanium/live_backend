@@ -3,6 +3,7 @@ package com.example.live_backend.domain.scrap.controller;
 import com.example.live_backend.domain.board.dto.response.BoardListResponseDto;
 import com.example.live_backend.domain.scrap.dto.request.ScrapCursorRequestDto;
 import com.example.live_backend.domain.scrap.dto.request.ScrapDeleteRequestDto;
+import com.example.live_backend.domain.scrap.dto.response.ScrapDeleteResponseDto;
 import com.example.live_backend.domain.scrap.dto.response.ScrapToggleResponseDto;
 import com.example.live_backend.domain.scrap.dto.response.ScrapMessage;
 import com.example.live_backend.domain.scrap.service.ScrapService;
@@ -132,12 +133,16 @@ class ScrapControllerTest {
             List<Long> boardIds = Arrays.asList(1L, 2L, 3L);
             ReflectionTestUtils.setField(requestDto, "boardIds", boardIds);
 
+            given(scrapService.removeScraps(TEST_MEMBER_ID, requestDto))
+                    .willReturn(ScrapDeleteResponseDto.of(3, 3));
+
             // when
-            ResponseHandler<Void> response = scrapController.removeScraps(principalDetails, requestDto);
+            ResponseHandler<ScrapDeleteResponseDto> response = scrapController.removeScraps(principalDetails, requestDto);
 
             // then
             assertThat(response.isSuccess()).isTrue();
-            assertThat(response.getData()).isNull();
+            assertThat(response.getData().getRequestedCount()).isEqualTo(3);
+            assertThat(response.getData().getDeletedCount()).isEqualTo(3);
             verify(scrapService).removeScraps(eq(TEST_MEMBER_ID), any(ScrapDeleteRequestDto.class));
         }
 
