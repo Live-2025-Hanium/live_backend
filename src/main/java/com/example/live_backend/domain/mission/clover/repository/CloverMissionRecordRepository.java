@@ -65,4 +65,11 @@ public interface CloverMissionRecordRepository extends JpaRepository<CloverMissi
                                                     @Param("start") LocalDateTime start,
                                                     @Param("end") LocalDateTime end);
 
+    @Query("SELECT cmr FROM CloverMissionRecord cmr " +
+            "WHERE cmr.member.id = :memberId " +
+            "AND cmr.feedbackComment IS NOT NULL " +
+            "AND cmr.feedbackDifficulty IS NOT NULL " +
+            "ORDER BY cmr.completedAt DESC " +
+            "LIMIT 3")
+    List<CloverMissionRecord> findRecentCompletedMissionsWithFeedback(@Param("memberId") Long memberId);
 }

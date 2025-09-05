@@ -2,13 +2,12 @@ package com.example.live_backend.domain.mission.clover.service;
 
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
-import com.example.live_backend.domain.mission.clover.dto.CloverMissionListResponseDto;
-import com.example.live_backend.domain.mission.clover.dto.CloverMissionResponseDto;
-import com.example.live_backend.domain.mission.clover.dto.CloverMissionStatusResponseDto;
+import com.example.live_backend.domain.mission.clover.dto.*;
 import com.example.live_backend.domain.mission.clover.entity.CloverMission;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
+import com.example.live_backend.domain.mission.clover.repository.CloverMissionVectorRepository;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +25,16 @@ import static java.util.Collections.emptyList;
 @Slf4j
 public class CloverMissionService {
 
-    private final VectorDBService vectorDBService;
+    private final CloverMissionVectorRepository cloverMissionVectorRepository;
     private final CloverMissionRepository cloverMissionRepository;
     private final MemberRepository memberRepository;
 
     private final CloverMissionRecordRepository cloverMissionRecordRepository;
+
+    private final CloverMissionRecordService cloverMissionRecordService;
+    private final LLMBasedQueryGeneratorService llmBasedQueryGeneratorService;
+
+    private static final int DEFAULT_MISSION_COUNT = 3;
 
     @Transactional
     public CloverMissionListResponseDto getCloverMissionList(Long memberId) {
@@ -117,21 +121,59 @@ public class CloverMissionService {
 
     private List<CloverMissionRecord> assignNewCloverMissions(Member member, List<Long> excludedIds) {
 
-        // TODO: 향후 실제 설문 요약 로직으로 대체 필요
-        String tempSurveySummary = "집안에서 컴퓨터만 보고 있으니 너무 답답해요. 하늘이나 자연을 보면서 마음을 정화하고 싶고, 산책도 좋아요.";
+        String searchQuery = generateSearchQuery(member.getId());
 
-        List<Long> newMissionsIds = vectorDBService.searchSimilarMissionsIds(tempSurveySummary, 3, excludedIds);
+        List<CloverMission> missions = findSimilarMissions(searchQuery, excludedIds);
 
-        List<CloverMission> findMissions = cloverMissionRepository.findAllById(newMissionsIds);
-        List<CloverMissionRecord> newMissionRecordList = findMissions.stream()
-                .map(cloverMission -> CloverMissionRecord.from(cloverMission, member))
-                .toList();
-
-        return cloverMissionRecordRepository.saveAll(newMissionRecordList);
+        return createAndSaveMissionRecords(missions, member);
     }
 
     private Member findUser(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private String generateSearchQuery(Long memberId) {
+        try {
+            List<UserFeedbackForLLMDto> userFeedbackList =
+                    cloverMissionRecordService.getRecentMissionRecordsWithFeedback(memberId);
+
+            if (userFeedbackList.isEmpty()) {
+                return generateDefaultSearchQuery();
+            }
+
+            LLMProcessingResultDto llmResult =
+                    llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(userFeedbackList);
+
+            return llmResult.getExpectedEffect();
+
+        } catch (Exception e) {
+            log.warn("LLM 처리 실패, 기본 쿼리 사용: {}", e.getMessage());
+            return generateDefaultSearchQuery();
+        }
+    }
+
+    private List<CloverMission> findSimilarMissions(String searchQuery, List<Long> excludedIds) {
+        List<Long> missionIds = cloverMissionVectorRepository.searchSimilarMissionsIds(
+                searchQuery,
+                DEFAULT_MISSION_COUNT,
+                excludedIds
+        );
+
+        // TODO: negative keywords 로 미션 필터링 기능 추가 예정
+
+        return cloverMissionRepository.findAllById(missionIds);
+    }
+
+    private List<CloverMissionRecord> createAndSaveMissionRecords(List<CloverMission> missions, Member member) {
+        List<CloverMissionRecord> missionRecords = missions.stream()
+                .map(mission -> CloverMissionRecord.from(mission, member))
+                .toList();
+
+        return cloverMissionRecordRepository.saveAll(missionRecords);
+    }
+
+    private String generateDefaultSearchQuery() {
+        return "처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션";
     }
 }
