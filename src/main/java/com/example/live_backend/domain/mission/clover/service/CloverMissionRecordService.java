@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -89,12 +90,11 @@ public class CloverMissionRecordService {
         return CloverMissionRecordResponseDto.from(missionRecord);
     }
 
-    @Transactional(readOnly = true)
     public List<UserFeedbackForLLMDto> getRecentMissionRecordsWithFeedback(Long memberId) {
         List<CloverMissionRecord> recentRecords = missionRecordRepository.findRecentCompletedMissionsWithFeedback(memberId);
 
-        return recentRecords.stream()
-                .map(UserFeedbackForLLMDto::from)
-                .toList();
+        return recentRecords.isEmpty() ?
+                Collections.emptyList() :
+                recentRecords.stream().map(UserFeedbackForLLMDto::from).toList();
     }
 }

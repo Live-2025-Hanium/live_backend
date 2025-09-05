@@ -56,10 +56,10 @@ public class LLMBasedQueryGeneratorService {
             분석 결과를 negative_keywords(피해야 할 요소들 배열)와 expected_effect(벡터DB 검색용 사용자 상태 및 니즈 설명) 형식으로 제공해주세요.
             """;
 
-    public LLMProcessingResultDto generateMissionRecommendationStrategy(List<UserFeedbackForLLMDto> dto) {
+    public LLMProcessingResultDto generateMissionRecommendationStrategy(List<UserFeedbackForLLMDto> userFeedbackList) {
         try {
             // DTO 변환
-            List<MissionHistoryItem> historyItems = dto.stream()
+            List<MissionHistoryItem> historyItems = userFeedbackList.stream()
                     .map(MissionHistoryItem::from)
                     .toList();
 
