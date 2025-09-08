@@ -1,5 +1,6 @@
 package com.example.live_backend.domain.mission.clover.entity;
 
+import com.example.live_backend.domain.mission.clover.Enum.CloverType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,5 +16,10 @@ public class TimerMission extends CloverMission {
 
     public TimerMission(int requiredSeconds) {
         this.requiredSeconds = requiredSeconds;
+    }
+
+    @Override
+    public CloverType getCloverType() {
+        return CloverType.TIMER;
     }
 }

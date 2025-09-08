@@ -1,5 +1,6 @@
 package com.example.live_backend.domain.mission.clover.entity;
 
+import com.example.live_backend.domain.mission.clover.Enum.CloverType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,5 +16,10 @@ public class VisitMission extends CloverMission {
 
     public VisitMission(String targetAddress) {
         this.targetAddress = targetAddress;
+    }
+
+    @Override
+    public CloverType getCloverType() {
+        return CloverType.VISIT;
     }
 }

@@ -1,5 +1,6 @@
 package com.example.live_backend.domain.mission.clover.entity;
 
+import com.example.live_backend.domain.mission.clover.Enum.CloverType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -17,5 +18,10 @@ public class PhotoMission extends CloverMission {
 
     public PhotoMission(String illustrationUrl) {
         this.illustrationUrl = illustrationUrl;
+    }
+
+    @Override
+    public CloverType getCloverType() {
+        return CloverType.PHOTO;
     }
 }
