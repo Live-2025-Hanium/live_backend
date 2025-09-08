@@ -121,9 +121,11 @@ public class CloverMissionService {
 
     private List<CloverMissionRecord> assignNewCloverMissions(Member member, List<Long> excludedIds) {
 
-        String searchQuery = generateSearchQuery(member.getId());
+        LLMProcessingResultDto strategy = generateSearchStrategy(member.getId());
 
-        List<CloverMission> missions = findSimilarMissions(searchQuery, excludedIds);
+        List<CloverMission> missions = findSimilarMissions(strategy.getExpectedEffect(), excludedIds);
+
+        // 벡터 DB에서 가져온 미션들에 필터링 적용
 
         return createAndSaveMissionRecords(missions, member);
     }
@@ -133,7 +135,7 @@ public class CloverMissionService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
-    private String generateSearchQuery(Long memberId) {
+    private LLMProcessingResultDto generateSearchStrategy(Long memberId) {
         try {
             List<UserFeedbackForLLMDto> userFeedbackList =
                     cloverMissionRecordService.getRecentMissionRecordsWithFeedback(memberId);
@@ -145,7 +147,7 @@ public class CloverMissionService {
             LLMProcessingResultDto llmResult =
                     llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(userFeedbackList);
 
-            return llmResult.getExpectedEffect();
+            return llmResult;
 
         } catch (Exception e) {
             log.warn("LLM 처리 실패, 기본 쿼리 사용: {}", e.getMessage());
@@ -160,8 +162,6 @@ public class CloverMissionService {
                 excludedIds
         );
 
-        // TODO: negative keywords 로 미션 필터링 기능 추가 예정
-
         return cloverMissionRepository.findAllById(missionIds);
     }
 
@@ -173,7 +173,9 @@ public class CloverMissionService {
         return cloverMissionRecordRepository.saveAll(missionRecords);
     }
 
-    private String generateDefaultSearchQuery() {
-        return "처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션";
+    private LLMProcessingResultDto generateDefaultSearchQuery() {
+        return LLMProcessingResultDto.builder()
+                .expectedEffect("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션")
+                .build();
     }
 }
