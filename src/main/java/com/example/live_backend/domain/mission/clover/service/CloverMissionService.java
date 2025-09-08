@@ -2,6 +2,7 @@ package com.example.live_backend.domain.mission.clover.service;
 
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
+import com.example.live_backend.domain.mission.clover.Enum.MissionScoreCalculator;
 import com.example.live_backend.domain.mission.clover.dto.*;
 import com.example.live_backend.domain.mission.clover.entity.CloverMission;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
@@ -16,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 
@@ -34,7 +38,7 @@ public class CloverMissionService {
     private final CloverMissionRecordService cloverMissionRecordService;
     private final LLMBasedQueryGeneratorService llmBasedQueryGeneratorService;
 
-    private static final int DEFAULT_MISSION_COUNT = 3;
+    private static final int DEFAULT_MISSION_COUNT = 10;
 
     @Transactional
     public CloverMissionListResponseDto getCloverMissionList(Long memberId) {
@@ -123,11 +127,16 @@ public class CloverMissionService {
 
         LLMProcessingResultDto strategy = generateSearchStrategy(member.getId());
 
-        List<CloverMission> missions = findSimilarMissions(strategy.getExpectedEffect(), excludedIds);
+        List<CloverMission> missions = findSimilarMissions(strategy.getSearchQuery(), excludedIds);
 
         // 벡터 DB에서 가져온 미션들에 필터링 적용
+        List<CloverMission> weightedMissions = applyMissionWeighting(missions, strategy);
 
-        return createAndSaveMissionRecords(missions, member);
+        List<CloverMission> finalMissions = weightedMissions.stream()
+                .limit(3)
+                .toList();
+
+        return createAndSaveMissionRecords(finalMissions, member);
     }
 
     private Member findUser(Long memberId) {
@@ -175,7 +184,30 @@ public class CloverMissionService {
 
     private LLMProcessingResultDto generateDefaultSearchQuery() {
         return LLMProcessingResultDto.builder()
-                .expectedEffect("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션")
+                .searchQuery("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션")
                 .build();
+    }
+
+    private List<CloverMission> applyMissionWeighting(List<CloverMission> missions, LLMProcessingResultDto strategy) {
+        if (strategy == null) {
+            return missions;
+        }
+
+        Map<CloverMission, Integer> missionScores = new HashMap<>();
+
+        for (CloverMission mission : missions) {
+            int score = calculateMissionScore(mission, strategy);
+            missionScores.put(mission, score);
+        }
+
+        return missions.stream()
+                .sorted(Comparator.comparingInt(missionScores::get).reversed())
+                .toList();
+    }
+
+    private int calculateMissionScore(CloverMission mission, LLMProcessingResultDto strategy) {
+        return MissionScoreCalculator.CATEGORY.calculate(mission, strategy) +
+                MissionScoreCalculator.DIFFICULTY.calculate(mission, strategy) +
+                MissionScoreCalculator.CLOVER_TYPE.calculate(mission, strategy);
     }
 }

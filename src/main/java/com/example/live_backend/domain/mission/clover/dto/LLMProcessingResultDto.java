@@ -17,8 +17,8 @@ import java.util.List;
 @Builder
 public class LLMProcessingResultDto {
 
-    @JsonProperty("expected_effect")
-    private String expectedEffect;
+    @JsonProperty("search_query")
+    private String searchQuery;
 
     @JsonProperty("recommend_categories")
     private List<MissionCategory> recommendCategories;

@@ -86,9 +86,10 @@ public class CloverMissionVectorRepository {
         Map<String, Object> metadata = Map.of(
                 "clover_mission_id", String.valueOf(savedMission.getId()),
                 "mission_title", savedMission.getTitle(),
+                "mission_description", savedMission.getDescription(),
                 "mission_category", savedMission.getCategory().name(),
                 "mission_difficulty", savedMission.getDifficulty().name(),
-                "clover_type", savedMission.getCloverType()
+                "clover_type", savedMission.getCloverType().name()
         );
 
         vectorStore.add(List.of(new Document(vectorDocument, metadata)));

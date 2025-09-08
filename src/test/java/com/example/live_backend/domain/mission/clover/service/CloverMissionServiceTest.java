@@ -624,7 +624,7 @@ class CloverMissionServiceTest {
                     .willReturn(mockFeedbacks);
 
             LLMProcessingResultDto llmResult = LLMProcessingResultDto.builder()
-                    .expectedEffect("가벼운 사회적 활동으로 자신감을 회복하고 싶어하는 상태")
+                    .searchQuery("가벼운 사회적 활동으로 자신감을 회복하고 싶어하는 상태")
                     .negativeKeywords(List.of("어려운", "복잡한"))
                     .build();
             given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(mockFeedbacks))

@@ -37,8 +37,6 @@ public abstract class CloverMission extends BaseEntity {
     @Column(nullable = false)
     private MissionDifficulty difficulty;
 
-
-
     public abstract CloverType getCloverType();
 
     protected CloverMission(String title, String description, MissionCategory category, MissionDifficulty difficulty) {

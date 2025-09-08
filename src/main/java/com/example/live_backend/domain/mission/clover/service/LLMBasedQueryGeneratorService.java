@@ -1,9 +1,7 @@
 package com.example.live_backend.domain.mission.clover.service;
 
-import com.example.live_backend.domain.mission.clover.Enum.MissionDifficulty;
 import com.example.live_backend.domain.mission.clover.dto.LLMProcessingResultDto;
 import com.example.live_backend.domain.mission.clover.dto.UserFeedbackForLLMDto;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -70,7 +68,7 @@ public class LLMBasedQueryGeneratorService {
 
             [출력 데이터 활용 방식]
             - 필드
-              - `expected_effect`: 벡터 데이터베이스 검색 쿼리로 사용됩니다. 사용자의 현재 상태와 필요에 맞는 미션을 찾기 위한 의미적 검색어를 단 한문장으로 작성해주세요. 피해야 하는 미션의 특징 말고 추천해야 하는 미션의 특징을 작성해주세요. 이 텍스트는 미션 데이터베이스에서 사용자에게 적합한 미션을 찾는 임베딩 검색에 직접 사용되므로, 구체적이고 검색 친화적으로 작성해주세요.
+              - search_query: 벡터 데이터베이스 검색 쿼리로 사용됩니다. 사용자의 현재 상태와 필요에 맞는 미션을 찾기 위한 의미적 검색어를 단 한문장으로 작성해주세요. 피해야 하는 미션의 특징 말고 추천해야 하는 미션의 특징을 작성해주세요. 이 텍스트는 미션 데이터베이스에서 사용자에게 적합한 미션을 찾는 임베딩 검색에 직접 사용되므로, 구체적이고 검색 친화적으로 작성해주세요.
               - recommend_categories (MissionCategory[])고: 선호 카테고리 0~2개
               - avoid_categories (MissionCategory[]): 피해야 할 카테고리 0~2개
               - recommend_difficulties (MissionDifficulty[]): 선호 난이도 0~2개
@@ -111,7 +109,7 @@ public class LLMBasedQueryGeneratorService {
 
     private LLMProcessingResultDto createFallbackResponse() {
         return LLMProcessingResultDto.builder()
-                .expectedEffect("가벼운 일상 활동과 간단한 사회적 소통을 통해 점진적으로 성장할 수 있는 기본적인 미션")
+                .searchQuery("가벼운 일상 활동과 간단한 사회적 소통을 통해 점진적으로 성장할 수 있는 기본적인 미션")
                 .build();
     }
 
