@@ -28,4 +28,3 @@ public class AdminRegisterCloverMissionRequestDto {
     private String activityDescription;
     private String expectedEffect;
 }
-//미션 : missionTitle, 활동 설명: activityDescription, 도움을 줄 수 있는 사용자의 특성 : relatedFeature, 기대 효과: expectedEffect

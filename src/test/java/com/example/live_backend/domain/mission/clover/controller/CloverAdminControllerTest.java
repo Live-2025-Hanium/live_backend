@@ -1,8 +1,8 @@
 package com.example.live_backend.domain.mission.clover.controller;
 
+import com.example.live_backend.domain.mission.clover.Enum.CloverType;
 import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.clover.Enum.MissionDifficulty;
-import com.example.live_backend.domain.mission.clover.Enum.TargetUserType;
 import com.example.live_backend.domain.mission.clover.dto.AdminRegisterCloverMissionRequestDto;
 import com.example.live_backend.domain.mission.clover.dto.AdminRegisterCloverMissionResponseDto;
 import com.example.live_backend.domain.mission.clover.service.CloverAdminService;
@@ -50,7 +50,7 @@ class CloverAdminControllerTest {
                     .description("하루 10분 걷기")
                     .missionCategory(MissionCategory.HEALTH)
                     .missionDifficulty(MissionDifficulty.EASY)
-                    .targetUserType(TargetUserType.HEALTH_VULNERABLE)
+                    .cloverType(CloverType.DISTANCE)
                     .vectorDocument("미션 제목: 걷기 미션, 미션 설명: ..., 도움을 줄 수 있는 사용자의 특성: ..., 기대 효과: ...")
                     .build();
 
