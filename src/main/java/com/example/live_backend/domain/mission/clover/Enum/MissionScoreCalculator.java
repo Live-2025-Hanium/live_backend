@@ -49,7 +49,7 @@ public enum MissionScoreCalculator {
         }
 
         if (avoidList != null && avoidList.contains(value)) {
-            score -= 3;
+            score -= 5;
         }
 
         return score;

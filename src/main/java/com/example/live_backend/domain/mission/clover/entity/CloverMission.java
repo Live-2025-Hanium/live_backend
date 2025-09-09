@@ -50,6 +50,10 @@ public abstract class CloverMission extends BaseEntity {
         CloverMission mission;
         CloverType cloverType = dto.getCloverType();
 
+        if (cloverType == null) {
+            throw new CustomException(ErrorCode.INVALID_CLOVER_TYPE);
+        }
+
         if (cloverType.equals(CloverType.DISTANCE)) {
             mission = new DistanceMission(dto.getRequiredMeters());
         } else if (cloverType.equals(CloverType.TIMER)) {

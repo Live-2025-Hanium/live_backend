@@ -21,7 +21,6 @@ class MissionScoreCalculatorTest {
 
     @BeforeEach
     void setUp() {
-        // 각 테스트에서 사용할 Mock CloverMission 객체 생성
         mockMission = mock(CloverMission.class);
     }
 
@@ -78,7 +77,7 @@ class MissionScoreCalculatorTest {
             int score = MissionScoreCalculator.CATEGORY.calculate(mockMission, strategy);
 
             // ---Then---
-            assertThat(score).isEqualTo(5); // 10 - 5 = 5
+            assertThat(score).isEqualTo(5);
         }
 
         @Test

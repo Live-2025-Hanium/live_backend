@@ -5,9 +5,9 @@ import com.example.live_backend.domain.mission.clover.dto.AdminRegisterCloverMis
 import com.example.live_backend.domain.mission.clover.entity.CloverMission;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionVectorRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -16,7 +16,6 @@ public class CloverAdminService {
 
     private final CloverMissionRepository cloverMissionRepository;
     private final CloverMissionVectorRepository cloverMissionVectorRepository;
-
 
     @Transactional
     public AdminRegisterCloverMissionResponseDto registerCloverMission(AdminRegisterCloverMissionRequestDto request) {
