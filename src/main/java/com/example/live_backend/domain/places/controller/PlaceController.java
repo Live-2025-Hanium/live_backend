@@ -9,6 +9,8 @@ import com.example.live_backend.domain.places.dto.request.SearchRequest;
 import com.example.live_backend.domain.places.service.PlaceMissionService;
 import com.example.live_backend.domain.places.service.PlaceService;
 import com.example.live_backend.global.error.response.ResponseHandler;
+import com.example.live_backend.global.security.annotation.AuthenticatedApi;
+import com.example.live_backend.global.security.annotation.PublicApi;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class PlaceController implements PlacesApiDocs {
     private final PlaceMissionService placeMissionService;
     
     @Override
+    @PublicApi(reason = "장소 검색은 로그인 없이 가능합니다")
     public ResponseEntity<ResponseHandler<PlaceSearchResult>> searchByKeyword(
             @Valid @ModelAttribute SearchRequest request) {
         log.info("Search places by keyword: {}", request.getQuery());
@@ -36,6 +39,7 @@ public class PlaceController implements PlacesApiDocs {
     }
     
     @Override
+    @PublicApi(reason = "주변 장소 검색은 로그인 없이 가능합니다")
     public ResponseEntity<ResponseHandler<PlaceSearchResult>> searchByCategory(
             @Valid @ModelAttribute NearbyRequest request) {
         log.info("Search nearby places by category: {}", request.getCategory());
@@ -44,6 +48,7 @@ public class PlaceController implements PlacesApiDocs {
     }
     
     @Override
+    @PublicApi(reason = "장소 상세 조회는 로그인 없이 가능합니다")
     public ResponseEntity<ResponseHandler<PlaceDetail>> getPlaceDetail(
             @PathVariable String placeId) {
         log.info("Get place detail for: {}", placeId);
@@ -52,6 +57,7 @@ public class PlaceController implements PlacesApiDocs {
     }
     
     @Override
+    @AuthenticatedApi(reason = "활성 미션 조회는 로그인한 사용자만 가능합니다")
     public ResponseEntity<?> getActiveMissionPlace(
             @AuthenticationPrincipal UserDetails userDetails) {
         log.info("Get active mission place for user: {}", userDetails.getUsername());

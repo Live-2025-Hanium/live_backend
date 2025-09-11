@@ -1,5 +1,6 @@
 package com.example.live_backend.domain.places.entity;
 
+import com.example.live_backend.domain.BaseEntity;
 import com.example.live_backend.domain.mission.clover.entity.VisitMission;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PlaceVisitMission {
+public class PlaceVisitMission extends BaseEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
