@@ -15,8 +15,10 @@ public interface PlaceVisitMissionRepository extends JpaRepository<PlaceVisitMis
     
     @Query("SELECT pvm FROM PlaceVisitMission pvm " +
            "JOIN pvm.visitMission vm " +
-           "JOIN CloverMissionRecord cmr ON cmr.cloverMission = vm " +
+           "JOIN com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord cmr " +
+           "ON cmr.missionId = vm.id " +
            "WHERE cmr.member.id = :memberId " +
-           "AND cmr.cloverMissionStatus IN ('ASSIGNED', 'STARTED', 'PAUSED')")
+           "AND cmr.cloverMissionStatus IN ('ASSIGNED', 'STARTED', 'PAUSED') " +
+           "AND cmr.cloverType = 'VISIT'")
     Optional<PlaceVisitMission> findActiveMissionByMemberId(@Param("memberId") Long memberId);
 }
