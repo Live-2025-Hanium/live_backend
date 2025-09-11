@@ -62,12 +62,25 @@ public enum ErrorCode {
 
 	/* ------------------ 409 CONFLICT : 충돌 오류 ------------------ */
 	INVALID_INPUT_VALUE(CONFLICT, "잘못된 입력값입니다."),
+	
+	/* ------------------ 429 TOO_MANY_REQUESTS : 요청 제한 초과 ------------------ */
+	RATE_LIMITED(TOO_MANY_REQUESTS, "너무 많은 요청입니다. 잠시 후 다시 시도해주세요."),
 
 	/* ------------------ 500 INTERNAL_SERVER_ERROR : 서버 오류 ------------------ */
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
 	UNSUPPORTED_CLOVER_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "지원하지 않는 클로버 미션 타입입니다."),
 	S3_CONNECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 연결에 실패했습니다."),
-	PRESIGNED_URL_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "업로드 URL 생성에 실패했습니다.");
+	PRESIGNED_URL_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "업로드 URL 생성에 실패했습니다."),
+	
+	/* ------------------ 502 BAD_GATEWAY : 외부 서비스 오류 ------------------ */
+	EXTERNAL_API_ERROR(BAD_GATEWAY, "외부 API 호출에 실패했습니다."),
+	
+	/* ------------------ 504 GATEWAY_TIMEOUT : 타임아웃 ------------------ */
+	EXTERNAL_API_TIMEOUT(GATEWAY_TIMEOUT, "외부 API 호출 시간이 초과되었습니다."),
+	
+	/* ------------------ Places 도메인 관련 에러 ------------------ */
+	INVALID_VALUE(BAD_REQUEST, "잘못된 값입니다."),
+	PLACE_NOT_FOUND(NOT_FOUND, "장소를 찾을 수 없습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String detail;

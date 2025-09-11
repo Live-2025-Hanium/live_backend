@@ -3,6 +3,8 @@ package com.example.live_backend.domain.places.service;
 import com.example.live_backend.domain.places.dto.*;
 import com.example.live_backend.domain.places.dto.request.NearbyRequest;
 import com.example.live_backend.domain.places.dto.request.SearchRequest;
+import com.example.live_backend.domain.places.exception.PlaceException;
+import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.infra.kakao.feign.KakaoLocalFeign;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoCategoryResponse;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
@@ -61,8 +63,8 @@ public class PlaceService {
             
             return convertToPlaceSearchResult(response, request.getPage(), request.getSize());
         } catch (Exception e) {
-            log.error("Failed to search places by keyword", e);
-            throw new RuntimeException("장소 검색에 실패했습니다", e);
+            log.error("Failed to search places by keyword: {}", request.getQuery(), e);
+            throw PlaceException.searchFailed(request.getQuery());
         }
     }
     
@@ -74,7 +76,7 @@ public class PlaceService {
         
         String kakaoCategory = CATEGORY_MAPPING.get(request.getCategory());
         if (kakaoCategory == null) {
-            throw new IllegalArgumentException("지원하지 않는 카테고리입니다: " + request.getCategory());
+            throw PlaceException.invalidCategory(request.getCategory());
         }
         
         try {
@@ -93,9 +95,11 @@ public class PlaceService {
             }
             
             return convertToPlaceSearchResult(response, request.getPage(), request.getSize(), request.getCategory());
+        } catch (PlaceException e) {
+            throw e;  // PlaceException은 그대로 전파
         } catch (Exception e) {
-            log.error("Failed to search places by category", e);
-            throw new RuntimeException("주변 장소 검색에 실패했습니다", e);
+            log.error("Failed to search places by category: {}", request.getCategory(), e);
+            throw PlaceException.kakaoApiError("카테고리 검색 실패");
         }
     }
     
@@ -105,7 +109,7 @@ public class PlaceService {
         
         // placeId 형식: "kakao:123456789"
         if (!placeId.startsWith("kakao:")) {
-            throw new IllegalArgumentException("잘못된 장소 ID 형식입니다");
+            throw PlaceException.invalidPlaceId(placeId);
         }
         
         String kakaoId = placeId.substring(6);
@@ -124,13 +128,15 @@ public class PlaceService {
             );
             
             if (response.getDocuments().isEmpty()) {
-                throw new RuntimeException("장소를 찾을 수 없습니다");
+                throw PlaceException.placeNotFound(placeId);
             }
             
             return convertToPlaceDetail(response.getDocuments().get(0));
+        } catch (PlaceException e) {
+            throw e;  // PlaceException은 그대로 전파
         } catch (Exception e) {
-            log.error("Failed to get place detail", e);
-            throw new RuntimeException("장소 상세 정보 조회에 실패했습니다", e);
+            log.error("Failed to get place detail for: {}", placeId, e);
+            throw PlaceException.kakaoApiError("장소 상세 조회 실패");
         }
     }
     

@@ -1,6 +1,9 @@
 package com.example.live_backend.domain.places.interceptor;
 
 import com.example.live_backend.domain.places.config.RateLimitConfig;
+import com.example.live_backend.global.error.exception.ErrorCode;
+import com.example.live_backend.global.error.response.ResponseHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class RateLimitInterceptor implements HandlerInterceptor {
     
     private final RateLimitConfig rateLimitConfig;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -51,10 +55,9 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             
-            String errorMessage = String.format(
-                "{\"success\":false,\"data\":null,\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"너무 많은 요청입니다. %d초 후에 다시 시도해주세요.\"}}",
-                waitForRefill
-            );
+            // 공통 응답 객체 사용
+            ResponseHandler<?> errorResponse = ResponseHandler.error(ErrorCode.RATE_LIMITED);
+            String errorMessage = objectMapper.writeValueAsString(errorResponse);
             response.getWriter().write(errorMessage);
             
             log.warn("Rate limit exceeded for key: {}", key);
