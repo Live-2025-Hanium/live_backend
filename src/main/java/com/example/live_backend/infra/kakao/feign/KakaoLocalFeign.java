@@ -1,7 +1,7 @@
-package com.example.live_backend.domain.places.infra.feign;
+package com.example.live_backend.infra.kakao.feign;
 
-import com.example.live_backend.domain.places.infra.feign.dto.KakaoCategoryResponse;
-import com.example.live_backend.domain.places.infra.feign.dto.KakaoKeywordResponse;
+import com.example.live_backend.infra.kakao.feign.dto.KakaoCategoryResponse;
+import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;

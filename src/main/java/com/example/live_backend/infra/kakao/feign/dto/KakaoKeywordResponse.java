@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.places.infra.feign.dto;
+package com.example.live_backend.infra.kakao.feign.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

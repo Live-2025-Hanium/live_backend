@@ -1,4 +1,4 @@
-package com.example.live_backend.domain.places.infra.feign;
+package com.example.live_backend.infra.kakao.feign;
 
 import feign.Logger;
 import feign.Request;
