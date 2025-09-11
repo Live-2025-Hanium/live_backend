@@ -6,6 +6,8 @@ import com.example.live_backend.domain.places.dto.request.SearchRequest;
 import com.example.live_backend.infra.kakao.feign.KakaoLocalFeign;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoCategoryResponse;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -41,6 +43,8 @@ public class PlaceService {
     }};
     
     @Cacheable(value = "placeSearch", key = "#request.query + '_' + T(Math).round(#request.lat * 1000) + '_' + T(Math).round(#request.lng * 1000) + '_' + #request.radius + '_' + #request.page + '_' + #request.size")
+    @CircuitBreaker(name = "kakaoLocal", fallbackMethod = "searchByKeywordFallback")
+    @Retry(name = "kakaoLocal")
     public PlaceSearchResult searchByKeyword(SearchRequest request) {
         log.info("Searching places by keyword: {}", request.getQuery());
         
@@ -63,6 +67,8 @@ public class PlaceService {
     }
     
     @Cacheable(value = "placeNearby", key = "#request.category + '_' + T(Math).round(#request.lat * 1000) + '_' + T(Math).round(#request.lng * 1000) + '_' + #request.radius + '_' + #request.page + '_' + #request.size")
+    @CircuitBreaker(name = "kakaoLocal", fallbackMethod = "searchByCategoryFallback")
+    @Retry(name = "kakaoLocal")
     public PlaceSearchResult searchByCategory(NearbyRequest request) {
         log.info("Searching places by category: {}", request.getCategory());
         
@@ -238,5 +244,30 @@ public class PlaceService {
             .collect(Collectors.toList());
         
         return new KakaoCategoryResponse(filtered, response.getMeta());
+    }
+    
+    // Circuit Breaker Fallback 메서드들
+    public PlaceSearchResult searchByKeywordFallback(SearchRequest request, Exception ex) {
+        log.error("Circuit breaker opened for searchByKeyword. Returning empty result", ex);
+        return PlaceSearchResult.builder()
+            .items(new ArrayList<>())
+            .page(PlaceSearchResult.PlacePage.builder()
+                .number(request.getPage())
+                .size(request.getSize())
+                .hasNext(false)
+                .build())
+            .build();
+    }
+    
+    public PlaceSearchResult searchByCategoryFallback(NearbyRequest request, Exception ex) {
+        log.error("Circuit breaker opened for searchByCategory. Returning empty result", ex);
+        return PlaceSearchResult.builder()
+            .items(new ArrayList<>())
+            .page(PlaceSearchResult.PlacePage.builder()
+                .number(request.getPage())
+                .size(request.getSize())
+                .hasNext(false)
+                .build())
+            .build();
     }
 }
