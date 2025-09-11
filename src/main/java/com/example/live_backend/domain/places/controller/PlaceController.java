@@ -1,5 +1,6 @@
 package com.example.live_backend.domain.places.controller;
 
+import com.example.live_backend.domain.places.docs.PlacesApiDocs;
 import com.example.live_backend.domain.places.dto.ActiveMissionPlace;
 import com.example.live_backend.domain.places.dto.PlaceDetail;
 import com.example.live_backend.domain.places.dto.PlaceSearchResult;
@@ -11,7 +12,6 @@ import com.example.live_backend.global.error.response.ResponseHandler;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,14 +21,13 @@ import java.util.Optional;
 
 @Slf4j
 @RestController
-@RequestMapping("/v1/places")
 @RequiredArgsConstructor
-public class PlaceController {
+public class PlaceController implements PlacesApiDocs {
     
     private final PlaceService placeService;
     private final PlaceMissionService placeMissionService;
     
-    @GetMapping("/search")
+    @Override
     public ResponseEntity<ResponseHandler<PlaceSearchResult>> searchByKeyword(
             @Valid @ModelAttribute SearchRequest request) {
         log.info("Search places by keyword: {}", request.getQuery());
@@ -36,7 +35,7 @@ public class PlaceController {
         return ResponseEntity.ok(ResponseHandler.success(result));
     }
     
-    @GetMapping("/nearby")
+    @Override
     public ResponseEntity<ResponseHandler<PlaceSearchResult>> searchByCategory(
             @Valid @ModelAttribute NearbyRequest request) {
         log.info("Search nearby places by category: {}", request.getCategory());
@@ -44,7 +43,7 @@ public class PlaceController {
         return ResponseEntity.ok(ResponseHandler.success(result));
     }
     
-    @GetMapping("/{placeId}")
+    @Override
     public ResponseEntity<ResponseHandler<PlaceDetail>> getPlaceDetail(
             @PathVariable String placeId) {
         log.info("Get place detail for: {}", placeId);
@@ -52,7 +51,7 @@ public class PlaceController {
         return ResponseEntity.ok(ResponseHandler.success(detail));
     }
     
-    @GetMapping("/me/missions/active")
+    @Override
     public ResponseEntity<?> getActiveMissionPlace(
             @AuthenticationPrincipal UserDetails userDetails) {
         log.info("Get active mission place for user: {}", userDetails.getUsername());
