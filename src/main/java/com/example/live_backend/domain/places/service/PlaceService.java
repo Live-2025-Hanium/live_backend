@@ -145,16 +145,7 @@ public class PlaceService {
             .map(this::convertToPlaceItem)
             .collect(Collectors.toList());
         
-        PlaceSearchResult.PlacePage pageInfo = PlaceSearchResult.PlacePage.builder()
-            .number(page)
-            .size(size)
-            .hasNext(!response.getMeta().isEnd())
-            .build();
-        
-        return PlaceSearchResult.builder()
-            .items(items)
-            .page(pageInfo)
-            .build();
+        return PlaceSearchResult.simple(items, page, size, !response.getMeta().isEnd());
     }
     
     private PlaceSearchResult convertToPlaceSearchResult(KakaoCategoryResponse response, int page, int size, String categoryCode) {
@@ -162,16 +153,7 @@ public class PlaceService {
             .map(doc -> convertToPlaceItem(doc, categoryCode))
             .collect(Collectors.toList());
         
-        PlaceSearchResult.PlacePage pageInfo = PlaceSearchResult.PlacePage.builder()
-            .number(page)
-            .size(size)
-            .hasNext(!response.getMeta().isEnd())
-            .build();
-        
-        return PlaceSearchResult.builder()
-            .items(items)
-            .page(pageInfo)
-            .build();
+        return PlaceSearchResult.simple(items, page, size, !response.getMeta().isEnd());
     }
     
     private PlaceItem convertToPlaceItem(KakaoKeywordResponse.KakaoPlace kakaoPlace) {
@@ -255,25 +237,11 @@ public class PlaceService {
     // Circuit Breaker Fallback 메서드들
     public PlaceSearchResult searchByKeywordFallback(SearchRequest request, Exception ex) {
         log.error("Circuit breaker opened for searchByKeyword. Returning empty result", ex);
-        return PlaceSearchResult.builder()
-            .items(new ArrayList<>())
-            .page(PlaceSearchResult.PlacePage.builder()
-                .number(request.getPage())
-                .size(request.getSize())
-                .hasNext(false)
-                .build())
-            .build();
+        return PlaceSearchResult.simple(new ArrayList<>(), request.getPage(), request.getSize(), false);
     }
     
     public PlaceSearchResult searchByCategoryFallback(NearbyRequest request, Exception ex) {
         log.error("Circuit breaker opened for searchByCategory. Returning empty result", ex);
-        return PlaceSearchResult.builder()
-            .items(new ArrayList<>())
-            .page(PlaceSearchResult.PlacePage.builder()
-                .number(request.getPage())
-                .size(request.getSize())
-                .hasNext(false)
-                .build())
-            .build();
+        return PlaceSearchResult.simple(new ArrayList<>(), request.getPage(), request.getSize(), false);
     }
 }

@@ -1,41 +1,40 @@
 package com.example.live_backend.domain.places.dto;
 
 import com.example.live_backend.global.page.PageTemplate;
+import com.example.live_backend.global.page.Pagination;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-import java.util.List;
-
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Schema(description = "장소 검색 결과")
-public class PlaceSearchResult {
+public class PlaceSearchResult extends PageTemplate<PlaceItem> {
     
-    @Schema(description = "검색된 장소 목록")
-    private List<PlaceItem> items;
+    public PlaceSearchResult(long totalElements, int totalPages, int currentPage, 
+                            int pageSize, boolean hasNext, java.util.List<PlaceItem> content) {
+        super(totalElements, totalPages, currentPage, pageSize, hasNext, content);
+    }
     
-    @Schema(description = "페이지 정보")
-    private PlacePage page;
+    public static PlaceSearchResult of(java.util.List<PlaceItem> content, Pagination pagination) {
+        return new PlaceSearchResult(
+            pagination.getTotalElements(),
+            pagination.getTotalPages(),
+            pagination.getCurrentPage(),
+            pagination.getPageSize(),
+            pagination.hasNext(),
+            content
+        );
+    }
     
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    @Schema(description = "페이지 정보")
-    public static class PlacePage {
+    public static PlaceSearchResult simple(java.util.List<PlaceItem> items, int page, int size, boolean hasNext) {
+        // 카카오 API는 전체 개수를 제공하지 않으므로 간단한 페이지 정보만 제공
+        long estimatedTotal = hasNext ? (long) (page + 1) * size + 1 : (long) page * size;
+        int totalPages = hasNext ? page + 1 : page;
         
-        @Schema(description = "현재 페이지 번호", example = "1")
-        private int number;
-        
-        @Schema(description = "페이지 크기", example = "15")
-        private int size;
-        
-        @Schema(description = "다음 페이지 존재 여부", example = "true")
-        private boolean hasNext;
+        return new PlaceSearchResult(
+            estimatedTotal,
+            totalPages,
+            page,
+            size,
+            hasNext,
+            items
+        );
     }
 }
