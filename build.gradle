@@ -73,6 +73,21 @@ dependencies {
 	// AI
 	implementation 'org.springframework.ai:spring-ai-starter-vector-store-qdrant'
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+
+	// OpenFeign for external API calls
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.1.0'
+
+	// Cache
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+
+	// Rate Limiting
+	implementation 'com.bucket4j:bucket4j-core:8.7.0'
+
+	// Resilience4j
+	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+	implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.2.0'
+	implementation 'io.github.resilience4j:resilience4j-retry:2.2.0'
 }
 
 tasks.named('test') {
