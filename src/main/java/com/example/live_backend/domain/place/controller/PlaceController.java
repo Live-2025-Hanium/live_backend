@@ -1,0 +1,74 @@
+package com.example.live_backend.domain.place.controller;
+
+import com.example.live_backend.domain.place.controller.docs.PlacesApiDocs;
+import com.example.live_backend.domain.place.dto.ActiveMissionPlace;
+import com.example.live_backend.domain.place.dto.PlaceDetail;
+import com.example.live_backend.domain.place.dto.PlaceSearchResult;
+import com.example.live_backend.domain.place.dto.request.NearbyRequest;
+import com.example.live_backend.domain.place.dto.request.SearchRequest;
+import com.example.live_backend.domain.place.service.PlaceMissionService;
+import com.example.live_backend.domain.place.service.PlaceService;
+import com.example.live_backend.global.error.response.ResponseHandler;
+import com.example.live_backend.global.security.annotation.AuthenticatedApi;
+import com.example.live_backend.global.security.annotation.PublicApi;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+
+@Slf4j
+@RestController
+@RequiredArgsConstructor
+public class PlaceController implements PlacesApiDocs {
+    
+    private final PlaceService placeService;
+    private final PlaceMissionService placeMissionService;
+    
+    @Override
+    @PublicApi(reason = "장소 검색은 로그인 없이 가능합니다")
+    public ResponseEntity<ResponseHandler<PlaceSearchResult>> searchByKeyword(
+            @Valid @ModelAttribute SearchRequest request) {
+        log.info("Search places by keyword: {}", request.getQuery());
+        PlaceSearchResult result = placeService.searchByKeyword(request);
+        return ResponseEntity.ok(ResponseHandler.success(result));
+    }
+    
+    @Override
+    @PublicApi(reason = "주변 장소 검색은 로그인 없이 가능합니다")
+    public ResponseEntity<ResponseHandler<PlaceSearchResult>> searchByCategory(
+            @Valid @ModelAttribute NearbyRequest request) {
+        log.info("Search nearby places by category: {}", request.getCategory());
+        PlaceSearchResult result = placeService.searchByCategory(request);
+        return ResponseEntity.ok(ResponseHandler.success(result));
+    }
+    
+    @Override
+    @PublicApi(reason = "장소 상세 조회는 로그인 없이 가능합니다")
+    public ResponseEntity<ResponseHandler<PlaceDetail>> getPlaceDetail(
+            @PathVariable String placeId) {
+        log.info("Get place detail for: {}", placeId);
+        PlaceDetail detail = placeService.getPlaceDetail(placeId);
+        return ResponseEntity.ok(ResponseHandler.success(detail));
+    }
+    
+    @Override
+    @AuthenticatedApi(reason = "활성 미션 조회는 로그인한 사용자만 가능합니다")
+    public ResponseEntity<?> getActiveMissionPlace(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        log.info("Get active mission place for user: {}", userDetails.getUsername());
+        
+        Optional<ActiveMissionPlace> activeMission = placeMissionService
+            .getActiveMissionPlace(userDetails.getUsername());
+        
+        if (activeMission.isPresent()) {
+            return ResponseEntity.ok(ResponseHandler.success(activeMission.get()));
+        } else {
+            return ResponseEntity.noContent().build();
+        }
+    }
+}
