@@ -3,9 +3,12 @@ package com.example.live_backend.domain.place.controller;
 import com.example.live_backend.domain.place.controller.docs.PlacesApiDocs;
 import com.example.live_backend.domain.place.dto.ActiveMissionPlace;
 import com.example.live_backend.domain.place.dto.PlaceDetail;
-import com.example.live_backend.domain.place.dto.PlaceSearchResult;
+import com.example.live_backend.domain.place.dto.PlaceItem;
+import com.example.live_backend.domain.place.dto.SuggestResponse;
 import com.example.live_backend.domain.place.dto.request.NearbyRequest;
 import com.example.live_backend.domain.place.dto.request.SearchRequest;
+import com.example.live_backend.domain.place.dto.request.SuggestRequest;
+import com.example.live_backend.global.page.PageTemplate;
 import com.example.live_backend.domain.place.service.PlaceMissionService;
 import com.example.live_backend.domain.place.service.PlaceService;
 import com.example.live_backend.global.error.response.ResponseHandler;
@@ -30,45 +33,46 @@ public class PlaceController implements PlacesApiDocs {
     private final PlaceMissionService placeMissionService;
     
     @Override
+    @PublicApi(reason = "자동완성 제안은 로그인 없이 가능합니다")
+    public ResponseHandler<SuggestResponse> suggest(
+            @Valid @ModelAttribute SuggestRequest request) {
+        SuggestResponse response = placeService.suggest(request);
+        return ResponseHandler.success(response);
+    }
+    
+    @Override
     @PublicApi(reason = "장소 검색은 로그인 없이 가능합니다")
-    public ResponseEntity<ResponseHandler<PlaceSearchResult>> searchByKeyword(
+    public ResponseHandler<PageTemplate<PlaceItem>> searchByKeyword(
             @Valid @ModelAttribute SearchRequest request) {
-        log.info("Search places by keyword: {}", request.getQuery());
-        PlaceSearchResult result = placeService.searchByKeyword(request);
-        return ResponseEntity.ok(ResponseHandler.success(result));
+        PageTemplate<PlaceItem> result = placeService.searchByKeyword(request);
+        return ResponseHandler.success(result);
     }
     
     @Override
     @PublicApi(reason = "주변 장소 검색은 로그인 없이 가능합니다")
-    public ResponseEntity<ResponseHandler<PlaceSearchResult>> searchByCategory(
+    public ResponseHandler<PageTemplate<PlaceItem>> searchByCategory(
             @Valid @ModelAttribute NearbyRequest request) {
-        log.info("Search nearby places by category: {}", request.getCategory());
-        PlaceSearchResult result = placeService.searchByCategory(request);
-        return ResponseEntity.ok(ResponseHandler.success(result));
+        PageTemplate<PlaceItem> result = placeService.searchByCategory(request);
+        return ResponseHandler.success(result);
     }
     
     @Override
-    @PublicApi(reason = "장소 상세 조회는 로그인 없이 가능합니다")
-    public ResponseEntity<ResponseHandler<PlaceDetail>> getPlaceDetail(
+    @PublicApi(reason = "장소 상세"
+		+ " 조회는 로그인 없이 가능합니다")
+    public ResponseHandler<PlaceDetail> getPlaceDetail(
             @PathVariable String placeId) {
-        log.info("Get place detail for: {}", placeId);
         PlaceDetail detail = placeService.getPlaceDetail(placeId);
-        return ResponseEntity.ok(ResponseHandler.success(detail));
+        return ResponseHandler.success(detail);
     }
     
     @Override
     @AuthenticatedApi(reason = "활성 미션 조회는 로그인한 사용자만 가능합니다")
-    public ResponseEntity<?> getActiveMissionPlace(
+    public ResponseHandler<ActiveMissionPlace> getActiveMissionPlace(
             @AuthenticationPrincipal UserDetails userDetails) {
-        log.info("Get active mission place for user: {}", userDetails.getUsername());
         
         Optional<ActiveMissionPlace> activeMission = placeMissionService
             .getActiveMissionPlace(userDetails.getUsername());
         
-        if (activeMission.isPresent()) {
-            return ResponseEntity.ok(ResponseHandler.success(activeMission.get()));
-        } else {
-            return ResponseEntity.noContent().build();
-        }
+        return ResponseHandler.success(activeMission.orElse(null));
     }
 }

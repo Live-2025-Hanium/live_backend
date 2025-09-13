@@ -3,7 +3,9 @@ package com.example.live_backend.domain.place.service;
 import com.example.live_backend.domain.place.dto.*;
 import com.example.live_backend.domain.place.dto.request.NearbyRequest;
 import com.example.live_backend.domain.place.dto.request.SearchRequest;
+import com.example.live_backend.domain.place.dto.request.SuggestRequest;
 import com.example.live_backend.domain.place.exception.PlaceException;
+import com.example.live_backend.global.page.PageTemplate;
 import com.example.live_backend.infra.kakao.feign.KakaoLocalFeign;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoCategoryResponse;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
@@ -18,7 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -27,15 +28,13 @@ public class PlaceService {
     
     private final KakaoLocalFeign kakaoLocalFeign;
     
-    // 카테고리 매핑 (내부 코드 -> 카카오 카테고리 그룹 코드)
     private static final Map<String, String> CATEGORY_MAPPING = new HashMap<>() {{
-        put("LEI", "AT4");  // 관광명소
-        put("PSY", "HP8");  // 병원
-        put("WEL", "HP8");  // 병원 (복지시설도 병원 카테고리 사용)
-        put("CSC", "PO3");  // 공공기관
+        put("LEI", "AT4");
+        put("PSY", "HP8");
+        put("WEL", "HP8");
+        put("CSC", "PO3");
     }};
     
-    // 카테고리 라벨
     private static final Map<String, String> CATEGORY_LABELS = new HashMap<>() {{
         put("LEI", "여가시설");
         put("PSY", "정신건강의학과");
@@ -46,7 +45,7 @@ public class PlaceService {
     @Cacheable(value = "placeSearch", key = "#request.query + '_' + T(Math).round(#request.lat * 1000) + '_' + T(Math).round(#request.lng * 1000) + '_' + #request.radius + '_' + #request.page + '_' + #request.size")
     @CircuitBreaker(name = "kakaoLocal", fallbackMethod = "searchByKeywordFallback")
     @Retry(name = "kakaoLocal")
-    public PlaceSearchResult searchByKeyword(SearchRequest request) {
+    public PageTemplate<PlaceItem> searchByKeyword(SearchRequest request) {
         log.info("Searching places by keyword: {}", request.getQuery());
         
         try {
@@ -62,16 +61,100 @@ public class PlaceService {
             
             return convertToPlaceSearchResult(response, request.getPage(), request.getSize());
         } catch (Exception e) {
-            log.error("Failed to search places by keyword: {}", request.getQuery(), e);
             throw PlaceException.searchFailed(request.getQuery());
         }
+    }
+    
+    @Cacheable(value = "suggest", key = "#request.query.toLowerCase() + '_' + (#request.lat != null ? T(Math).round(#request.lat * 1000) : 0) + '_' + (#request.lng != null ? T(Math).round(#request.lng * 1000) : 0) + '_' + #request.limit + '_' + (#request.category != null ? #request.category : '')")
+    @CircuitBreaker(name = "kakaoLocal", fallbackMethod = "suggestFallback")
+    @Retry(name = "kakaoLocal")
+    public SuggestResponse suggest(SuggestRequest request) {
+        long startTime = System.currentTimeMillis();
+        log.info("Getting suggestions for: {}", request.getQuery());
+        
+        try {
+
+            String query = request.getQuery().trim();
+            Double lng = request.hasLocation() ? request.getLng() : 126.9780;
+            Double lat = request.hasLocation() ? request.getLat() : 37.5665;
+            int radius = request.hasLocation() ? 5000 : 20000;
+
+            KakaoKeywordResponse response = kakaoLocalFeign.searchByKeyword(
+                query,
+                lng,
+                lat,
+                radius,
+                1,
+                request.getLimit() * 2,
+                request.hasLocation() ? "distance" : "accuracy"
+            );
+            
+            // 결과를 SuggestItem으로 변환 및 필터링
+            List<SuggestItem> suggestions = response.getDocuments().stream()
+                .filter(place -> isMatchingQuery(place, query))
+                .filter(place -> !request.hasCategory() || isMatchingCategory(place, request.getCategory()))
+                .limit(request.getLimit())
+                .map(place -> {
+                    Integer distance = null;
+                    if (request.hasLocation()) {
+                        distance = calculateDistance(
+                            request.getLat(), request.getLng(),
+                            Double.parseDouble(place.getY()), Double.parseDouble(place.getX())
+                        );
+                    }
+                    return SuggestItem.from(convertToPlaceItem(place), query, distance);
+                })
+                .toList();
+            
+            return SuggestResponse.of(query, suggestions, request.hasLocation(), startTime);
+            
+        } catch (Exception e) {
+            log.error("Failed to get suggestions for: {}", request.getQuery(), e);
+            return SuggestResponse.empty(request.getQuery());
+        }
+    }
+
+    private boolean isMatchingQuery(KakaoKeywordResponse.KakaoPlace place, String query) {
+        String lowerQuery = query.toLowerCase();
+        String placeName = place.getPlaceName().toLowerCase();
+        String addressName = place.getAddressName() != null ? place.getAddressName().toLowerCase() : "";
+        String roadAddress = place.getRoadAddressName() != null ? place.getRoadAddressName().toLowerCase() : "";
+        
+        return placeName.startsWith(lowerQuery) || placeName.contains(lowerQuery) ||
+               addressName.contains(lowerQuery) || roadAddress.contains(lowerQuery);
+    }
+    
+
+    private boolean isMatchingCategory(KakaoKeywordResponse.KakaoPlace place, String categoryFilter) {
+        String kakaoCategory = CATEGORY_MAPPING.get(categoryFilter);
+        if (kakaoCategory == null) return true;
+        
+        if ("PSY".equals(categoryFilter)) {
+            return place.getCategoryName() != null && 
+                   (place.getCategoryName().contains("정신") || 
+                    place.getCategoryName().contains("신경정신"));
+        }
+        
+        return kakaoCategory.equals(place.getCategoryGroupCode());
+    }
+    
+    private Integer calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371000;
+        
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        
+        return (int) Math.round(R * c);
     }
     
     @Cacheable(value = "placeNearby", key = "#request.category + '_' + T(Math).round(#request.lat * 1000) + '_' + T(Math).round(#request.lng * 1000) + '_' + #request.radius + '_' + #request.page + '_' + #request.size")
     @CircuitBreaker(name = "kakaoLocal", fallbackMethod = "searchByCategoryFallback")
     @Retry(name = "kakaoLocal")
-    public PlaceSearchResult searchByCategory(NearbyRequest request) {
-        log.info("Searching places by category: {}", request.getCategory());
+    public PageTemplate<PlaceItem> searchByCategory(NearbyRequest request) {
         
         String kakaoCategory = CATEGORY_MAPPING.get(request.getCategory());
         if (kakaoCategory == null) {
@@ -88,39 +171,33 @@ public class PlaceService {
                 request.getSize()
             );
             
-            // 카테고리별 필터링 (PSY의 경우 정신과만)
             if ("PSY".equals(request.getCategory())) {
                 response = filterPsychiatryOnly(response);
             }
             
             return convertToPlaceSearchResult(response, request.getPage(), request.getSize(), request.getCategory());
         } catch (PlaceException e) {
-            throw e;  // PlaceException은 그대로 전파
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to search places by category: {}", request.getCategory(), e);
             throw PlaceException.kakaoApiError("카테고리 검색 실패");
         }
     }
     
     @Cacheable(value = "placeDetail", key = "#placeId")
     public PlaceDetail getPlaceDetail(String placeId) {
-        log.info("Getting place detail for: {}", placeId);
         
-        // placeId 형식: "kakao:123456789"
         if (!placeId.startsWith("kakao:")) {
             throw PlaceException.invalidPlaceId(placeId);
         }
         
         String kakaoId = placeId.substring(6);
         
-        // 카카오 API는 상세 조회를 별도로 제공하지 않으므로,
-        // ID로 검색하여 첫 번째 결과를 반환
         try {
             KakaoKeywordResponse response = kakaoLocalFeign.searchByKeyword(
                 kakaoId,
-                127.0,  // 기본 좌표 (전국 검색)
+                127.0,
                 37.5,
-                20000,  // 최대 범위
+                20000,
                 1,
                 1,
                 null
@@ -132,27 +209,26 @@ public class PlaceService {
             
             return convertToPlaceDetail(response.getDocuments().get(0));
         } catch (PlaceException e) {
-            throw e;  // PlaceException은 그대로 전파
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to get place detail for: {}", placeId, e);
             throw PlaceException.kakaoApiError("장소 상세 조회 실패");
         }
     }
     
-    private PlaceSearchResult convertToPlaceSearchResult(KakaoKeywordResponse response, int page, int size) {
+    private PageTemplate<PlaceItem> convertToPlaceSearchResult(KakaoKeywordResponse response, int page, int size) {
         List<PlaceItem> items = response.getDocuments().stream()
             .map(this::convertToPlaceItem)
-            .collect(Collectors.toList());
+			.toList();
         
-        return PlaceSearchResult.simple(items, page, size, !response.getMeta().isEnd());
+        return createSimplePageTemplate(items, page, size, !response.getMeta().isEnd());
     }
     
-    private PlaceSearchResult convertToPlaceSearchResult(KakaoCategoryResponse response, int page, int size, String categoryCode) {
+    private PageTemplate<PlaceItem> convertToPlaceSearchResult(KakaoCategoryResponse response, int page, int size, String categoryCode) {
         List<PlaceItem> items = response.getDocuments().stream()
             .map(doc -> convertToPlaceItem(doc, categoryCode))
-            .collect(Collectors.toList());
+            .toList();
         
-        return PlaceSearchResult.simple(items, page, size, !response.getMeta().isEnd());
+        return createSimplePageTemplate(items, page, size, !response.getMeta().isEnd());
     }
     
     private PlaceItem convertToPlaceItem(KakaoKeywordResponse.KakaoPlace kakaoPlace) {
@@ -216,9 +292,9 @@ public class PlaceService {
                 .lng(Double.parseDouble(kakaoPlace.getX()))
                 .build())
             .phone(kakaoPlace.getPhone())
-            .hours(new ArrayList<>())  // 카카오 API에서 제공하지 않음
-            .intro(null)  // 추후 DB에서 보정 데이터 조회
-            .photos(new ArrayList<>())  // 추후 DB에서 보정 데이터 조회
+            .hours(new ArrayList<>())
+            .intro(null)
+            .photos(new ArrayList<>())
             .source("kakao")
             .build();
     }
@@ -230,5 +306,24 @@ public class PlaceService {
                             place.getCategoryName().contains("신경정신")))
             .toList();
         return new KakaoCategoryResponse(filtered, response.getMeta());
+    }
+
+    
+    private PageTemplate<PlaceItem> createSimplePageTemplate(List<PlaceItem> items, int page, int size, boolean hasNext) {
+        long estimatedTotal = hasNext ? (long) (page + 1) * size + 1 : (long) page * size;
+        int totalPages = hasNext ? page + 1 : page;
+        
+        return new PageTemplate<>(
+            estimatedTotal,
+            totalPages,
+            page,
+            size,
+            hasNext,
+            items != null ? items : List.of()
+        );
+    }
+    
+    public SuggestResponse suggestFallback(SuggestRequest request, Exception ex) {
+        return SuggestResponse.empty(request.getQuery());
     }
 }

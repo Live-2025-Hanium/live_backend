@@ -2,9 +2,12 @@ package com.example.live_backend.domain.place.controller.docs;
 
 import com.example.live_backend.domain.place.dto.ActiveMissionPlace;
 import com.example.live_backend.domain.place.dto.PlaceDetail;
-import com.example.live_backend.domain.place.dto.PlaceSearchResult;
+import com.example.live_backend.domain.place.dto.PlaceItem;
+import com.example.live_backend.domain.place.dto.SuggestResponse;
 import com.example.live_backend.domain.place.dto.request.NearbyRequest;
 import com.example.live_backend.domain.place.dto.request.SearchRequest;
+import com.example.live_backend.domain.place.dto.request.SuggestRequest;
+import com.example.live_backend.global.page.PageTemplate;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,6 +30,32 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public interface PlacesApiDocs {
     
     @Operation(
+        summary = "자동완성 제안",
+        description = "입력 중인 검색어에 대한 자동완성 제안을 반환합니다. 실제 검색이 아닌 입력 보조 기능입니다."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "제안 목록 반환 성공",
+            content = @Content(schema = @Schema(implementation = SuggestResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "잘못된 요청 파라미터",
+            content = @Content(schema = @Schema(implementation = ResponseHandler.class))
+        ),
+        @ApiResponse(
+            responseCode = "429",
+            description = "레이트 리밋 초과",
+            content = @Content(schema = @Schema(implementation = ResponseHandler.class))
+        )
+    })
+    @GetMapping("/suggest")
+    ResponseHandler<SuggestResponse> suggest(
+        @Parameter(description = "자동완성 요청 파라미터") @Valid @ModelAttribute SuggestRequest request
+    );
+    
+    @Operation(
         summary = "키워드로 장소 검색",
         description = "카카오 Local API를 통해 키워드로 주변 장소를 검색합니다."
     )
@@ -34,7 +63,7 @@ public interface PlacesApiDocs {
         @ApiResponse(
             responseCode = "200",
             description = "검색 성공",
-            content = @Content(schema = @Schema(implementation = PlaceSearchResult.class))
+            content = @Content(schema = @Schema(implementation = PageTemplate.class))
         ),
         @ApiResponse(
             responseCode = "400",
@@ -53,7 +82,7 @@ public interface PlacesApiDocs {
         )
     })
     @GetMapping("/search")
-    ResponseEntity<ResponseHandler<PlaceSearchResult>> searchByKeyword(
+    ResponseHandler<PageTemplate<PlaceItem>> searchByKeyword(
         @Parameter(description = "검색 요청 파라미터") @Valid @ModelAttribute SearchRequest request
     );
     
@@ -65,7 +94,7 @@ public interface PlacesApiDocs {
         @ApiResponse(
             responseCode = "200",
             description = "검색 성공",
-            content = @Content(schema = @Schema(implementation = PlaceSearchResult.class))
+            content = @Content(schema = @Schema(implementation = PageTemplate.class))
         ),
         @ApiResponse(
             responseCode = "400",
@@ -84,7 +113,7 @@ public interface PlacesApiDocs {
         )
     })
     @GetMapping("/nearby")
-    ResponseEntity<ResponseHandler<PlaceSearchResult>> searchByCategory(
+    ResponseHandler<PageTemplate<PlaceItem>> searchByCategory(
         @Parameter(description = "카테고리 검색 요청 파라미터") @Valid @ModelAttribute NearbyRequest request
     );
     
@@ -115,7 +144,7 @@ public interface PlacesApiDocs {
         )
     })
     @GetMapping("/{placeId}")
-    ResponseEntity<ResponseHandler<PlaceDetail>> getPlaceDetail(
+    ResponseHandler<PlaceDetail> getPlaceDetail(
         @Parameter(description = "장소 ID (형식: kakao:123456789)", example = "kakao:123456789") 
         @PathVariable String placeId
     );
@@ -142,7 +171,7 @@ public interface PlacesApiDocs {
         )
     })
     @GetMapping("/me/missions/active")
-    ResponseEntity<?> getActiveMissionPlace(
+    ResponseHandler<ActiveMissionPlace> getActiveMissionPlace(
         @Parameter(hidden = true) UserDetails userDetails
     );
 }
