@@ -43,7 +43,11 @@ public class PlaceService {
         put("CSC", "상담센터");
     }};
     
-    @Cacheable(value = "placeSearch", key = "#request.query + '_' + T(Math).round(#request.lat * 1000) + '_' + T(Math).round(#request.lng * 1000) + '_' + #request.radius + '_' + #request.page + '_' + #request.size")
+    @Cacheable(
+        value = "placeSearch", 
+        key = "#request.query + '_' + (#request.lat != null ? T(Math).round(#request.lat * 100) : 0) + '_' + (#request.lng != null ? T(Math).round(#request.lng * 100) : 0) + '_' + #request.radius",
+        condition = "#request.page == 1"
+    )
     @Retryable(
         value = {Exception.class},
         maxAttempts = 2,
@@ -67,12 +71,16 @@ public class PlaceService {
             return convertToPlaceSearchResult(response, request.getPage(), request.getSize());
         } catch (Exception e) {
             log.warn("키워드 검색 실패 (재시도 {} 회 수행): {}", 2, request.getQuery(), e);
-            // 재시도 후에도 실패시 빈 결과 반환
+
             return createSimplePageTemplate(new ArrayList<>(), request.getPage(), request.getSize(), false);
         }
     }
     
-    @Cacheable(value = "suggest", key = "#request.query.toLowerCase() + '_' + (#request.lat != null ? T(Math).round(#request.lat * 1000) : 0) + '_' + (#request.lng != null ? T(Math).round(#request.lng * 1000) : 0) + '_' + #request.limit + '_' + (#request.category != null ? #request.category : '')")
+    @Cacheable(
+        value = "suggest", 
+        key = "#request.query.toLowerCase().substring(0, T(Math).min(#request.query.length(), 10)) + '_' + (#request.lat != null ? T(Math).round(#request.lat * 100) : 0) + '_' + (#request.lng != null ? T(Math).round(#request.lng * 100) : 0)",
+        condition = "#request.query.length() >= 2"  // 2글자 이상만 캐싱
+    )
     @Retryable(
         value = {Exception.class},
         maxAttempts = 1  // 자동완성은 빠른 응답이 중요하므로 재시도 없음
@@ -98,8 +106,7 @@ public class PlaceService {
                 request.getLimit() * 2,
                 request.hasLocation() ? "distance" : "accuracy"
             );
-            
-            // 결과를 SuggestItem으로 변환 및 필터링
+
             List<SuggestItem> suggestions = response.getDocuments().stream()
                 .filter(place -> isMatchingQuery(place, query))
                 .filter(place -> !request.hasCategory() || isMatchingCategory(place, request.getCategory()))
@@ -120,7 +127,7 @@ public class PlaceService {
             
         } catch (Exception e) {
             log.warn("자동완성 조회 실패: {}", request.getQuery(), e);
-            // 자동완성은 재시도 없이 즉시 빈 결과 반환
+
             return SuggestResponse.empty(request.getQuery());
         }
     }
@@ -162,7 +169,11 @@ public class PlaceService {
         return (int) Math.round(R * c);
     }
     
-    @Cacheable(value = "placeNearby", key = "#request.category + '_' + T(Math).round(#request.lat * 1000) + '_' + T(Math).round(#request.lng * 1000) + '_' + #request.radius + '_' + #request.page + '_' + #request.size")
+    @Cacheable(
+        value = "placeNearby", 
+        key = "#request.category + '_' + T(Math).round(#request.lat * 100) + '_' + T(Math).round(#request.lng * 100) + '_' + #request.radius",
+        condition = "#request.page == 1"  // 첫 페이지만 캐싱
+    )
     @Retryable(
         value = {Exception.class},
         exclude = {PlaceException.class},
@@ -237,7 +248,7 @@ public class PlaceService {
             throw e;
         } catch (Exception e) {
             log.warn("장소 상세 조회 실패 (재시도 {} 회 수행): {}", 2, placeId, e);
-            // 재시도 후에도 실패시 기본 정보 반환
+
             return PlaceDetail.builder()
                 .id(placeId)
                 .name("정보를 불러올 수 없습니다")

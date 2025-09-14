@@ -20,7 +20,7 @@ public class PlaceVisitMission extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "visit_mission_id", nullable = false)
     private VisitMission visitMission;
     

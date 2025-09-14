@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface PlaceVisitMissionRepository extends JpaRepository<PlaceVisitMission, Long> {
 
     @Query("SELECT pvm FROM PlaceVisitMission pvm " +
-           "JOIN pvm.visitMission vm " +
+           "JOIN FETCH pvm.visitMission vm " +
            "JOIN com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord cmr " +
            "ON cmr.missionId = vm.id " +
            "WHERE cmr.member.id = :memberId " +
