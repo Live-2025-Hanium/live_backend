@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class PlaceCacheConfig {
     
-    @Bean
-    public CacheManager cacheManager() {
+    @Bean(name = "placeCacheManager")
+    public CacheManager placeCacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
         
         // 기본 캐시 설정

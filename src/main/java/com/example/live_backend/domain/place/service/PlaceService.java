@@ -9,11 +9,12 @@ import com.example.live_backend.global.page.PageTemplate;
 import com.example.live_backend.infra.kakao.feign.KakaoLocalFeign;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoCategoryResponse;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -43,9 +44,13 @@ public class PlaceService {
     }};
     
     @Cacheable(value = "placeSearch", key = "#request.query + '_' + T(Math).round(#request.lat * 1000) + '_' + T(Math).round(#request.lng * 1000) + '_' + #request.radius + '_' + #request.page + '_' + #request.size")
-    @CircuitBreaker(name = "kakaoLocal", fallbackMethod = "searchByKeywordFallback")
-    @Retry(name = "kakaoLocal")
+    @Retryable(
+        value = {Exception.class},
+        maxAttempts = 2,
+        backoff = @Backoff(delay = 500, multiplier = 2)
+    )
     public PageTemplate<PlaceItem> searchByKeyword(SearchRequest request) {
+        log.info("키워드로 장소 검색 중: {}", request.getQuery());
         log.info("Searching places by keyword: {}", request.getQuery());
         
         try {
@@ -61,15 +66,20 @@ public class PlaceService {
             
             return convertToPlaceSearchResult(response, request.getPage(), request.getSize());
         } catch (Exception e) {
-            throw PlaceException.searchFailed(request.getQuery());
+            log.warn("키워드 검색 실패 (재시도 {} 회 수행): {}", 2, request.getQuery(), e);
+            // 재시도 후에도 실패시 빈 결과 반환
+            return createSimplePageTemplate(new ArrayList<>(), request.getPage(), request.getSize(), false);
         }
     }
     
     @Cacheable(value = "suggest", key = "#request.query.toLowerCase() + '_' + (#request.lat != null ? T(Math).round(#request.lat * 1000) : 0) + '_' + (#request.lng != null ? T(Math).round(#request.lng * 1000) : 0) + '_' + #request.limit + '_' + (#request.category != null ? #request.category : '')")
-    @CircuitBreaker(name = "kakaoLocal", fallbackMethod = "suggestFallback")
-    @Retry(name = "kakaoLocal")
+    @Retryable(
+        value = {Exception.class},
+        maxAttempts = 1  // 자동완성은 빠른 응답이 중요하므로 재시도 없음
+    )
     public SuggestResponse suggest(SuggestRequest request) {
         long startTime = System.currentTimeMillis();
+        log.debug("자동완성 제안 조회 중: {}", request.getQuery());
         log.info("Getting suggestions for: {}", request.getQuery());
         
         try {
@@ -109,7 +119,8 @@ public class PlaceService {
             return SuggestResponse.of(query, suggestions, request.hasLocation(), startTime);
             
         } catch (Exception e) {
-            log.error("Failed to get suggestions for: {}", request.getQuery(), e);
+            log.warn("자동완성 조회 실패: {}", request.getQuery(), e);
+            // 자동완성은 재시도 없이 즉시 빈 결과 반환
             return SuggestResponse.empty(request.getQuery());
         }
     }
@@ -152,9 +163,14 @@ public class PlaceService {
     }
     
     @Cacheable(value = "placeNearby", key = "#request.category + '_' + T(Math).round(#request.lat * 1000) + '_' + T(Math).round(#request.lng * 1000) + '_' + #request.radius + '_' + #request.page + '_' + #request.size")
-    @CircuitBreaker(name = "kakaoLocal", fallbackMethod = "searchByCategoryFallback")
-    @Retry(name = "kakaoLocal")
+    @Retryable(
+        value = {Exception.class},
+        exclude = {PlaceException.class},
+        maxAttempts = 2,
+        backoff = @Backoff(delay = 500, multiplier = 2)
+    )
     public PageTemplate<PlaceItem> searchByCategory(NearbyRequest request) {
+        log.info("카테고리로 주변 장소 검색 중: {}", request.getCategory());
         
         String kakaoCategory = CATEGORY_MAPPING.get(request.getCategory());
         if (kakaoCategory == null) {
@@ -179,12 +195,21 @@ public class PlaceService {
         } catch (PlaceException e) {
             throw e;
         } catch (Exception e) {
-            throw PlaceException.kakaoApiError("카테고리 검색 실패");
+            log.warn("카테고리 검색 실패 (재시도 {} 회 수행): {}", 2, request.getCategory(), e);
+            // 재시도 후에도 실패시 빈 결과 반환
+            return createSimplePageTemplate(new ArrayList<>(), request.getPage(), request.getSize(), false);
         }
     }
     
     @Cacheable(value = "placeDetail", key = "#placeId")
+    @Retryable(
+        value = {Exception.class},
+        exclude = {PlaceException.class},
+        maxAttempts = 2,
+        backoff = @Backoff(delay = 500)
+    )
     public PlaceDetail getPlaceDetail(String placeId) {
+        log.info("장소 상세 정보 조회 중: {}", placeId);
         
         if (!placeId.startsWith("kakao:")) {
             throw PlaceException.invalidPlaceId(placeId);
@@ -211,7 +236,12 @@ public class PlaceService {
         } catch (PlaceException e) {
             throw e;
         } catch (Exception e) {
-            throw PlaceException.kakaoApiError("장소 상세 조회 실패");
+            log.warn("장소 상세 조회 실패 (재시도 {} 회 수행): {}", 2, placeId, e);
+            // 재시도 후에도 실패시 기본 정보 반환
+            return PlaceDetail.builder()
+                .id(placeId)
+                .name("정보를 불러올 수 없습니다")
+                .build();
         }
     }
     
@@ -308,7 +338,7 @@ public class PlaceService {
         return new KakaoCategoryResponse(filtered, response.getMeta());
     }
 
-    
+
     private PageTemplate<PlaceItem> createSimplePageTemplate(List<PlaceItem> items, int page, int size, boolean hasNext) {
         long estimatedTotal = hasNext ? (long) (page + 1) * size + 1 : (long) page * size;
         int totalPages = hasNext ? page + 1 : page;
@@ -321,9 +351,5 @@ public class PlaceService {
             hasNext,
             items != null ? items : List.of()
         );
-    }
-    
-    public SuggestResponse suggestFallback(SuggestRequest request, Exception ex) {
-        return SuggestResponse.empty(request.getQuery());
     }
 }
