@@ -10,6 +10,7 @@ import com.example.live_backend.infra.kakao.feign.KakaoLocalFeign;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,18 @@ public class PlaceSuggestService {
     private final PlaceConverter placeConverter;
     private final PlaceDistanceCalculator distanceCalculator;
     
+    @Value("${place.default.longitude:126.9780}")
+    private Double defaultLongitude;
+    
+    @Value("${place.default.latitude:37.5665}")
+    private Double defaultLatitude;
+    
+    @Value("${place.default.radius.with-location:5000}")
+    private int radiusWithLocation;
+    
+    @Value("${place.default.radius.without-location:20000}")
+    private int radiusWithoutLocation;
+    
 
     @Cacheable(
         value = "suggest",
@@ -40,9 +53,9 @@ public class PlaceSuggestService {
         try {
             String query = request.getQuery().trim();
 
-            Double lng = request.hasLocation() ? request.getLng() : 126.9780;
-            Double lat = request.hasLocation() ? request.getLat() : 37.5665;
-            int radius = request.hasLocation() ? 5000 : 20000;
+            Double lng = request.hasLocation() ? request.getLng() : defaultLongitude;
+            Double lat = request.hasLocation() ? request.getLat() : defaultLatitude;
+            int radius = request.hasLocation() ? radiusWithLocation : radiusWithoutLocation;
             
 
             KakaoKeywordResponse response = kakaoLocalFeign.searchByKeyword(
