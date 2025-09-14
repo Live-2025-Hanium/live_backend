@@ -14,38 +14,36 @@ public class PlaceCacheConfig {
     @Bean(name = "placeCacheManager")
     public CacheManager placeCacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        
-        // 기본 캐시 설정
+
         cacheManager.setCaffeine(Caffeine.newBuilder()
             .expireAfterWrite(60, TimeUnit.SECONDS)
             .maximumSize(100));
-        
-        // 캐시별 개별 설정
+
         cacheManager.registerCustomCache("placeSearch",
             Caffeine.newBuilder()
-                .expireAfterWrite(90, TimeUnit.SECONDS)  // TTL 90초
-                .maximumSize(500)  // 최대 500개 엔트리
-                .recordStats()  // 통계 기록
+                .expireAfterWrite(90, TimeUnit.SECONDS)
+                .maximumSize(500)
+                .recordStats()
                 .build());
         
         cacheManager.registerCustomCache("placeNearby",
             Caffeine.newBuilder()
-                .expireAfterWrite(90, TimeUnit.SECONDS)  // TTL 90초
-                .maximumSize(500)  // 최대 500개 엔트리
+                .expireAfterWrite(90, TimeUnit.SECONDS)
+                .maximumSize(500)
                 .recordStats()
                 .build());
         
         cacheManager.registerCustomCache("placeDetail",
             Caffeine.newBuilder()
-                .expireAfterWrite(10, TimeUnit.MINUTES)  // TTL 10분
-                .maximumSize(200)  // 최대 200개 엔트리
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .maximumSize(200)
                 .recordStats()
                 .build());
         
         cacheManager.registerCustomCache("suggest",
             Caffeine.newBuilder()
-                .expireAfterWrite(60, TimeUnit.SECONDS)  // TTL 60초
-                .maximumSize(300)  // 최대 300개 엔트리
+                .expireAfterWrite(60, TimeUnit.SECONDS)
+                .maximumSize(300)
                 .recordStats()
                 .build());
         
