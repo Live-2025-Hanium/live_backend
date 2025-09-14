@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class PlaceCacheConfig {
     
-    @Bean(name = "placeCacheManager")
-    public CacheManager placeCacheManager() {
+    @Bean
+    public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
 
         cacheManager.setCaffeine(Caffeine.newBuilder()
