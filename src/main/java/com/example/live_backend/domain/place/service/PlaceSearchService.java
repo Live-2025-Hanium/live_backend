@@ -3,7 +3,8 @@ package com.example.live_backend.domain.place.service;
 import com.example.live_backend.domain.place.dto.PlaceItem;
 import com.example.live_backend.domain.place.dto.request.NearbyRequest;
 import com.example.live_backend.domain.place.dto.request.SearchRequest;
-import com.example.live_backend.domain.place.exception.PlaceException;
+import com.example.live_backend.global.error.exception.CustomException;
+import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.domain.place.mapper.PlaceCategoryMapper;
 import com.example.live_backend.domain.place.mapper.PlaceConverter;
 import com.example.live_backend.global.page.PageTemplate;
@@ -72,7 +73,7 @@ public class PlaceSearchService {
     )
     @Retryable(
         value = {Exception.class},
-        exclude = {PlaceException.class},
+        exclude = {CustomException.class},
         maxAttempts = 2,
         backoff = @Backoff(delay = 500, multiplier = 2)
     )
@@ -81,7 +82,7 @@ public class PlaceSearchService {
         
         String kakaoCategory = categoryMapper.toKakaoCategory(request.getCategory());
         if (kakaoCategory == null) {
-            throw PlaceException.invalidCategory(request.getCategory());
+            throw new CustomException(ErrorCode.INVALID_CATEGORY, "지원하지 않는 카테고리: " + request.getCategory());
         }
         
         try {
@@ -100,7 +101,7 @@ public class PlaceSearchService {
             }
             
             return placeConverter.toPageTemplate(response, request.getPage(), request.getSize(), request.getCategory());
-        } catch (PlaceException e) {
+        } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
             log.warn("카테고리 검색 실패 (재시도 2회 수행): {}", request.getCategory(), e);

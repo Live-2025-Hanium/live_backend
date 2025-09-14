@@ -1,119 +1,115 @@
 package com.example.live_backend.domain.place.metrics;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Place 도메인 메트릭 수집
- */
+
 @Slf4j
 @Component
+@Getter
 public class PlaceMetrics {
+
+    private final Map<String, ApiMetric> apiMetrics = new ConcurrentHashMap<>();
     
-    private final MeterRegistry registry;
-    private final Counter searchCounter;
-    private final Counter suggestCounter;
-    private final Counter detailCounter;
-    private final Counter apiErrorCounter;
-    private final Timer apiResponseTimer;
-    
-    public PlaceMetrics(MeterRegistry registry) {
-        this.registry = registry;
+    @Getter
+    public static class ApiMetric {
+        private final AtomicLong callCount = new AtomicLong(0);
+        private final AtomicLong totalTime = new AtomicLong(0);
+        private final AtomicLong errorCount = new AtomicLong(0);
+        private final AtomicLong maxTime = new AtomicLong(0);
+        private final AtomicLong minTime = new AtomicLong(Long.MAX_VALUE);
         
-        // 카운터 초기화
-        this.searchCounter = Counter.builder("place.search.count")
-            .description("장소 검색 횟수")
-            .register(registry);
+        public void record(boolean success, long durationMs) {
+            callCount.incrementAndGet();
+            totalTime.addAndGet(durationMs);
             
-        this.suggestCounter = Counter.builder("place.suggest.count")
-            .description("자동완성 요청 횟수")
-            .register(registry);
-            
-        this.detailCounter = Counter.builder("place.detail.count")
-            .description("상세 조회 횟수")
-            .register(registry);
-            
-        this.apiErrorCounter = Counter.builder("place.api.error")
-            .description("API 에러 횟수")
-            .register(registry);
-            
-        this.apiResponseTimer = Timer.builder("place.api.response")
-            .description("API 응답 시간")
-            .register(registry);
-    }
-    
-    /**
-     * 검색 메트릭 기록
-     */
-    public void recordSearch(String query, boolean cached) {
-        searchCounter.increment();
-        registry.counter("place.search.detail",
-            "cached", String.valueOf(cached),
-            "has_query", String.valueOf(!query.isEmpty())
-        ).increment();
+            if (!success) {
+                errorCount.incrementAndGet();
+            }
+
+            updateMaxTime(durationMs);
+            updateMinTime(durationMs);
+        }
         
-        log.debug("검색 메트릭 기록: query={}, cached={}", query, cached);
-    }
-    
-    /**
-     * 자동완성 메트릭 기록
-     */
-    public void recordSuggest(String query, int resultCount) {
-        suggestCounter.increment();
-        registry.counter("place.suggest.detail",
-            "query_length", String.valueOf(query.length()),
-            "has_results", String.valueOf(resultCount > 0)
-        ).increment();
-    }
-    
-    /**
-     * 상세 조회 메트릭 기록
-     */
-    public void recordDetail(String placeId, boolean cached) {
-        detailCounter.increment();
-        registry.counter("place.detail.view",
-            "cached", String.valueOf(cached)
-        ).increment();
-    }
-    
-    /**
-     * API 호출 메트릭 기록
-     */
-    public void recordApiCall(String api, boolean success, long durationMs) {
-        apiResponseTimer.record(durationMs, TimeUnit.MILLISECONDS);
+        private void updateMaxTime(long durationMs) {
+            long currentMax = maxTime.get();
+            if (durationMs > currentMax) {
+                maxTime.compareAndSet(currentMax, durationMs);
+            }
+        }
         
-        registry.timer("place.api.call",
-            "api", api,
-            "success", String.valueOf(success)
-        ).record(Duration.ofMillis(durationMs));
+        private void updateMinTime(long durationMs) {
+            long currentMin = minTime.get();
+            if (durationMs < currentMin) {
+                minTime.compareAndSet(currentMin, durationMs);
+            }
+        }
         
-        if (!success) {
-            apiErrorCounter.increment();
+        public double getAverageTime() {
+            long count = callCount.get();
+            return count > 0 ? (double) totalTime.get() / count : 0;
+        }
+        
+        public double getSuccessRate() {
+            long count = callCount.get();
+            return count > 0 ? (double) (count - errorCount.get()) / count * 100 : 0;
         }
     }
-    
-    /**
-     * 캐시 히트율 기록
-     */
-    public void recordCacheHit(String cacheType, boolean hit) {
-        registry.counter("place.cache.hit",
-            "type", cacheType,
-            "hit", String.valueOf(hit)
-        ).increment();
+
+    public void recordApiCall(String api, boolean success, long durationMs) {
+        ApiMetric metric = apiMetrics.computeIfAbsent(api, k -> new ApiMetric());
+        metric.record(success, durationMs);
+
+        if (durationMs > 3000) {
+            log.warn("[SLOW API] {} 응답시간: {}ms", api, durationMs);
+        }
+
+        if (!success) {
+            log.error("[API ERROR] {} 실패", api);
+        }
     }
-    
-    /**
-     * Rate Limit 발생 기록
-     */
-    public void recordRateLimit(String clientType) {
-        registry.counter("place.rate.limit",
-            "client_type", clientType
-        ).increment();
+
+    public Map<String, Object> getStats() {
+        Map<String, Object> stats = new ConcurrentHashMap<>();
+        
+
+        long totalCalls = apiMetrics.values().stream()
+            .mapToLong(m -> m.getCallCount().get())
+            .sum();
+
+        long totalErrors = apiMetrics.values().stream()
+            .mapToLong(m -> m.getErrorCount().get())
+            .sum();
+
+        double avgResponseTime = apiMetrics.values().stream()
+            .mapToDouble(ApiMetric::getAverageTime)
+            .average()
+            .orElse(0.0);
+        
+        stats.put("totalCalls", totalCalls);
+        stats.put("totalErrors", totalErrors);
+        stats.put("overallSuccessRate", totalCalls > 0 ? (double)(totalCalls - totalErrors) / totalCalls * 100 : 0);
+        stats.put("avgResponseTime", avgResponseTime);
+
+        Map<String, Map<String, Object>> apiStats = new ConcurrentHashMap<>();
+        apiMetrics.forEach((api, metric) -> {
+            Map<String, Object> metricMap = new ConcurrentHashMap<>();
+            metricMap.put("callCount", metric.getCallCount().get());
+            metricMap.put("avgTime", String.format("%.2f", metric.getAverageTime()));
+            metricMap.put("maxTime", metric.getMaxTime().get());
+            metricMap.put("minTime", metric.getMinTime().get() == Long.MAX_VALUE ? 0 : metric.getMinTime().get());
+            metricMap.put("successRate", String.format("%.2f%%", metric.getSuccessRate()));
+            metricMap.put("errorCount", metric.getErrorCount().get());
+            apiStats.put(api, metricMap);
+        });
+        stats.put("apiDetails", apiStats);
+        
+        return stats;
     }
+
 }

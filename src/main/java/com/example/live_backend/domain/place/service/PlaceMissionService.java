@@ -5,7 +5,8 @@ import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.place.dto.ActiveMissionPlace;
 import com.example.live_backend.domain.place.dto.Location;
 import com.example.live_backend.domain.place.entity.PlaceVisitMission;
-import com.example.live_backend.domain.place.exception.PlaceException;
+import com.example.live_backend.global.error.exception.CustomException;
+import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.domain.place.repository.PlaceVisitMissionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,7 @@ public class PlaceMissionService {
         log.info("Getting active mission place for user: {}", oauthId);
         
         Member member = memberRepository.findByOauthId(oauthId)
-            .orElseThrow(() -> PlaceException.userNotFound(oauthId));
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + oauthId));
         
         Optional<PlaceVisitMission> activeMission = placeVisitMissionRepository
             .findActiveMissionByMemberId(member.getId());

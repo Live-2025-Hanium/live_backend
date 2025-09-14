@@ -1,7 +1,8 @@
 package com.example.live_backend.domain.place.service;
 
 import com.example.live_backend.domain.place.dto.PlaceDetail;
-import com.example.live_backend.domain.place.exception.PlaceException;
+import com.example.live_backend.global.error.exception.CustomException;
+import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.domain.place.mapper.PlaceConverter;
 import com.example.live_backend.infra.kakao.feign.KakaoLocalFeign;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
@@ -25,7 +26,7 @@ public class PlaceDetailService {
     @Cacheable(value = "placeDetail", key = "#placeId")
     @Retryable(
         value = {Exception.class},
-        exclude = {PlaceException.class},
+        exclude = {CustomException.class},
         maxAttempts = 2,
         backoff = @Backoff(delay = 500)
     )
@@ -47,12 +48,12 @@ public class PlaceDetailService {
             );
             
             if (response.getDocuments().isEmpty()) {
-                throw PlaceException.placeNotFound(placeId);
+                throw new CustomException(ErrorCode.PLACE_NOT_FOUND, "장소를 찾을 수 없습니다: " + placeId);
             }
             
             return placeConverter.toPlaceDetail(response.getDocuments().get(0));
             
-        } catch (PlaceException e) {
+        } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
             log.warn("장소 상세 조회 실패 (재시도 2회 수행): {}", placeId, e);
@@ -62,7 +63,7 @@ public class PlaceDetailService {
     
     private void validatePlaceId(String placeId) {
         if (!placeId.startsWith("kakao:")) {
-            throw PlaceException.invalidPlaceId(placeId);
+            throw new CustomException(ErrorCode.INVALID_VALUE, "유효하지 않은 장소 ID: " + placeId);
         }
     }
     
