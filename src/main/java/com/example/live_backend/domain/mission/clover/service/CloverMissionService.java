@@ -9,6 +9,8 @@ import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionVectorRepository;
+import com.example.live_backend.domain.survey.vitality.dto.VitalityResultDto;
+import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -146,6 +148,10 @@ public class CloverMissionService {
 
     private LLMProcessingResultDto generateSearchStrategy(Long memberId) {
         try {
+
+            Member member = findUser(memberId);
+            VitalityLevel vitalityLevel = member.getVitalityLevel();
+
             List<UserFeedbackForLLMDto> userFeedbackList =
                     cloverMissionRecordService.getRecentMissionRecordsWithFeedback(memberId);
 
@@ -154,7 +160,7 @@ public class CloverMissionService {
             }
 
             LLMProcessingResultDto llmResult =
-                    llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(userFeedbackList);
+                    llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(userFeedbackList, vitalityLevel);
 
             return llmResult;
 
