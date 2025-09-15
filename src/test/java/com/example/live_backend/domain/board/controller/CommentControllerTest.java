@@ -9,6 +9,7 @@ import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.memeber.Role;
+import com.example.live_backend.domain.place.config.RateLimitConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,6 +49,9 @@ class CommentControllerTest {
 	
 	@MockBean
 	private JwtTokenValidator jwtTokenValidator;
+
+	@MockBean
+	private RateLimitConfig rateLimitConfig;
 
 	@Autowired
 	private ObjectMapper objectMapper;
