@@ -59,6 +59,7 @@ public enum ErrorCode {
 	MISSION_NOT_FOUND(NOT_FOUND, "존재하지 않는 미션입니다."),
 	SURVEY_NOT_FOUND(NOT_FOUND, "존재하지 않는 설문입니다."),
 	SCRAP_NOT_FOUND(NOT_FOUND, "존재하지 않는 스크랩입니다."),
+	SURVEY_RESPONSE_NOT_FOUND(NOT_FOUND, "존재하지 않는 설문입니다."),
 
 	/* ------------------ 409 CONFLICT : 충돌 오류 ------------------ */
 	INVALID_INPUT_VALUE(CONFLICT, "잘못된 입력값입니다."),

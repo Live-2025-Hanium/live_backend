@@ -2,6 +2,7 @@ package com.example.live_backend.domain.mission.clover.service;
 
 import com.example.live_backend.domain.mission.clover.dto.LLMProcessingResultDto;
 import com.example.live_backend.domain.mission.clover.dto.UserFeedbackForLLMDto;
+import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,10 +28,15 @@ public class LLMBasedQueryGeneratorService {
 
     private static final String PROMPT = """
             # [역할 부여]
-            당신은 고립·은둔 청년의 사회 복귀를 돕는 전문 심리 코치입니다. 사용자의 최근 미션 수행기록을 바탕으로 이후에 수행할 적합한 미션 특성을 도출합니다.
+            당신은 고립·은둔 청년의 사회 복귀를 돕는 전문 심리 코치입니다. 사용자의 현재 심리 상태와 최근 미션 수행기록을 바탕으로 이후에 수행할 적합한 미션 특성을 도출합니다.
             
             # [도메인 정의]
-            
+           
+            - VitalityLevel (활력 수준): 사용자의 현재 심리적 에너지 상태입니다.
+              - LOW_VITALITY: 저활력 상태. 심리적, 신체적 에너지가 낮은 상태로, 부담이 적고 성취하기 쉬운 미션이 필요합니다.
+              - HIGH_VITALITY: 고활력 상태. 에너지가 충분하여, 조금 더 도전적인 미션을 시도해볼 수 있습니다.
+              - NORMAL: 보통 상태. 일반적인 수준의 미션을 수행할 수 있습니다.
+
             - MissionCategory (미션 카테고리)
               - COMMUNICATION: 소통하기 (대화, 인사, 온라인 소통 등)
               - RELATIONSHIP: 인간관계 챙기기 (연락, 약속, 관계 유지 등)
@@ -51,9 +57,10 @@ public class LLMBasedQueryGeneratorService {
               - VISIT: 방문 — 특정 장소(targetAddress) 방문
 
             # [명령]
-            아래에 제공되는 [입력 데이터]의 각 필드가 의미하는 맥락을 참고하여, 다음날의 활동 전략을 수립해주세요.
+            아래에 제공되는 [입력 데이터]의 각 필드가 의미하는 맥락을 참고하여, 이후의 활동 전략을 수립해주세요.
 
             [입력 데이터 맥락 설명]
+                - 'vitality_level' (VitalityLevel): 사용자의 장기적인 활력 수준입니다. 일시적인 기분 변화가 아닌, 사용자의 기본 에너지 상태를 나타냅니다. 이 값을 추천 전략의 큰 방향을 결정하는 가장 중요한 기준으로 삼아야 합니다.
                 - 'mission_history[].title': 미션 제목. 사용자가 어떤 활동을 했는지 식별하는 핵심 텍스트입니다.
                 - 'mission_history[].category' (MissionCategory): 미션의 주제 영역입니다.
                   - 값: COMMUNICATION(소통하기), RELATIONSHIP(인간관계 챙기기), ENVIRONMENT(환경 바꾸기), HEALTH(건강 챙기기)
@@ -84,10 +91,12 @@ public class LLMBasedQueryGeneratorService {
 
             """;
 
-    public LLMProcessingResultDto generateMissionRecommendationStrategy(List<UserFeedbackForLLMDto> userFeedbackList) {
+    public LLMProcessingResultDto generateMissionRecommendationStrategy(
+            List<UserFeedbackForLLMDto> userFeedbackList, VitalityLevel vitalityLevel) {
         try {
 
             LLMRequestDto requestDto = LLMRequestDto.builder()
+                    .vitalityLevel(vitalityLevel)
                     .missionHistory(userFeedbackList)
                     .build();
 
@@ -119,6 +128,7 @@ public class LLMBasedQueryGeneratorService {
     @Builder
     private static class LLMRequestDto {
 
+        private VitalityLevel vitalityLevel;
         private List<UserFeedbackForLLMDto> missionHistory;
     }
 }

@@ -1,5 +1,6 @@
 package com.example.live_backend.domain.survey.dto.response;
 
+import com.example.live_backend.domain.survey.vitality.dto.VitalityResultDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,4 +23,7 @@ public class SurveySubmissionResponseDto {
 
     @Schema(description = "응답한 문제 수", example = "5")
     private Integer totalAnswers;
+
+    @Schema(description = "활력 분석 결과")
+    private VitalityResultDto vitalityResult;
 } 
