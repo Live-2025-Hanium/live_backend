@@ -1,5 +1,9 @@
 package com.example.live_backend.domain.survey.service;
 
+import com.example.live_backend.domain.survey.vitality.dto.VitalityResultDto;
+import com.example.live_backend.domain.survey.vitality.enums.IsolationType;
+import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
+import com.example.live_backend.domain.survey.vitality.service.VitalityService;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.domain.memeber.entity.Member;
@@ -48,6 +52,9 @@ class SurveyServiceTest {
 
 	@Mock
 	private SurveyQuestionOptionRepository surveyQuestionOptionRepository;
+
+	@Mock
+	private VitalityService vitalityService;
 
 	@Mock
 	private MemberRepository memberRepository;
@@ -153,7 +160,7 @@ class SurveyServiceTest {
 				activeQuestions.add(mockQuestion);
 			}
 			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
-			
+
 			LocalDateTime expectedTime = LocalDateTime.now();
 			SurveyResponse savedResponse = org.mockito.Mockito.mock(SurveyResponse.class);
 			given(savedResponse.getId()).willReturn(123L);
@@ -172,6 +179,15 @@ class SurveyServiceTest {
 			
 			given(surveyResponseRepository.save(any(SurveyResponse.class))).willReturn(savedResponse);
 
+			VitalityResultDto mockResult = VitalityResultDto.builder()
+					.level(VitalityLevel.NORMAL)
+					.isolationType(IsolationType.NORMAL)
+					.isIsolated(false)
+					.isSecluded(false)
+					.description("정상")
+					.build();
+			given(vitalityService.analyzeVitality(any(Long.class))).willReturn(mockResult);
+
 			// when
 			SurveySubmissionResponseDto result = surveyService.submitSurvey(validRequest, MOCK_USER_ID);
 
@@ -184,6 +200,8 @@ class SurveyServiceTest {
 			verify(memberRepository).findById(MOCK_USER_ID);
 			verify(surveyResponseRepository).save(any(SurveyResponse.class));
 			verify(mockMember).updateLastSurveySubmittedAt(expectedTime);
+			verify(vitalityService).analyzeVitality(savedResponse.getId());
+			verify(mockMember).updateVitalityLevel(VitalityLevel.NORMAL);
 		}
 
 		@Test
@@ -374,10 +392,10 @@ class SurveyServiceTest {
 			Throwable t = catchThrowable(() -> surveyService.submitSurvey(req, MOCK_USER_ID));
 
 			assertThat(t)
-				.isInstanceOf(CustomException.class)
-				.hasMessageContaining("답변 번호는 1-5 범위여야 합니다. 입력된 값: 16");
+					.isInstanceOf(CustomException.class)
+					.hasMessageContaining("답변 번호는 1-8 범위여야 합니다. 입력된 값: 16");
 			assertThat(((CustomException)t).getErrorCode())
-				.isEqualTo(ErrorCode.INVALID_INPUT);
+					.isEqualTo(ErrorCode.INVALID_INPUT);
 		}
 
 		@Test
@@ -404,6 +422,15 @@ class SurveyServiceTest {
 					setField(saved, "createdAt", LocalDateTime.now());
 					return saved;
 				});
+
+			VitalityResultDto mockResult = VitalityResultDto.builder()
+					.level(VitalityLevel.NORMAL)
+					.isolationType(IsolationType.NORMAL)
+					.isIsolated(false)
+					.isSecluded(false)
+					.description("정상")
+					.build();
+			given(vitalityService.analyzeVitality(any(Long.class))).willReturn(mockResult);
 
 			// When
 			SurveySubmissionResponseDto result = surveyService.submitSurvey(validRequest, expectedId);
