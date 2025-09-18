@@ -17,6 +17,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import feign.FeignException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +39,10 @@ public class PlaceSearchService {
         condition = "#request.page == 1"
     )
     @Retryable(
-        value = {Exception.class},
-        maxAttempts = 2,
-        backoff = @Backoff(delay = 500, multiplier = 2)
+        retryFor = {FeignException.FeignServerException.class},  // 5xx 서버 오류만 재시도
+        noRetryFor = {FeignException.FeignClientException.class}, // 4xx 클라이언트 오류는 재시도 안함
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2, maxDelay = 5000)
     )
     public PageTemplate<PlaceItem> searchByKeyword(SearchRequest request) {
         log.info("키워드로 장소 검색 중: {}", request.getQuery());
@@ -72,10 +74,10 @@ public class PlaceSearchService {
         condition = "#request.page == 1"
     )
     @Retryable(
-        value = {Exception.class},
-        exclude = {CustomException.class},
-        maxAttempts = 2,
-        backoff = @Backoff(delay = 500, multiplier = 2)
+        retryFor = {FeignException.FeignServerException.class},  // 5xx 서버 오류만 재시도
+        noRetryFor = {FeignException.FeignClientException.class, CustomException.class}, // 4xx와 비즈니스 오류는 재시도 안함
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2, maxDelay = 5000)
     )
     public PageTemplate<PlaceItem> searchByCategory(NearbyRequest request) {
         log.info("카테고리로 주변 장소 검색 중: {}", request.getCategory());

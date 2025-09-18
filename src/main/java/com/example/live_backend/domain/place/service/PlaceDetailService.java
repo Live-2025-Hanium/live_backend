@@ -6,6 +6,8 @@ import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.domain.place.mapper.PlaceConverter;
 import com.example.live_backend.infra.kakao.feign.KakaoLocalFeign;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
+
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -25,10 +27,10 @@ public class PlaceDetailService {
 
     @Cacheable(value = "placeDetail", key = "#placeId")
     @Retryable(
-        value = {Exception.class},
-        exclude = {CustomException.class},
-        maxAttempts = 2,
-        backoff = @Backoff(delay = 500)
+        retryFor = {FeignException.FeignServerException.class},  // 5xx 서버 오류만 재시도
+        noRetryFor = {FeignException.FeignClientException.class, CustomException.class}, // 4xx와 비즈니스 오류는 재시도 안함
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2, maxDelay = 5000)
     )
     public PlaceDetail getPlaceDetail(String placeId) {
         log.info("장소 상세 정보 조회 중: {}", placeId);

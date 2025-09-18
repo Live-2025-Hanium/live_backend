@@ -13,7 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Service;
+import feign.FeignException;
 
 import java.util.List;
 
@@ -45,7 +47,12 @@ public class PlaceSuggestService {
         key = "#request.query.toLowerCase().substring(0, T(Math).min(#request.query.length(), 10)) + '_' + (#request.lat != null ? T(Math).round(#request.lat * 100) : 0) + '_' + (#request.lng != null ? T(Math).round(#request.lng * 100) : 0)",
         condition = "#request.query.length() >= 2"
     )
-    @Retryable(value = {Exception.class}, maxAttempts = 1)
+    @Retryable(
+        retryFor = {FeignException.FeignServerException.class},  // 5xx 서버 오류만 재시도
+        noRetryFor = {FeignException.FeignClientException.class}, // 4xx 클라이언트 오류는 재시도 안함
+        maxAttempts = 2,  // suggest는 빠른 응답이 중요하므로 2회만
+        backoff = @Backoff(delay = 500, maxDelay = 1000)
+    )
     public SuggestResponse suggest(SuggestRequest request) {
         long startTime = System.currentTimeMillis();
         log.debug("자동완성 제안 조회 중: {}", request.getQuery());
