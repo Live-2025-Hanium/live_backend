@@ -57,11 +57,23 @@ public class PlaceSearchService {
                 request.getSize(),
                 request.getSort()
             );
-            
+
             return placeConverter.toPageTemplate(response, request.getPage(), request.getSize());
-        } catch (Exception e) {
-            log.warn("키워드 검색 실패 (재시도 2회 수행): {}", request.getQuery(), e);
+        } catch (FeignException.FeignServerException e) {
+            log.error("카카오 API 서버 오류 발생: {}", e.getMessage());
+            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "카카오 API 서버 오류가 발생했습니다");
+        } catch (FeignException.FeignClientException e) {
+            if (e.status() == 401 || e.status() == 403) {
+                log.error("카카오 API 인증 오류: {}", e.getMessage());
+                throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "카카오 API 인증에 실패했습니다");
+            }
+            log.warn("클라이언트 오류로 빈 결과 반환: {}", e.getMessage());
             return createEmptyResult(request.getPage(), request.getSize());
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("예상치 못한 오류 발생: {}", e.getMessage(), e);
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "장소 검색 중 오류가 발생했습니다");
         }
     }
     
@@ -103,11 +115,21 @@ public class PlaceSearchService {
             }
             
             return placeConverter.toPageTemplate(response, request.getPage(), request.getSize(), request.getCategory());
+        } catch (FeignException.FeignServerException e) {
+            log.error("카카오 API 서버 오류 발생: {}", e.getMessage());
+            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "카카오 API 서버 오류가 발생했습니다");
+        } catch (FeignException.FeignClientException e) {
+            if (e.status() == 401 || e.status() == 403) {
+                log.error("카카오 API 인증 오류: {}", e.getMessage());
+                throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "카카오 API 인증에 실패했습니다");
+            }
+            log.warn("클라이언트 오류로 빈 결과 반환: {}", e.getMessage());
+            return createEmptyResult(request.getPage(), request.getSize());
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("카테고리 검색 실패 (재시도 2회 수행): {}", request.getCategory(), e);
-            return createEmptyResult(request.getPage(), request.getSize());
+            log.error("예상치 못한 오류 발생: {}", e.getMessage(), e);
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "장소 검색 중 오류가 발생했습니다");
         }
     }
     

@@ -95,8 +95,14 @@ public class PlaceSuggestService {
             
             return SuggestResponse.of(query, suggestions, request.hasLocation(), startTime);
             
+        } catch (FeignException.FeignServerException e) {
+            log.error("카카오 API 서버 오류, 빈 결과 반환: {}", e.getMessage());
+            return SuggestResponse.empty(request.getQuery());
+        } catch (FeignException.FeignClientException e) {
+            log.debug("카카오 API 클라이언트 오류, 빈 결과 반환: {}", e.getMessage());
+            return SuggestResponse.empty(request.getQuery());
         } catch (Exception e) {
-            log.warn("자동완성 조회 실패: {}", request.getQuery(), e);
+            log.warn("자동완성 조회 중 오류, 빈 결과 반환: {}", e.getMessage());
             return SuggestResponse.empty(request.getQuery());
         }
     }

@@ -11,6 +11,9 @@ import com.example.live_backend.global.page.PageTemplate;
 import com.example.live_backend.infra.kakao.feign.KakaoLocalFeign;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoCategoryResponse;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
+import feign.FeignException;
+import feign.Request;
+import feign.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -93,18 +96,20 @@ class PlaceSearchServiceTest {
                 .size(10)
                 .build();
             
-            when(kakaoLocalFeign.searchByKeyword(anyString(), anyDouble(), anyDouble(), 
+            when(kakaoLocalFeign.searchByKeyword(anyString(), anyDouble(), anyDouble(),
                 anyInt(), anyInt(), anyInt(), isNull()))
-                .thenThrow(new RuntimeException("API Error"));
+                .thenThrow(FeignException.errorStatus("searchByKeyword",
+                    Response.builder()
+                        .status(502)
+                        .reason("Bad Gateway")
+                        .request(Request.create(Request.HttpMethod.GET, "url",
+                            new java.util.HashMap<>(), null, java.nio.charset.StandardCharsets.UTF_8))
+                        .build()));
 
-            // When
-            PageTemplate<PlaceItem> result = placeSearchService.searchByKeyword(request);
-
-            // Then
-            assertThat(result).isNotNull();
-            assertThat(result.content()).isEmpty();
-            assertThat(result.totalElements()).isEqualTo(0L);
-            assertThat(result.hasNext()).isFalse();
+            // When & Then
+            assertThatThrownBy(() -> placeSearchService.searchByKeyword(request))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EXTERNAL_API_ERROR);
         }
 
         @Test
@@ -272,17 +277,20 @@ class PlaceSearchServiceTest {
             when(categoryMapper.toKakaoCategory("PSY"))
                 .thenReturn("HP8");
             
-            when(kakaoLocalFeign.searchByCategory(anyString(), anyDouble(), anyDouble(), 
+            when(kakaoLocalFeign.searchByCategory(anyString(), anyDouble(), anyDouble(),
                 anyInt(), anyInt(), anyInt()))
-                .thenThrow(new RuntimeException("API Error"));
+                .thenThrow(FeignException.errorStatus("searchByCategory",
+                    Response.builder()
+                        .status(502)
+                        .reason("Bad Gateway")
+                        .request(Request.create(Request.HttpMethod.GET, "url",
+                            new java.util.HashMap<>(), null, java.nio.charset.StandardCharsets.UTF_8))
+                        .build()));
 
-            // When
-            PageTemplate<PlaceItem> result = placeSearchService.searchByCategory(request);
-
-            // Then
-            assertThat(result).isNotNull();
-            assertThat(result.content()).isEmpty();
-            assertThat(result.totalElements()).isEqualTo(0L);
+            // When & Then
+            assertThatThrownBy(() -> placeSearchService.searchByCategory(request))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EXTERNAL_API_ERROR);
         }
     }
 }

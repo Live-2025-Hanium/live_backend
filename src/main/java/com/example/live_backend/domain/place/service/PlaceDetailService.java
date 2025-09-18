@@ -27,8 +27,8 @@ public class PlaceDetailService {
 
     @Cacheable(value = "placeDetail", key = "#placeId")
     @Retryable(
-        retryFor = {FeignException.FeignServerException.class},  // 5xx 서버 오류만 재시도
-        noRetryFor = {FeignException.FeignClientException.class, CustomException.class}, // 4xx와 비즈니스 오류는 재시도 안함
+        retryFor = {FeignException.FeignServerException.class},
+        noRetryFor = {FeignException.FeignClientException.class, CustomException.class},
         maxAttempts = 3,
         backoff = @Backoff(delay = 1000, multiplier = 2, maxDelay = 5000)
     )
@@ -41,7 +41,7 @@ public class PlaceDetailService {
         try {
             KakaoKeywordResponse response = kakaoLocalFeign.searchByKeyword(
                 kakaoId,
-                127.0,  // 기본 좌표 (서울)
+                127.0,
                 37.5,
                 20000,
                 1,
@@ -55,11 +55,21 @@ public class PlaceDetailService {
             
             return placeConverter.toPlaceDetail(response.getDocuments().get(0));
             
+        } catch (FeignException.FeignServerException e) {
+            log.error("카카오 API 서버 오류 발생: {}", e.getMessage());
+            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "카카오 API 서버 오류가 발생했습니다");
+        } catch (FeignException.FeignClientException e) {
+            if (e.status() == 401 || e.status() == 403) {
+                log.error("카카오 API 인증 오류: {}", e.getMessage());
+                throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "카카오 API 인증에 실패했습니다");
+            }
+            log.info("장소를 찾을 수 없음 (카카오 API 응답: {})", e.status());
+            throw new CustomException(ErrorCode.PLACE_NOT_FOUND, "장소를 찾을 수 없습니다: " + placeId);
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("장소 상세 조회 실패 (재시도 2회 수행): {}", placeId, e);
-            return createFallbackDetail(placeId);
+            log.error("예상치 못한 오류 발생: {}", e.getMessage(), e);
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "장소 조회 중 오류가 발생했습니다");
         }
     }
     
