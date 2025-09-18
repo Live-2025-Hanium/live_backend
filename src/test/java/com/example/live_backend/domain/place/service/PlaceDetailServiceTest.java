@@ -6,6 +6,9 @@ import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.infra.kakao.feign.KakaoLocalFeign;
 import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
+import feign.FeignException;
+import feign.Request;
+import feign.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -127,8 +130,8 @@ class PlaceDetailServiceTest {
         void apiErrorReturnsFallback() {
             // Given
             String placeId = "kakao:123456";
-            
-            when(kakaoLocalFeign.searchByKeyword(anyString(), anyDouble(), anyDouble(), 
+
+            when(kakaoLocalFeign.searchByKeyword(anyString(), anyDouble(), anyDouble(),
                 anyInt(), anyInt(), anyInt(), isNull()))
                 .thenThrow(new RuntimeException("API Error"));
 
@@ -181,15 +184,14 @@ class PlaceDetailServiceTest {
             // Given
             String placeId = "kakao:123456";
 
-            when(kakaoLocalFeign.searchByKeyword(anyString(), anyDouble(), anyDouble(), 
+            when(kakaoLocalFeign.searchByKeyword(anyString(), anyDouble(), anyDouble(),
                 anyInt(), anyInt(), anyInt(), isNull()))
                 .thenThrow(new RuntimeException("Temporary failure"));
 
             // When
             PlaceDetail result = placeDetailService.getPlaceDetail(placeId);
 
-            // Then
-            // @Retryable이 테스트 환경에서 동작하지 않아 fallback 반환함.
+            // Then - 폴백 반환
             assertThat(result).isNotNull();
             assertThat(result.getName()).isEqualTo("정보를 불러올 수 없습니다");
             assertThat(result.getId()).isEqualTo(placeId);

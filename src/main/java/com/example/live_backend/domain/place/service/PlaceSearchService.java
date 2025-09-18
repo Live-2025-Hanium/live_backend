@@ -39,8 +39,8 @@ public class PlaceSearchService {
         condition = "#request.page == 1"
     )
     @Retryable(
-        retryFor = {FeignException.FeignServerException.class},  // 5xx 서버 오류만 재시도
-        noRetryFor = {FeignException.FeignClientException.class}, // 4xx 클라이언트 오류는 재시도 안함
+        retryFor = {FeignException.FeignServerException.class},
+        noRetryFor = {FeignException.FeignClientException.class},
         maxAttempts = 3,
         backoff = @Backoff(delay = 1000, multiplier = 2, maxDelay = 5000)
     )
@@ -86,8 +86,8 @@ public class PlaceSearchService {
         condition = "#request.page == 1"
     )
     @Retryable(
-        retryFor = {FeignException.FeignServerException.class},  // 5xx 서버 오류만 재시도
-        noRetryFor = {FeignException.FeignClientException.class, CustomException.class}, // 4xx와 비즈니스 오류는 재시도 안함
+        retryFor = {FeignException.FeignServerException.class},
+        noRetryFor = {FeignException.FeignClientException.class, CustomException.class},
         maxAttempts = 3,
         backoff = @Backoff(delay = 1000, multiplier = 2, maxDelay = 5000)
     )
@@ -109,7 +109,6 @@ public class PlaceSearchService {
                 request.getSize()
             );
             
-            // 정신과 카테고리는 추가 필터링
             if (categoryMapper.isPsychiatryCategory(request.getCategory())) {
                 response = filterPsychiatryOnly(response);
             }

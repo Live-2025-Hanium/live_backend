@@ -56,20 +56,20 @@ public class PlaceDetailService {
             return placeConverter.toPlaceDetail(response.getDocuments().get(0));
             
         } catch (FeignException.FeignServerException e) {
-            log.error("카카오 API 서버 오류 발생: {}", e.getMessage());
-            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "카카오 API 서버 오류가 발생했습니다");
+            log.error("카카오 API 서버 오류, 폴백 반환: {}", e.getMessage());
+            return createFallbackDetail(placeId);
         } catch (FeignException.FeignClientException e) {
-            if (e.status() == 401 || e.status() == 403) {
-                log.error("카카오 API 인증 오류: {}", e.getMessage());
-                throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "카카오 API 인증에 실패했습니다");
+            if (e.status() == 404) {
+                log.info("장소를 찾을 수 없음: {}", placeId);
+                throw new CustomException(ErrorCode.PLACE_NOT_FOUND, "장소를 찾을 수 없습니다: " + placeId);
             }
-            log.info("장소를 찾을 수 없음 (카카오 API 응답: {})", e.status());
-            throw new CustomException(ErrorCode.PLACE_NOT_FOUND, "장소를 찾을 수 없습니다: " + placeId);
+            log.warn("카카오 API 클라이언트 오류, 폴백 반환: {}", e.getMessage());
+            return createFallbackDetail(placeId);
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("예상치 못한 오류 발생: {}", e.getMessage(), e);
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "장소 조회 중 오류가 발생했습니다");
+            log.error("예상치 못한 오류, 폴백 반환: {}", e.getMessage(), e);
+            return createFallbackDetail(placeId);
         }
     }
     
