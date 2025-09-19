@@ -29,7 +29,7 @@ public class KakaoAuthService {
 
     public KakaoLoginRequestDto processOAuthLogin(String code, String redirectUri) {
         try {
-            // 1. 인가 코드로 토큰 교환
+
             KakaoTokenResponse tokenResponse = kakaoOAuthFeign.getToken(
                 "authorization_code",
                 clientId,
@@ -38,12 +38,10 @@ public class KakaoAuthService {
                 redirectUri
             );
 
-            // 2. 액세스 토큰으로 사용자 정보 조회
             KakaoUserResponse userResponse = kakaoUserFeign.getUserInfo(
                 "Bearer " + tokenResponse.accessToken()
             );
 
-            // 3. KakaoLoginRequestDto로 변환
             return convertToLoginRequest(userResponse);
 
         } catch (Exception e) {
@@ -55,15 +53,12 @@ public class KakaoAuthService {
     private KakaoLoginRequestDto convertToLoginRequest(KakaoUserResponse response) {
         KakaoLoginRequestDto dto = new KakaoLoginRequestDto();
 
-        // 카카오 ID를 문자열로 변환
         dto.setOauthId(String.valueOf(response.id()));
 
-        // 이메일 (선택 동의 항목일 수 있음)
         if (response.kakaoAccount() != null && response.kakaoAccount().email() != null) {
             dto.setEmail(response.kakaoAccount().email());
         }
 
-        // 닉네임 (프로필 또는 properties에서 가져옴)
         String nickname = null;
         if (response.kakaoAccount() != null &&
             response.kakaoAccount().profile() != null &&
@@ -75,7 +70,6 @@ public class KakaoAuthService {
         }
         dto.setNickname(nickname);
 
-        // 프로필 이미지 URL
         String profileImageUrl = null;
         if (response.kakaoAccount() != null &&
             response.kakaoAccount().profile() != null &&
