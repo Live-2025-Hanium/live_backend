@@ -1,5 +1,6 @@
 package com.example.live_backend.domain.mission.clover.repository;
 
+import com.example.live_backend.domain.mission.clover.entity.CloverMission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -10,6 +11,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -69,5 +71,29 @@ public class CloverMissionVectorRepository {
     private Long extractMissionId(Document document) {
         Object missionId = document.getMetadata().get(MISSION_ID_KEY);
         return Long.valueOf(String.valueOf(missionId));
+    }
+
+    public String saveMissionToVectorDB(CloverMission savedMission, String activityDescription, String relatedFeature, String expectedEffect) {
+
+        String vectorDocument = String.format(
+                "미션 제목: %s, 미션 설명: %s, 도움을 줄 수 있는 사용자의 특성: %s, 기대 효과: %s",
+                savedMission.getTitle(),
+                activityDescription,
+                relatedFeature,
+                expectedEffect
+        );
+
+        Map<String, Object> metadata = Map.of(
+                "clover_mission_id", String.valueOf(savedMission.getId()),
+                "mission_title", savedMission.getTitle(),
+                "mission_description", savedMission.getDescription(),
+                "mission_category", savedMission.getCategory().name(),
+                "mission_difficulty", savedMission.getDifficulty().name(),
+                "clover_type", savedMission.getCloverType().name()
+        );
+
+        vectorStore.add(List.of(new Document(vectorDocument, metadata)));
+
+        return vectorDocument;
     }
 }

@@ -24,6 +24,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -34,7 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
@@ -125,7 +126,7 @@ class CloverMissionServiceTest {
                     .willReturn(Collections.emptyList());
 
             List<Long> missionIdsFromVectorDB = List.of(1L, 10L, 20L);
-            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), anyInt(), anyList()))
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList()))
                     .willReturn(missionIdsFromVectorDB);
 
             DistanceMission mission1 = new DistanceMission(1000);
@@ -141,10 +142,10 @@ class CloverMissionServiceTest {
             ReflectionTestUtils.setField(mission2, "difficulty", MissionDifficulty.NORMAL);
 
             TimerMission mission3 = new TimerMission(500);
-            ReflectionTestUtils.setField(mission2, "id", 20L);
-            ReflectionTestUtils.setField(mission2, "title", "5분 환기하기");
-            ReflectionTestUtils.setField(mission2, "category", MissionCategory.ENVIRONMENT);
-            ReflectionTestUtils.setField(mission2, "difficulty", MissionDifficulty.NORMAL);
+            ReflectionTestUtils.setField(mission3, "id", 20L);
+            ReflectionTestUtils.setField(mission3, "title", "5분 환기하기");
+            ReflectionTestUtils.setField(mission3, "category", MissionCategory.ENVIRONMENT);
+            ReflectionTestUtils.setField(mission3, "difficulty", MissionDifficulty.NORMAL);
 
             List<CloverMission> foundMissions = List.of(mission1, mission2, mission3);
             given(cloverMissionRepository.findAllById(missionIdsFromVectorDB))
@@ -163,7 +164,7 @@ class CloverMissionServiceTest {
             assertThat(result.getUserId()).isEqualTo(TEST_MEMBER_ID);
             assertThat(result.getMissions().size()).isEqualTo(3);
 
-            verify(cloverMissionVectorRepository, times(1)).searchSimilarMissionsIds(anyString(), eq(3), anyList());
+            verify(cloverMissionVectorRepository, times(1)).searchSimilarMissionsIds(anyString(), eq(10), anyList());
             verify(cloverMissionRepository, times(1)).findAllById(missionIdsFromVectorDB);
             verify(cloverMissionRecordRepository, times(1)).saveAll(anyList());
         }
@@ -177,7 +178,7 @@ class CloverMissionServiceTest {
             given(cloverMissionRecordRepository.findCloverMissionsList(eq(TEST_MEMBER_ID), any(LocalDate.class)))
                     .willReturn(Collections.emptyList());
 
-            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(3), anyList()))
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList()))
                     .willThrow(new CustomException(ErrorCode.MISSION_NOT_FOUND));
 
             // --- When & Then ---
@@ -325,7 +326,7 @@ class CloverMissionServiceTest {
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MISSION_NOT_FOUND);
             verify(cloverMissionRecordRepository).findByIdWithMember(eq(nonExistentId));
         }
-        
+
         @Test
         @DisplayName("실패 - 다른 사용자의 미션 조회 시 403 에러")
         void getMissionInfo_Forbidden_Failure() {
@@ -536,7 +537,7 @@ class CloverMissionServiceTest {
             // --- Given ---
             CloverMissionRecord assignedMission = createTestMissionRecord(TEST_USER_MISSION_ID, CloverMissionStatus.PAUSED, mockMember);
 
-            when(cloverMissionRecordRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(assignedMission));
+            given(cloverMissionRecordRepository.findByIdWithMember(anyLong())).willReturn(Optional.of(assignedMission));
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
@@ -569,7 +570,7 @@ class CloverMissionServiceTest {
 
             List<Long> excludedIds = List.of(101L, 102L);
             List<Long> newMissionIds = List.of(103L, 104L);
-            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), anyInt(), eq(excludedIds)))
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), eq(excludedIds)))
                     .willReturn(newMissionIds);
 
             CloverMission newMission1 = new TimerMission(300);
@@ -624,8 +625,7 @@ class CloverMissionServiceTest {
                     .willReturn(mockFeedbacks);
 
             LLMProcessingResultDto llmResult = LLMProcessingResultDto.builder()
-                    .expectedEffect("가벼운 사회적 활동으로 자신감을 회복하고 싶어하는 상태")
-                    .negativeKeywords(List.of("어려운", "복잡한"))
+                    .searchQuery("가벼운 사회적 활동으로 자신감을 회복하고 싶어하는 상태")
                     .build();
             given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(mockFeedbacks))
                     .willReturn(llmResult);
@@ -634,7 +634,7 @@ class CloverMissionServiceTest {
             List<Long> newMissionIds = List.of(102L, 103L);
             given(cloverMissionVectorRepository.searchSimilarMissionsIds(
                     eq("가벼운 사회적 활동으로 자신감을 회복하고 싶어하는 상태"),
-                    eq(3),
+                    eq(10),
                     eq(excludedIds)))
                     .willReturn(newMissionIds);
 
@@ -664,7 +664,7 @@ class CloverMissionServiceTest {
             verify(llmBasedQueryGeneratorService).generateMissionRecommendationStrategy(mockFeedbacks);
             verify(cloverMissionVectorRepository).searchSimilarMissionsIds(
                     eq("가벼운 사회적 활동으로 자신감을 회복하고 싶어하는 상태"),
-                    eq(3),
+                    eq(10),
                     eq(excludedIds));
         }
 
@@ -685,7 +685,7 @@ class CloverMissionServiceTest {
             List<Long> newMissionIds = List.of(101L, 102L);
             given(cloverMissionVectorRepository.searchSimilarMissionsIds(
                     eq("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션"),
-                    eq(3),
+                    eq(10),
                     eq(Collections.emptyList())))
                     .willReturn(newMissionIds);
 
@@ -715,7 +715,7 @@ class CloverMissionServiceTest {
             verify(llmBasedQueryGeneratorService, never()).generateMissionRecommendationStrategy(any());
             verify(cloverMissionVectorRepository).searchSimilarMissionsIds(
                     eq("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션"),
-                    eq(3),
+                    eq(10),
                     eq(Collections.emptyList()));
         }
 
@@ -748,7 +748,7 @@ class CloverMissionServiceTest {
             List<Long> newMissionIds = List.of(101L, 102L);
             given(cloverMissionVectorRepository.searchSimilarMissionsIds(
                     eq("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션"),
-                    eq(3),
+                    eq(10),
                     eq(Collections.emptyList())))
                     .willReturn(newMissionIds);
 
@@ -778,8 +778,65 @@ class CloverMissionServiceTest {
             verify(llmBasedQueryGeneratorService).generateMissionRecommendationStrategy(mockFeedbacks);
             verify(cloverMissionVectorRepository).searchSimilarMissionsIds(
                     eq("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션"),
-                    eq(3),
+                    eq(10),
                     eq(Collections.emptyList()));
+        }
+
+        @Test
+        @DisplayName("성공 - 추천 가능한 미션이 3개 미만일 경우 가능한 만큼만 할당")
+        void assignCloverMissionList_Success_WhenLessThanThreeMissionsAvailable() {
+            // --- Given ---
+            given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
+            given(cloverMissionRecordRepository.findCloverMissionsList(anyLong(), any())).willReturn(Collections.emptyList());
+
+            // 벡터 DB에서 2개의 미션 ID만 반환
+            List<Long> newMissionIds = List.of(101L, 102L);
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList()))
+                    .willReturn(newMissionIds);
+
+            CloverMission newMission1 = new TimerMission(300);
+            ReflectionTestUtils.setField(newMission1, "id", 101L);
+            CloverMission newMission2 = new TimerMission(600);
+            ReflectionTestUtils.setField(newMission2, "id", 102L);
+            List<CloverMission> foundMissions = List.of(newMission1, newMission2);
+            given(cloverMissionRepository.findAllById(newMissionIds)).willReturn(foundMissions);
+
+            List<CloverMissionRecord> savedNewRecords = foundMissions.stream()
+                    .map(mission -> CloverMissionRecord.from(mission, mockMember))
+                    .toList();
+            given(cloverMissionRecordRepository.saveAll(anyList())).willReturn(savedNewRecords);
+
+            // --- When ---
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+
+            // --- Then ---
+            assertThat(result).isNotNull();
+            // 최종 할당된 미션은 2개여야 한다.
+            assertThat(result.getMissions().size()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("성공 - 추천 가능한 미션이 전혀 없을 경우 빈 리스트 반환")
+        void assignCloverMissionList_Success_WhenNoMissionsAvailable() {
+            // --- Given ---
+            given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
+            given(cloverMissionRecordRepository.findCloverMissionsList(anyLong(), any())).willReturn(Collections.emptyList());
+
+            // 벡터 DB에서 빈 리스트 반환
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList()))
+                    .willReturn(Collections.emptyList());
+
+            given(cloverMissionRepository.findAllById(Collections.emptyList())).willReturn(Collections.emptyList());
+            given(cloverMissionRecordRepository.saveAll(anyList())).willReturn(Collections.emptyList());
+
+            // --- When ---
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+
+            // --- Then ---
+            assertThat(result).isNotNull();
+            // 최종 할당된 미션은 0개여야 한다.
+            assertThat(result.getMissions().size()).isEqualTo(0);
+            verify(cloverMissionRecordRepository, times(1)).saveAll(eq(Collections.emptyList()));
         }
 
         @Test
@@ -818,7 +875,7 @@ class CloverMissionServiceTest {
                     .map(CloverMissionRecord::getMissionId)
                     .toList();
 
-            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), anyInt(), eq(excludedMissionIds)))
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), eq(excludedMissionIds)))
                     .willThrow(new CustomException(ErrorCode.MISSION_NOT_FOUND));
 
             // --- When & Then ---
@@ -849,5 +906,103 @@ class CloverMissionServiceTest {
                 .build();
         ReflectionTestUtils.setField(mission, "id", userMissionId);
         return mission;
+    }
+
+    @Nested
+    @DisplayName("LLM 가중치 기반 미션 추천 정렬")
+    class MissionWeightingAndSorting {
+
+        @Test
+        @DisplayName("성공 - LLM 추천(recommend) 전략에 따라 미션이 정렬되어 할당된다")
+        void assignMissions_Success_SortedByRecommendedStrategy() {
+
+            // --- Given ---
+            CloverMission mission1 = createCloverMission(1L, "운동하기", MissionCategory.HEALTH, MissionDifficulty.EASY); // 점수: 10(카테고리)+10(난이도) = 20
+            CloverMission mission2 = createCloverMission(2L, "친구에게 연락하기", MissionCategory.RELATIONSHIP, MissionDifficulty.EASY); // 점수: 10(난이도) = 10
+            CloverMission mission3 = createCloverMission(3L, "10분 산책하기", MissionCategory.HEALTH, MissionDifficulty.NORMAL); // 점수: 10(카테고리) = 10
+            CloverMission mission4 = createCloverMission(4L, "방 청소하기", MissionCategory.ENVIRONMENT, MissionDifficulty.HARD); // 점수: 0
+            CloverMission mission5 = createCloverMission(5L, "새로운 장소 방문", MissionCategory.ENVIRONMENT, MissionDifficulty.NORMAL); // 점수: 0
+            List<CloverMission> allMissions = List.of(mission1, mission2, mission3, mission4, mission5);
+            List<Long> allMissionIds = allMissions.stream().map(CloverMission::getId).toList();
+
+            LLMProcessingResultDto llmStrategy = LLMProcessingResultDto.builder()
+                    .searchQuery("건강하고 쉬운 활동 추천")
+                    .recommendCategories(List.of(MissionCategory.HEALTH))
+                    .recommendDifficulties(List.of(MissionDifficulty.EASY))
+                    .build();
+
+            given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
+            given(cloverMissionRecordRepository.findCloverMissionsList(anyLong(), any())).willReturn(Collections.emptyList());
+            given(cloverMissionRecordService.getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID)).willReturn(List.of(mock(UserFeedbackForLLMDto.class)));
+            given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(anyList())).willReturn(llmStrategy);
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList())).willReturn(allMissionIds);
+            given(cloverMissionRepository.findAllById(allMissionIds)).willReturn(allMissions);
+
+            ArgumentCaptor<List<CloverMissionRecord>> captor = ArgumentCaptor.forClass(List.class);
+            when(cloverMissionRecordRepository.saveAll(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+
+            // --- When ---
+            cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+
+            // --- Then ---
+            List<CloverMissionRecord> savedRecords = captor.getValue();
+            List<Long> savedMissionIds = savedRecords.stream().map(CloverMissionRecord::getMissionId).toList();
+
+            assertThat(savedRecords.size()).isEqualTo(3);
+            assertThat(savedMissionIds).contains(1L);
+            assertThat(savedMissionIds).contains(2L, 3L);
+        }
+
+        @Test
+        @DisplayName("성공 - LLM 회피(avoid) 전략에 따라 점수가 낮은 미션은 후순위로 밀려난다")
+        void assignMissions_Success_SortedByAvoidedStrategy() {
+
+            // --- Given ---
+            CloverMission mission1 = createCloverMission(1L, "가벼운 스트레칭", MissionCategory.HEALTH, MissionDifficulty.EASY); // 점수: 10
+            CloverMission mission2 = createCloverMission(2L, "명상하기", MissionCategory.HEALTH, MissionDifficulty.NORMAL); // 점수: 10
+            CloverMission mission3 = createCloverMission(3L, "장보기", MissionCategory.ENVIRONMENT, MissionDifficulty.NORMAL); // 점수: 10-5 = 5
+            CloverMission mission4 = createCloverMission(4L, "격렬한 운동", MissionCategory.HEALTH, MissionDifficulty.HARD); // 점수: 10-5 = 5
+            CloverMission mission5 = createCloverMission(5L, "심부름하기", MissionCategory.ENVIRONMENT, MissionDifficulty.HARD); // 점수: -5
+            List<CloverMission> allMissions = List.of(mission1, mission2, mission3, mission4, mission5);
+            List<Long> allMissionIds = allMissions.stream().map(CloverMission::getId).toList();
+
+            LLMProcessingResultDto llmStrategy = LLMProcessingResultDto.builder()
+                    .searchQuery("건강하지만 어렵지 않은 활동 추천")
+                    .recommendCategories(List.of(MissionCategory.HEALTH))
+                    .avoidCategories(List.of(MissionCategory.ENVIRONMENT))
+                    .avoidDifficulties(List.of(MissionDifficulty.HARD))
+                    .build();
+
+            given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
+            given(cloverMissionRecordRepository.findCloverMissionsList(anyLong(), any())).willReturn(Collections.emptyList());
+            given(cloverMissionRecordService.getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID)).willReturn(List.of(mock(UserFeedbackForLLMDto.class)));
+            given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(anyList())).willReturn(llmStrategy);
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList())).willReturn(allMissionIds);
+            given(cloverMissionRepository.findAllById(allMissionIds)).willReturn(allMissions);
+
+            ArgumentCaptor<List<CloverMissionRecord>> captor = ArgumentCaptor.forClass(List.class);
+            when(cloverMissionRecordRepository.saveAll(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+
+            // --- When ---
+            cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+
+            // --- Then ---
+            List<CloverMissionRecord> savedRecords = captor.getValue();
+            List<Long> savedMissionIds = savedRecords.stream().map(CloverMissionRecord::getMissionId).toList();
+
+            assertThat(savedRecords.size()).isEqualTo(3);
+            assertThat(savedMissionIds).contains(1L, 2L);
+            assertThat(savedMissionIds).doesNotContain(5L);
+            assertThat(savedMissionIds).containsAnyOf(3L, 4L);
+        }
+
+        private CloverMission createCloverMission(Long id, String title, MissionCategory category, MissionDifficulty difficulty) {
+            TimerMission mission = new TimerMission(300);
+            ReflectionTestUtils.setField(mission, "id", id);
+            ReflectionTestUtils.setField(mission, "title", title);
+            ReflectionTestUtils.setField(mission, "category", category);
+            ReflectionTestUtils.setField(mission, "difficulty", difficulty);
+            return mission;
+        }
     }
 }

@@ -4,7 +4,7 @@ import com.example.live_backend.domain.BaseEntity;
 import com.example.live_backend.domain.mission.clover.Enum.CloverType;
 import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.clover.Enum.MissionDifficulty;
-import com.example.live_backend.domain.mission.clover.dto.CloverMissionCreateRequestDto;
+import com.example.live_backend.domain.mission.clover.dto.AdminRegisterCloverMissionRequestDto;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import jakarta.persistence.*;
@@ -37,6 +37,8 @@ public abstract class CloverMission extends BaseEntity {
     @Column(nullable = false)
     private MissionDifficulty difficulty;
 
+    public abstract CloverType getCloverType();
+
     protected CloverMission(String title, String description, MissionCategory category, MissionDifficulty difficulty) {
         this.title = title;
         this.description = description;
@@ -44,9 +46,13 @@ public abstract class CloverMission extends BaseEntity {
         this.difficulty = difficulty;
     }
 
-    public static CloverMission from(CloverMissionCreateRequestDto dto) {
+    public static CloverMission from(AdminRegisterCloverMissionRequestDto dto) {
         CloverMission mission;
         CloverType cloverType = dto.getCloverType();
+
+        if (cloverType == null) {
+            throw new CustomException(ErrorCode.INVALID_CLOVER_TYPE);
+        }
 
         if (cloverType.equals(CloverType.DISTANCE)) {
             mission = new DistanceMission(dto.getRequiredMeters());
