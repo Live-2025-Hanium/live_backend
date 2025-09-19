@@ -66,8 +66,8 @@ public class CloverMissionRecord {
     @Column(name = "progress_in_seconds")
     private Integer progressInSeconds;
 
-    @Column(name = "target_address")
-    private String targetAddress;
+    @Column(name = "target_place_category")
+    private String targetPlaceCategory;
 
     @Column(name = "place_name")
     private String placeName;
@@ -127,13 +127,6 @@ public class CloverMissionRecord {
         }
 
         return builder.build();
-    }
-
-    public void setVisitPlace(String placeName, String address, String latitude, String longitude) {
-        this.placeName = placeName;
-        this.address = address;
-        this.latitude = latitude;
-        this.longitude = longitude;
     }
 
     public void updateDistanceProgress(int progressInMeters) {
@@ -202,6 +195,13 @@ public class CloverMissionRecord {
         if (imageUrl != null) {
             this.imageUrl = imageUrl;
         }
+    }
+
+    public void setVisitPlace(String placeName, String address, String latitude, String longitude) {
+        this.placeName = placeName;
+        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 }
 

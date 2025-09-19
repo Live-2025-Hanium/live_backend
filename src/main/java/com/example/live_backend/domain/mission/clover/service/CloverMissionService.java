@@ -6,23 +6,25 @@ import com.example.live_backend.domain.mission.clover.Enum.MissionScoreCalculato
 import com.example.live_backend.domain.mission.clover.dto.*;
 import com.example.live_backend.domain.mission.clover.entity.CloverMission;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
+import com.example.live_backend.domain.mission.clover.entity.VisitMission;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionVectorRepository;
-import com.example.live_backend.domain.survey.vitality.dto.VitalityResultDto;
 import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
+import com.example.live_backend.infra.kakao.feign.KakaoLocalFeign;
+import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static java.util.Collections.emptyList;
 
@@ -36,14 +38,17 @@ public class CloverMissionService {
     private final MemberRepository memberRepository;
 
     private final CloverMissionRecordRepository cloverMissionRecordRepository;
+    private final KakaoLocalFeign kakaoLocalFeign;
 
     private final CloverMissionRecordService cloverMissionRecordService;
     private final LLMBasedQueryGeneratorService llmBasedQueryGeneratorService;
 
     private static final int DEFAULT_MISSION_COUNT = 10;
+    private static final int KAKAO_SEARCH_RADIUS = 2000;
+    private static final int KAKAO_SEARCH_SIZE = 1;
 
     @Transactional
-    public CloverMissionListResponseDto getCloverMissionList(Long memberId, double lat, double lon) {
+    public CloverMissionListResponseDto getCloverMissionList(Long memberId, BigDecimal lat, BigDecimal lon) {
 
         Member member = findUser(memberId);
         LocalDate today  = LocalDate.now();
@@ -51,7 +56,7 @@ public class CloverMissionService {
 
         // 만약 오늘의 클로버 미션 리스트를 조회했는데 결과가 없다면 미션 할당받는 아래의 로직 수행
         if (todayMissions.isEmpty()) {
-            List<CloverMissionRecord> newMissions = assignNewCloverMissions(member, emptyList());
+            List<CloverMissionRecord> newMissions = assignNewCloverMissions(member, emptyList(), lat, lon);
             return CloverMissionListResponseDto.of(memberId, newMissions);
         }
 
@@ -59,7 +64,7 @@ public class CloverMissionService {
     }
 
     @Transactional
-    public CloverMissionListResponseDto assignCloverMissionList(Long memberId) {
+    public CloverMissionListResponseDto assignCloverMissionList(Long memberId, BigDecimal lat, BigDecimal lon) {
 
         Member member = findUser(memberId);
         LocalDate today  = LocalDate.now();
@@ -70,7 +75,7 @@ public class CloverMissionService {
                 .map(CloverMissionRecord::getMissionId)
                 .toList();
 
-        List<CloverMissionRecord> newMissions = assignNewCloverMissions(member, excludedMissionIds);
+        List<CloverMissionRecord> newMissions = assignNewCloverMissions(member, excludedMissionIds, lat, lon);
 
         return CloverMissionListResponseDto.of(memberId, newMissions);
     }
@@ -125,7 +130,7 @@ public class CloverMissionService {
         return findByUserMissionId;
     }
 
-    private List<CloverMissionRecord> assignNewCloverMissions(Member member, List<Long> excludedIds) {
+    private List<CloverMissionRecord> assignNewCloverMissions(Member member, List<Long> excludedIds, BigDecimal lat, BigDecimal lon) {
 
         LLMProcessingResultDto strategy = generateSearchStrategy(member.getId());
 
@@ -138,7 +143,7 @@ public class CloverMissionService {
                 .limit(3)
                 .toList();
 
-        return createAndSaveMissionRecords(finalMissions, member);
+        return createAndSaveMissionRecords(finalMissions, member, lat, lon);
     }
 
     private Member findUser(Long memberId) {
@@ -180,12 +185,44 @@ public class CloverMissionService {
         return cloverMissionRepository.findAllById(missionIds);
     }
 
-    private List<CloverMissionRecord> createAndSaveMissionRecords(List<CloverMission> missions, Member member) {
-        List<CloverMissionRecord> missionRecords = missions.stream()
-                .map(mission -> CloverMissionRecord.from(mission, member))
-                .toList();
+    private List<CloverMissionRecord> createAndSaveMissionRecords(List<CloverMission> missions, Member member, BigDecimal lat, BigDecimal lon) {
 
-        return cloverMissionRecordRepository.saveAll(missionRecords);
+        List<CloverMissionRecord> visitMissionRecords = new ArrayList<>();
+        for (CloverMission mission : missions) {
+            CloverMissionRecord record = CloverMissionRecord.from(mission, member);
+
+            if (mission instanceof VisitMission visitMission) {
+                KakaoKeywordResponse response = kakaoLocalFeign.searchByKeyword(
+                        visitMission.getTargetPlaceCategory(),
+                        lon.doubleValue(),
+                        lat.doubleValue(),
+                        KAKAO_SEARCH_RADIUS,
+                        1,
+                        KAKAO_SEARCH_SIZE,
+                        "distance"
+                );
+
+                if (response.getDocuments().isEmpty()) {
+                    response = kakaoLocalFeign.searchByKeyword(
+                            visitMission.getTargetPlaceCategory(),
+                            lon.doubleValue(),
+                            lat.doubleValue(),
+                            10000,
+                            1,
+                            KAKAO_SEARCH_SIZE,
+                            "distance"
+                    );
+                }
+
+                if (!response.getDocuments().isEmpty()) {
+                    KakaoKeywordResponse.KakaoPlace place = response.getDocuments().get(0);
+                    record.setVisitPlace(place.getPlaceName(), place.getAddressName(), place.getY(), place.getX());
+                }
+            }
+            visitMissionRecords.add(record);
+        }
+
+        return cloverMissionRecordRepository.saveAll(visitMissionRecords);
     }
 
     private LLMProcessingResultDto generateDefaultSearchQuery() {
