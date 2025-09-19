@@ -193,15 +193,8 @@ public class CloverMissionService {
             return missions;
         }
 
-        Map<CloverMission, Integer> missionScores = new HashMap<>();
-
-        for (CloverMission mission : missions) {
-            int score = calculateMissionScore(mission, strategy);
-            missionScores.put(mission, score);
-        }
-
         return missions.stream()
-                .sorted(Comparator.comparingInt(missionScores::get).reversed())
+                .sorted(Comparator.comparingInt(m -> calculateMissionScore((CloverMission) m, strategy)).reversed())
                 .toList();
     }
 

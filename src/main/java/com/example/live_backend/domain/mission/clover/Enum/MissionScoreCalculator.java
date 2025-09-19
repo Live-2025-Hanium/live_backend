@@ -39,17 +39,20 @@ public enum MissionScoreCalculator {
         }
     };
 
+    private static final int RECOMMEND_POINT = 10;
+    private static final int PENALTY_POINT = 5;
+
     public abstract int calculate(CloverMission mission, LLMProcessingResultDto strategy);
 
     private static <T> int calculateScore(T value, List<T> recommendList, List<T> avoidList) {
         int score = 0;
 
         if (recommendList != null && recommendList.contains(value)) {
-            score += 10;
+            score += RECOMMEND_POINT;
         }
 
         if (avoidList != null && avoidList.contains(value)) {
-            score -= 5;
+            score -= PENALTY_POINT;
         }
 
         return score;
