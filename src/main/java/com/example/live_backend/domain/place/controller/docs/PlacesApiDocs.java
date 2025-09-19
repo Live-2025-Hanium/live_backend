@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@RequestMapping("/v1/places")
+@RequestMapping("/api/v1/places")
 @Tag(name = "Places", description = "장소 검색 및 조회 API")
 public interface PlacesApiDocs {
     
@@ -42,6 +42,11 @@ public interface PlacesApiDocs {
         @ApiResponse(
             responseCode = "400",
             description = "잘못된 요청 파라미터",
+            content = @Content(schema = @Schema(implementation = ResponseHandler.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "접근 권한 없음",
             content = @Content(schema = @Schema(implementation = ResponseHandler.class))
         ),
         @ApiResponse(
@@ -68,6 +73,11 @@ public interface PlacesApiDocs {
         @ApiResponse(
             responseCode = "400",
             description = "잘못된 요청 파라미터",
+            content = @Content(schema = @Schema(implementation = ResponseHandler.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "접근 권한 없음",
             content = @Content(schema = @Schema(implementation = ResponseHandler.class))
         ),
         @ApiResponse(
@@ -102,6 +112,11 @@ public interface PlacesApiDocs {
             content = @Content(schema = @Schema(implementation = ResponseHandler.class))
         ),
         @ApiResponse(
+            responseCode = "403",
+            description = "접근 권한 없음",
+            content = @Content(schema = @Schema(implementation = ResponseHandler.class))
+        ),
+        @ApiResponse(
             responseCode = "429",
             description = "레이트 리밋 초과",
             content = @Content(schema = @Schema(implementation = ResponseHandler.class))
@@ -126,6 +141,11 @@ public interface PlacesApiDocs {
             responseCode = "200",
             description = "조회 성공",
             content = @Content(schema = @Schema(implementation = PlaceDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "접근 권한 없음",
+            content = @Content(schema = @Schema(implementation = ResponseHandler.class))
         ),
         @ApiResponse(
             responseCode = "404",
