@@ -18,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @Slf4j
+@Tag(name = "Places", description = "장소 검색 및 조회 API")
 @RestController
+@RequestMapping("/api/v1/places")
 @RequiredArgsConstructor
 public class PlaceController implements PlacesApiDocs {
     
@@ -33,6 +36,7 @@ public class PlaceController implements PlacesApiDocs {
     private final PlaceMissionService placeMissionService;
     
     @Override
+    @GetMapping("/suggest")
     @PublicApi(reason = "자동완성 제안은 로그인 없이 가능합니다")
     public ResponseHandler<SuggestResponse> suggest(
             @Valid @ModelAttribute SuggestRequest request) {
@@ -41,6 +45,7 @@ public class PlaceController implements PlacesApiDocs {
     }
     
     @Override
+    @GetMapping("/search")
     @PublicApi(reason = "장소 검색은 로그인 없이 가능합니다")
     public ResponseHandler<PageTemplate<PlaceItem>> searchByKeyword(
             @Valid @ModelAttribute SearchRequest request) {
@@ -49,6 +54,7 @@ public class PlaceController implements PlacesApiDocs {
     }
     
     @Override
+    @GetMapping("/nearby")
     @PublicApi(reason = "주변 장소 검색은 로그인 없이 가능합니다")
     public ResponseHandler<PageTemplate<PlaceItem>> searchByCategory(
             @Valid @ModelAttribute NearbyRequest request) {
@@ -57,8 +63,8 @@ public class PlaceController implements PlacesApiDocs {
     }
     
     @Override
-    @PublicApi(reason = "장소 상세"
-		+ " 조회는 로그인 없이 가능합니다")
+    @GetMapping("/{placeId}")
+    @PublicApi(reason = "장소 상세 조회는 로그인 없이 가능합니다")
     public ResponseHandler<PlaceDetail> getPlaceDetail(
             @PathVariable String placeId) {
         PlaceDetail detail = placeService.getPlaceDetail(placeId);
@@ -66,6 +72,7 @@ public class PlaceController implements PlacesApiDocs {
     }
     
     @Override
+    @GetMapping("/missions/active")
     @AuthenticatedApi(reason = "활성 미션 조회는 로그인한 사용자만 가능합니다")
     public ResponseHandler<ActiveMissionPlace> getActiveMissionPlace(
             @AuthenticationPrincipal UserDetails userDetails) {
