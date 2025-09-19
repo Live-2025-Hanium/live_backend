@@ -1,5 +1,7 @@
 package com.example.live_backend.domain.survey.service;
 
+import com.example.live_backend.domain.survey.vitality.dto.VitalityResultDto;
+import com.example.live_backend.domain.survey.vitality.service.VitalityService;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.domain.memeber.entity.Member;
@@ -36,9 +38,11 @@ public class SurveyService {
     private final SurveyQuestionRepository surveyQuestionRepository;
     private final SurveyQuestionOptionRepository surveyQuestionOptionRepository;
     private final MemberRepository memberRepository;
+    private final VitalityService vitalityService;
+
 
     private static final int MIN_ANSWER_NUMBER = 1;
-    private static final int MAX_ANSWER_NUMBER = 5;
+    private static final int MAX_ANSWER_NUMBER = 8;
 
 
     @Transactional
@@ -90,13 +94,19 @@ public class SurveyService {
         SurveyResponse saved = surveyResponseRepository.save(surveyResponse);
 
         member.updateLastSurveySubmittedAt(saved.getCreatedAt());
-        
+
         log.info("설문 응답 제출 완료 - 응답 ID: {}, 사용자 ID: {}", saved.getId(), memberId);
+
+        VitalityResultDto vitalityResult = vitalityService.analyzeVitality(saved.getId());
+        member.updateVitalityLevel(vitalityResult.getLevel());
+
+        log.info("활력 분석 완료 - 응답 ID: {}, 활력 수준: {}", saved.getId(), vitalityResult.getLevel());
 
         return SurveySubmissionResponseDto.builder()
             .responseId(saved.getId())
             .submittedAt(saved.getCreatedAt())
             .totalAnswers(saved.getAnswers().size())
+            .vitalityResult(vitalityResult)
             .build();
     }
 

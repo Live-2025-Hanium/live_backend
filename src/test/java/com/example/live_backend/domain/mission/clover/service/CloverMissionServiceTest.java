@@ -17,6 +17,7 @@ import com.example.live_backend.domain.mission.clover.entity.TimerMission;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionVectorRepository;
+import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,6 +83,7 @@ class CloverMissionServiceTest {
                 .build();
 
         ReflectionTestUtils.setField(mockMember, "id", TEST_MEMBER_ID);
+        ReflectionTestUtils.setField(mockMember, "vitalityLevel", VitalityLevel.HIGH_VITALITY);
     }
 
     @Nested
@@ -627,7 +629,8 @@ class CloverMissionServiceTest {
             LLMProcessingResultDto llmResult = LLMProcessingResultDto.builder()
                     .searchQuery("가벼운 사회적 활동으로 자신감을 회복하고 싶어하는 상태")
                     .build();
-            given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(mockFeedbacks))
+
+            given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(mockFeedbacks, VitalityLevel.HIGH_VITALITY))
                     .willReturn(llmResult);
 
             List<Long> excludedIds = List.of(101L);
@@ -661,7 +664,7 @@ class CloverMissionServiceTest {
             assertThat(result.getMissions().size()).isEqualTo(2);
 
             verify(cloverMissionRecordService).getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID);
-            verify(llmBasedQueryGeneratorService).generateMissionRecommendationStrategy(mockFeedbacks);
+            verify(llmBasedQueryGeneratorService).generateMissionRecommendationStrategy(mockFeedbacks, VitalityLevel.HIGH_VITALITY);
             verify(cloverMissionVectorRepository).searchSimilarMissionsIds(
                     eq("가벼운 사회적 활동으로 자신감을 회복하고 싶어하는 상태"),
                     eq(10),
@@ -712,7 +715,7 @@ class CloverMissionServiceTest {
             assertThat(result.getMissions().size()).isEqualTo(2);
 
             verify(cloverMissionRecordService).getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID);
-            verify(llmBasedQueryGeneratorService, never()).generateMissionRecommendationStrategy(any());
+            verify(llmBasedQueryGeneratorService, never()).generateMissionRecommendationStrategy(any(), any());
             verify(cloverMissionVectorRepository).searchSimilarMissionsIds(
                     eq("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션"),
                     eq(10),
@@ -740,8 +743,7 @@ class CloverMissionServiceTest {
             given(cloverMissionRecordService.getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID))
                     .willReturn(mockFeedbacks);
 
-            // LLM 처리 실패 시뮬레이션
-            given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(mockFeedbacks))
+            given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(mockFeedbacks, VitalityLevel.HIGH_VITALITY))
                     .willThrow(new RuntimeException("LLM 서비스 오류"));
 
             // Fallback 쿼리로 벡터 검색
@@ -775,7 +777,7 @@ class CloverMissionServiceTest {
             assertThat(result.getMissions().size()).isEqualTo(2);
 
             verify(cloverMissionRecordService).getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID);
-            verify(llmBasedQueryGeneratorService).generateMissionRecommendationStrategy(mockFeedbacks);
+            verify(llmBasedQueryGeneratorService).generateMissionRecommendationStrategy(mockFeedbacks, VitalityLevel.HIGH_VITALITY);
             verify(cloverMissionVectorRepository).searchSimilarMissionsIds(
                     eq("처음 시작하는 사용자를 위한 가벼운 일상 활동과 간단한 사회적 소통 미션"),
                     eq(10),
@@ -934,7 +936,7 @@ class CloverMissionServiceTest {
             given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
             given(cloverMissionRecordRepository.findCloverMissionsList(anyLong(), any())).willReturn(Collections.emptyList());
             given(cloverMissionRecordService.getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID)).willReturn(List.of(mock(UserFeedbackForLLMDto.class)));
-            given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(anyList())).willReturn(llmStrategy);
+            given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(anyList(), eq(VitalityLevel.HIGH_VITALITY))).willReturn(llmStrategy);
             given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList())).willReturn(allMissionIds);
             given(cloverMissionRepository.findAllById(allMissionIds)).willReturn(allMissions);
 
@@ -976,7 +978,7 @@ class CloverMissionServiceTest {
             given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
             given(cloverMissionRecordRepository.findCloverMissionsList(anyLong(), any())).willReturn(Collections.emptyList());
             given(cloverMissionRecordService.getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID)).willReturn(List.of(mock(UserFeedbackForLLMDto.class)));
-            given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(anyList())).willReturn(llmStrategy);
+            given(llmBasedQueryGeneratorService.generateMissionRecommendationStrategy(anyList(), eq(VitalityLevel.HIGH_VITALITY))).willReturn(llmStrategy);
             given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList())).willReturn(allMissionIds);
             given(cloverMissionRepository.findAllById(allMissionIds)).willReturn(allMissions);
 

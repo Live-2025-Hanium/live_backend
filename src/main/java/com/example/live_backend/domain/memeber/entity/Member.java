@@ -5,6 +5,7 @@ import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.memeber.entity.vo.BirthDate;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
 
+import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -56,6 +57,10 @@ public class Member {
 	@Column(length = 100)
 	private String occupationDetail; // OTHER 선택 시 추가 입력
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "vitality_level")
+	private VitalityLevel vitalityLevel;
+
 	@Column(name = "last_survey_submitted_at")
 	private LocalDateTime lastSurveySubmittedAt;
 
@@ -93,4 +98,7 @@ public class Member {
 		this.lastSurveySubmittedAt = lastSurveySubmittedAt;
 	}
 
+	public void updateVitalityLevel(VitalityLevel vitalityLevel) {
+		this.vitalityLevel = vitalityLevel;
+	}
 }
