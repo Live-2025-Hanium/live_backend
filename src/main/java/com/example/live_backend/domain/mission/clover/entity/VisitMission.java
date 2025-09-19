@@ -12,10 +12,10 @@ import lombok.NoArgsConstructor;
 public class VisitMission extends CloverMission {
 
     @Column(name = "target_address")
-    private String targetAddress;
+    private String targetPlaceCategory;
 
     public VisitMission(String targetAddress) {
-        this.targetAddress = targetAddress;
+        this.targetPlaceCategory = targetAddress;
     }
 
     @Override
