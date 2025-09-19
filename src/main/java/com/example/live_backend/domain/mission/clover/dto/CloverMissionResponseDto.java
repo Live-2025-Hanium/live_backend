@@ -1,6 +1,7 @@
 package com.example.live_backend.domain.mission.clover.dto;
 
 import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
+import com.example.live_backend.domain.mission.clover.Enum.CloverType;
 import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.clover.Enum.MissionDifficulty;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
@@ -61,10 +62,16 @@ public class CloverMissionResponseDto {
     private String illustrationUrl;
 
     public static CloverMissionResponseDto from(CloverMissionRecord missionRecord) {
+
+        String missionTitle = missionRecord.getMissionTitle();
+        if (missionRecord.getCloverType() == CloverType.VISIT && missionRecord.getPlaceName() != null && !missionRecord.getPlaceName().isEmpty()) {
+            missionTitle = String.format("%s (%s)", missionRecord.getMissionTitle(), missionRecord.getPlaceName());
+        }
+
         CloverMissionResponseDto.CloverMissionResponseDtoBuilder builder = CloverMissionResponseDto.builder()
                 .userMissionId(missionRecord.getId())
                 .cloverType(String.valueOf(missionRecord.getCloverType()))
-                .missionTitle(missionRecord.getMissionTitle())
+                .missionTitle(missionTitle)
                 .missionStatus(missionRecord.getCloverMissionStatus())
                 .missionDifficulty(missionRecord.getMissionDifficulty())
                 .missionCategory(missionRecord.getMissionCategory());
