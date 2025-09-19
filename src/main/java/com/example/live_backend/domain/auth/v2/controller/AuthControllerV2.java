@@ -31,13 +31,10 @@ public class AuthControllerV2 implements AuthControllerV2Docs {
     public ResponseHandler<LoginResponseDto> kakaoOAuthCallback(@Valid @RequestBody OAuthCallbackRequest request) {
         log.info("카카오 OAuth 콜백 요청: redirectUri={}", request.redirectUri());
 
-        // 1. 인가 코드로 카카오 사용자 정보 조회
         KakaoLoginRequestDto kakaoUser = kakaoAuthService.processOAuthLogin(
             request.code(),
             request.redirectUri()
         );
-
-        // 2. 기존 로그인 프로세스 활용 (회원가입/로그인 + JWT 발급)
         LoginResult result = authenticationFacade.processKakaoLogin(kakaoUser);
 
         return ResponseHandler.success(result.getResponse());
