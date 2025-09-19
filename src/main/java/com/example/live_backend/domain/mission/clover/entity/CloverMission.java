@@ -61,7 +61,7 @@ public abstract class CloverMission extends BaseEntity {
         } else if (cloverType.equals(CloverType.PHOTO)) {
             mission = new PhotoMission(dto.getIllustrationUrl());
         } else if (cloverType.equals(CloverType.VISIT)) {
-            mission = new VisitMission(dto.getTargetAddress());
+            mission = new VisitMission(dto.getTargetPlaceCategory());
         } else {
             throw new CustomException(ErrorCode.INVALID_CLOVER_TYPE);
         }
