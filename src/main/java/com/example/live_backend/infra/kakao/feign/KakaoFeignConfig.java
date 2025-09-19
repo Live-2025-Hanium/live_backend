@@ -11,7 +11,10 @@ import org.springframework.context.annotation.Configuration;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
-@EnableFeignClients
+@EnableFeignClients(basePackages = {
+    "com.example.live_backend.infra.kakao.feign",
+    "com.example.live_backend.infra.kakao.oauth.feign"
+})
 public class KakaoFeignConfig {
 
     @Value("${kakao.local.rest-api-key}")
