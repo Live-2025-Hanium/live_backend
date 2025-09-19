@@ -10,16 +10,15 @@ import com.example.live_backend.domain.mission.clover.Enum.CloverType;
 import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.clover.Enum.MissionDifficulty;
 import com.example.live_backend.domain.mission.clover.dto.*;
-import com.example.live_backend.domain.mission.clover.entity.CloverMission;
-import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
-import com.example.live_backend.domain.mission.clover.entity.DistanceMission;
-import com.example.live_backend.domain.mission.clover.entity.TimerMission;
+import com.example.live_backend.domain.mission.clover.entity.*;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRepository;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionVectorRepository;
 import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
+import com.example.live_backend.infra.kakao.feign.KakaoLocalFeign;
+import com.example.live_backend.infra.kakao.feign.dto.KakaoKeywordResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,6 +30,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
@@ -67,9 +67,15 @@ class CloverMissionServiceTest {
     @Mock
     private LLMBasedQueryGeneratorService llmBasedQueryGeneratorService;
 
+    @Mock
+    private KakaoLocalFeign kakaoLocalFeign;
+
+
     private Member mockMember;
     private final Long TEST_MEMBER_ID = 1L;
     private final Long TEST_USER_MISSION_ID = 10L;
+    private final BigDecimal TEST_LAT = new BigDecimal("37.123456");
+    private final BigDecimal TEST_LON = new BigDecimal("127.123456");
 
     @BeforeEach
     void setUp() {
@@ -106,7 +112,7 @@ class CloverMissionServiceTest {
                     .willReturn(existingMissions);
 
             // --- When ---
-            CloverMissionListResponseDto result = cloverMissionService.getCloverMissionList(TEST_MEMBER_ID);
+            CloverMissionListResponseDto result = cloverMissionService.getCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
 
             // --- Then ---
             assertThat(result).isNotNull();
@@ -159,7 +165,7 @@ class CloverMissionServiceTest {
             given(cloverMissionRecordRepository.saveAll(anyList())).willReturn(savedMissions);
 
             // --- When ---
-            CloverMissionListResponseDto result = cloverMissionService.getCloverMissionList(TEST_MEMBER_ID);
+            CloverMissionListResponseDto result = cloverMissionService.getCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
 
             // --- Then ---
             assertThat(result).isNotNull();
@@ -185,7 +191,7 @@ class CloverMissionServiceTest {
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () ->
-                    cloverMissionService.getCloverMissionList(TEST_MEMBER_ID));
+                    cloverMissionService.getCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON));
 
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MISSION_NOT_FOUND);
             verify(cloverMissionRepository, never()).findAllById(any());
@@ -201,7 +207,7 @@ class CloverMissionServiceTest {
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
-                cloverMissionService.getCloverMissionList(TEST_MEMBER_ID);
+                cloverMissionService.getCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
             });
 
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
@@ -269,12 +275,17 @@ class CloverMissionServiceTest {
         void getVisitMissionInfo() {
 
             // --- Given ---
+            String placeName = "스타벅스 강남점";
             String address = "서울시 강남구 테헤란로";
             CloverMissionRecord visitMission = CloverMissionRecord.builder()
                     .member(mockMember)
                     .cloverType(CloverType.VISIT)
-                    .targetAddress(address)
+                    .placeName(placeName)
+                    .address(address)
+                    .latitude(String.valueOf(TEST_LAT))
+                    .longitude(String.valueOf(TEST_LON))
                     .build();
+
             ReflectionTestUtils.setField(visitMission, "id", TEST_USER_MISSION_ID);
 
             given(cloverMissionRecordRepository.findByIdWithMember(eq(TEST_USER_MISSION_ID))).willReturn(Optional.of(visitMission));
@@ -285,7 +296,7 @@ class CloverMissionServiceTest {
             // --- Then ---
             verify(cloverMissionRecordRepository).findByIdWithMember(eq(TEST_USER_MISSION_ID));
             assertThat(actualDto).isNotNull();
-            assertThat(actualDto.getTargetAddress()).isEqualTo(address);
+            assertThat(actualDto.getAddress()).isEqualTo(address);
         }
 
         @Test
@@ -593,7 +604,7 @@ class CloverMissionServiceTest {
             given(cloverMissionRecordRepository.saveAll(anyList())).willReturn(savedNewRecords);
 
             // --- When ---
-            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
 
             // --- Then ---
             assertThat(result).isNotNull();
@@ -656,7 +667,7 @@ class CloverMissionServiceTest {
             given(cloverMissionRecordRepository.saveAll(anyList())).willReturn(savedNewRecords);
 
             // --- When ---
-            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
 
             // --- Then ---
             assertThat(result).isNotNull();
@@ -707,7 +718,7 @@ class CloverMissionServiceTest {
             given(cloverMissionRecordRepository.saveAll(anyList())).willReturn(savedNewRecords);
 
             // --- When ---
-            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
 
             // --- Then ---
             assertThat(result).isNotNull();
@@ -769,7 +780,7 @@ class CloverMissionServiceTest {
             given(cloverMissionRecordRepository.saveAll(anyList())).willReturn(savedNewRecords);
 
             // --- When ---
-            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
 
             // --- Then ---
             assertThat(result).isNotNull();
@@ -809,7 +820,7 @@ class CloverMissionServiceTest {
             given(cloverMissionRecordRepository.saveAll(anyList())).willReturn(savedNewRecords);
 
             // --- When ---
-            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
 
             // --- Then ---
             assertThat(result).isNotNull();
@@ -832,7 +843,7 @@ class CloverMissionServiceTest {
             given(cloverMissionRecordRepository.saveAll(anyList())).willReturn(Collections.emptyList());
 
             // --- When ---
-            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
 
             // --- Then ---
             assertThat(result).isNotNull();
@@ -850,7 +861,7 @@ class CloverMissionServiceTest {
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () -> {
-                cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+                cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
             });
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
         }
@@ -882,7 +893,7 @@ class CloverMissionServiceTest {
 
             // --- When & Then ---
             CustomException exception = assertThrows(CustomException.class, () ->
-                    cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID));
+                    cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON));
 
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MISSION_NOT_FOUND);
             verify(cloverMissionRepository, never()).findAllById(any());
@@ -944,7 +955,7 @@ class CloverMissionServiceTest {
             when(cloverMissionRecordRepository.saveAll(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
 
             // --- When ---
-            cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+            cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
 
             // --- Then ---
             List<CloverMissionRecord> savedRecords = captor.getValue();
@@ -986,7 +997,7 @@ class CloverMissionServiceTest {
             when(cloverMissionRecordRepository.saveAll(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
 
             // --- When ---
-            cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID);
+            cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
 
             // --- Then ---
             List<CloverMissionRecord> savedRecords = captor.getValue();
@@ -1005,6 +1016,273 @@ class CloverMissionServiceTest {
             ReflectionTestUtils.setField(mission, "category", category);
             ReflectionTestUtils.setField(mission, "difficulty", difficulty);
             return mission;
+        }
+    }
+
+    @Nested
+    @DisplayName("방문 미션 장소 검색 및 할당")
+    class VisitMissionLocationAssignment {
+
+        @Test
+        @DisplayName("성공 - 방문 미션에 대해 카카오 API로 장소 검색 및 할당")
+        void assignCloverMissionList_Success_WithVisitMissionLocationFound() {
+
+            // --- Given ---
+            given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
+            given(cloverMissionRecordRepository.findCloverMissionsList(eq(TEST_MEMBER_ID), any(LocalDate.class)))
+                    .willReturn(Collections.emptyList());
+
+            // LLM 관련 mocking
+            given(cloverMissionRecordService.getRecentMissionRecordsWithFeedback(TEST_MEMBER_ID))
+                    .willReturn(Collections.emptyList());
+
+            // 방문 미션과 일반 미션들 생성 (3개)
+            VisitMission visitMission = new VisitMission("카페");
+            ReflectionTestUtils.setField(visitMission, "id", 1L);
+            ReflectionTestUtils.setField(visitMission, "title", "카페 가기");
+            ReflectionTestUtils.setField(visitMission, "category", MissionCategory.HEALTH);
+            ReflectionTestUtils.setField(visitMission, "difficulty", MissionDifficulty.EASY);
+
+            TimerMission timerMission1 = new TimerMission(300);
+            ReflectionTestUtils.setField(timerMission1, "id", 2L);
+            ReflectionTestUtils.setField(timerMission1, "title", "5분 명상하기");
+            ReflectionTestUtils.setField(timerMission1, "category", MissionCategory.HEALTH);
+            ReflectionTestUtils.setField(timerMission1, "difficulty", MissionDifficulty.EASY);
+
+            DistanceMission distanceMission = new DistanceMission(1000);
+            ReflectionTestUtils.setField(distanceMission, "id", 3L);
+            ReflectionTestUtils.setField(distanceMission, "title", "1km 걷기");
+            ReflectionTestUtils.setField(distanceMission, "category", MissionCategory.HEALTH);
+            ReflectionTestUtils.setField(distanceMission, "difficulty", MissionDifficulty.NORMAL);
+
+            List<Long> missionIds = List.of(1L, 2L, 3L);
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList()))
+                    .willReturn(missionIds);
+            given(cloverMissionRepository.findAllById(missionIds))
+                    .willReturn(List.of(visitMission, timerMission1, distanceMission));
+
+            // 카카오 API 응답 Mock (더 간단하게)
+            KakaoKeywordResponse.KakaoPlace place1 = mock(KakaoKeywordResponse.KakaoPlace.class);
+            given(place1.getPlaceName()).willReturn("스타벅스 강남점");
+            given(place1.getAddressName()).willReturn("서울 강남구 강남대로 390");
+            given(place1.getY()).willReturn("37.4979");
+            given(place1.getX()).willReturn("127.0276");
+
+            KakaoKeywordResponse kakaoResponse = mock(KakaoKeywordResponse.class);
+            given(kakaoResponse.getDocuments()).willReturn(List.of(place1));
+
+            given(kakaoLocalFeign.searchByKeyword(eq("카페"), eq(TEST_LON.doubleValue()), eq(TEST_LAT.doubleValue()), eq(2000), eq(1), eq(5), eq("distance")))
+                    .willReturn(kakaoResponse);
+
+            ArgumentCaptor<List<CloverMissionRecord>> captor = ArgumentCaptor.forClass(List.class);
+            when(cloverMissionRecordRepository.saveAll(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+
+            // --- When ---
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
+
+            // --- Then ---
+            assertThat(result).isNotNull();
+            assertThat(result.getMissions().size()).isEqualTo(3);
+
+            List<CloverMissionRecord> savedRecords = captor.getValue();
+            assertThat(savedRecords.size()).isEqualTo(3);
+
+            // 방문 미션 확인
+            CloverMissionRecord visitRecord = savedRecords.stream()
+                    .filter(record -> record.getCloverType() == CloverType.VISIT)
+                    .findFirst()
+                    .orElseThrow();
+
+            assertThat(visitRecord.getPlaceName()).isEqualTo("스타벅스 강남점");
+            assertThat(visitRecord.getAddress()).isEqualTo("서울 강남구 강남대로 390");
+            assertThat(visitRecord.getLatitude()).isEqualTo("37.4979");
+            assertThat(visitRecord.getLongitude()).isEqualTo("127.0276");
+
+            verify(kakaoLocalFeign, times(1)).searchByKeyword(eq("카페"), anyDouble(), anyDouble(), eq(2000), eq(1), eq(5), eq("distance"));
+        }
+
+        @Test
+        @DisplayName("성공 - 첫 번째 검색 실패 후 재검색으로 장소 찾기")
+        void assignCloverMissionList_Success_RetrySearchWithLargerRadius() {
+
+            // --- Given ---
+            given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
+            given(cloverMissionRecordRepository.findCloverMissionsList(eq(TEST_MEMBER_ID), any(LocalDate.class)))
+                    .willReturn(Collections.emptyList());
+
+            VisitMission visitMission = new VisitMission("도서관");
+            ReflectionTestUtils.setField(visitMission, "id", 1L);
+            ReflectionTestUtils.setField(visitMission, "title", "도서관 가기");
+            ReflectionTestUtils.setField(visitMission, "category", MissionCategory.HEALTH);
+            ReflectionTestUtils.setField(visitMission, "difficulty", MissionDifficulty.NORMAL);
+
+            List<Long> missionIds = List.of(1L);
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList()))
+                    .willReturn(missionIds);
+            given(cloverMissionRepository.findAllById(missionIds))
+                    .willReturn(List.of(visitMission));
+
+            // 첫 번째 검색 (2km) - 실패
+            KakaoKeywordResponse emptyResponse = mock(KakaoKeywordResponse.class);
+            given(emptyResponse.getDocuments()).willReturn(Collections.emptyList());
+            given(kakaoLocalFeign.searchByKeyword(eq("도서관"), eq(TEST_LON.doubleValue()), eq(TEST_LAT.doubleValue()), eq(2000), eq(1), eq(5), eq("distance")))
+                    .willReturn(emptyResponse);
+
+            // 두 번째 검색 (20km) - 성공
+            KakaoKeywordResponse.KakaoPlace place = createMockPlace("강남구립도서관", "서울 강남구 대치동 123", "37.5010", "127.0300");
+            KakaoKeywordResponse successResponse = mock(KakaoKeywordResponse.class);
+            given(successResponse.getDocuments()).willReturn(List.of(place));
+            given(kakaoLocalFeign.searchByKeyword(eq("도서관"), eq(TEST_LON.doubleValue()), eq(TEST_LAT.doubleValue()), eq(20000), eq(1), eq(5), eq("distance")))
+                    .willReturn(successResponse);
+
+            ArgumentCaptor<List<CloverMissionRecord>> captor = ArgumentCaptor.forClass(List.class);
+            when(cloverMissionRecordRepository.saveAll(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+
+            // --- When ---
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
+
+            // --- Then ---
+            assertThat(result).isNotNull();
+            assertThat(result.getMissions().size()).isEqualTo(1);
+
+            List<CloverMissionRecord> savedRecords = captor.getValue();
+            CloverMissionRecord visitRecord = savedRecords.get(0);
+
+            assertThat(visitRecord.getPlaceName()).isEqualTo("강남구립도서관");
+            assertThat(visitRecord.getAddress()).isEqualTo("서울 강남구 대치동 123");
+
+            verify(kakaoLocalFeign, times(1)).searchByKeyword(eq("도서관"), anyDouble(), anyDouble(), eq(2000), eq(1), eq(5), eq("distance"));
+            verify(kakaoLocalFeign, times(1)).searchByKeyword(eq("도서관"), anyDouble(), anyDouble(), eq(20000), eq(1), eq(5), eq("distance"));
+        }
+
+        @Test
+        @DisplayName("성공 - 방문 미션 장소 검색 완전 실패 시 해당 미션 제외")
+        void assignCloverMissionList_Success_ExcludeVisitMissionWhenNoPlaceFound() {
+
+            // --- Given ---
+            given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
+            given(cloverMissionRecordRepository.findCloverMissionsList(eq(TEST_MEMBER_ID), any(LocalDate.class)))
+                    .willReturn(Collections.emptyList());
+
+            // 방문 미션과 일반 미션 혼합
+            VisitMission visitMission = new VisitMission("체육관");
+            ReflectionTestUtils.setField(visitMission, "id", 1L);
+            ReflectionTestUtils.setField(visitMission, "title", "체육관 가기");
+            ReflectionTestUtils.setField(visitMission, "category", MissionCategory.HEALTH);
+            ReflectionTestUtils.setField(visitMission, "difficulty", MissionDifficulty.NORMAL);
+
+            TimerMission timerMission = new TimerMission(300);
+            ReflectionTestUtils.setField(timerMission, "id", 2L);
+            ReflectionTestUtils.setField(timerMission, "title", "5분 명상하기");
+            ReflectionTestUtils.setField(timerMission, "category", MissionCategory.HEALTH);
+            ReflectionTestUtils.setField(timerMission, "difficulty", MissionDifficulty.EASY);
+
+            List<Long> missionIds = List.of(1L, 2L);
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList()))
+                    .willReturn(missionIds);
+            given(cloverMissionRepository.findAllById(missionIds))
+                    .willReturn(List.of(visitMission, timerMission));
+
+            // 방문 미션 장소 검색 - 두 번 모두 실패
+            KakaoKeywordResponse emptyResponse = mock(KakaoKeywordResponse.class);
+            given(emptyResponse.getDocuments()).willReturn(Collections.emptyList());
+            given(kakaoLocalFeign.searchByKeyword(eq("체육관"), eq(TEST_LON.doubleValue()), eq(TEST_LAT.doubleValue()), eq(2000), eq(1), eq(5), eq("distance")))
+                    .willReturn(emptyResponse);
+            given(kakaoLocalFeign.searchByKeyword(eq("체육관"), eq(TEST_LON.doubleValue()), eq(TEST_LAT.doubleValue()), eq(20000), eq(1), eq(5), eq("distance")))
+                    .willReturn(emptyResponse);
+
+            ArgumentCaptor<List<CloverMissionRecord>> captor = ArgumentCaptor.forClass(List.class);
+            when(cloverMissionRecordRepository.saveAll(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+
+            // --- When ---
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
+
+            // --- Then ---
+            assertThat(result).isNotNull();
+            assertThat(result.getMissions().size()).isEqualTo(1); // 방문 미션은 제외되고 타이머 미션만 남음
+
+            List<CloverMissionRecord> savedRecords = captor.getValue();
+            CloverMissionRecord remainingRecord = savedRecords.get(0);
+
+            assertThat(remainingRecord.getCloverType()).isEqualTo(CloverType.TIMER);
+            assertThat(remainingRecord.getMissionTitle()).isEqualTo("5분 명상하기");
+
+            verify(kakaoLocalFeign, times(1)).searchByKeyword(eq("체육관"), anyDouble(), anyDouble(), eq(2000), eq(1), eq(5), eq("distance"));
+            verify(kakaoLocalFeign, times(1)).searchByKeyword(eq("체육관"), anyDouble(), anyDouble(), eq(20000), eq(1), eq(5), eq("distance"));
+        }
+
+        @Test
+        @DisplayName("성공 - 방문 미션과 일반 미션이 함께 할당되는 경우")
+        void assignCloverMissionList_Success_MixedMissionTypes() {
+
+            // --- Given ---
+            given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
+            given(cloverMissionRecordRepository.findCloverMissionsList(eq(TEST_MEMBER_ID), any(LocalDate.class)))
+                    .willReturn(Collections.emptyList());
+
+            VisitMission visitMission = new VisitMission("카페");
+            ReflectionTestUtils.setField(visitMission, "id", 1L);
+            ReflectionTestUtils.setField(visitMission, "title", "카페 가기");
+            ReflectionTestUtils.setField(visitMission, "category", MissionCategory.HEALTH);
+            ReflectionTestUtils.setField(visitMission, "difficulty", MissionDifficulty.EASY);
+
+            DistanceMission distanceMission = new DistanceMission(1000);
+            ReflectionTestUtils.setField(distanceMission, "id", 2L);
+            ReflectionTestUtils.setField(distanceMission, "title", "1km 걷기");
+            ReflectionTestUtils.setField(distanceMission, "category", MissionCategory.HEALTH);
+            ReflectionTestUtils.setField(distanceMission, "difficulty", MissionDifficulty.NORMAL);
+
+            List<Long> missionIds = List.of(1L, 2L);
+            given(cloverMissionVectorRepository.searchSimilarMissionsIds(anyString(), eq(10), anyList()))
+                    .willReturn(missionIds);
+            given(cloverMissionRepository.findAllById(missionIds))
+                    .willReturn(List.of(visitMission, distanceMission));
+
+            // 카카오 API 응답
+            KakaoKeywordResponse.KakaoPlace place = createMockPlace("스타벅스 테스트점", "서울 강남구 테스트로 123", "37.4979", "127.0276");
+            KakaoKeywordResponse kakaoResponse = mock(KakaoKeywordResponse.class);
+            given(kakaoResponse.getDocuments()).willReturn(List.of(place));
+            given(kakaoLocalFeign.searchByKeyword(eq("카페"), eq(TEST_LON.doubleValue()), eq(TEST_LAT.doubleValue()), eq(2000), eq(1), eq(5), eq("distance")))
+                    .willReturn(kakaoResponse);
+
+            ArgumentCaptor<List<CloverMissionRecord>> captor = ArgumentCaptor.forClass(List.class);
+            when(cloverMissionRecordRepository.saveAll(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+
+            // --- When ---
+            CloverMissionListResponseDto result = cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
+
+            // --- Then ---
+            assertThat(result).isNotNull();
+            assertThat(result.getMissions().size()).isEqualTo(2);
+
+            List<CloverMissionRecord> savedRecords = captor.getValue();
+
+            // 방문 미션 확인
+            CloverMissionRecord visitRecord = savedRecords.stream()
+                    .filter(record -> record.getCloverType() == CloverType.VISIT)
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(visitRecord.getPlaceName()).isEqualTo("스타벅스 테스트점");
+            assertThat(visitRecord.getAddress()).isEqualTo("서울 강남구 테스트로 123");
+
+            // 거리 미션 확인
+            CloverMissionRecord distanceRecord = savedRecords.stream()
+                    .filter(record -> record.getCloverType() == CloverType.DISTANCE)
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(distanceRecord.getPlaceName()).isNull();
+            assertThat(distanceRecord.getRequiredMeters()).isEqualTo(1000);
+
+            verify(kakaoLocalFeign, times(1)).searchByKeyword(eq("카페"), anyDouble(), anyDouble(), eq(2000), eq(1), eq(5), eq("distance"));
+        }
+
+        private KakaoKeywordResponse.KakaoPlace createMockPlace(String placeName, String address, String lat, String lon) {
+            KakaoKeywordResponse.KakaoPlace place = mock(KakaoKeywordResponse.KakaoPlace.class);
+            given(place.getPlaceName()).willReturn(placeName);
+            given(place.getAddressName()).willReturn(address);
+            given(place.getY()).willReturn(lat);
+            given(place.getX()).willReturn(lon);
+            return place;
         }
     }
 }
