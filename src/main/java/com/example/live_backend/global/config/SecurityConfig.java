@@ -10,8 +10,13 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.example.live_backend.domain.auth.jwt.JwtFilter;
+
+import java.util.Arrays;
 
 
 @Configuration
@@ -25,10 +30,35 @@ public class SecurityConfig {
 	}
 
 	/**
-	 * 스웨거 및 정적 리소스 전용 체인
+	 * 웹 애플리케이션 V2 API용 체인 (CORS 활성화)
 	 */
 	@Bean
 	@Order(1)
+	public SecurityFilterChain webApiChain(HttpSecurity http) throws Exception {
+		http
+			.securityMatcher("/api/v2/**")
+			.csrf(AbstractHttpConfigurer::disable)
+			.formLogin(AbstractHttpConfigurer::disable)
+			.httpBasic(AbstractHttpConfigurer::disable)
+			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			.sessionManagement(mgmt ->
+				mgmt.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+			)
+			.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+			.authorizeHttpRequests(auth -> auth
+				.requestMatchers(
+					"/api/v2/auth/kakao/callback"
+				).permitAll()
+				.anyRequest().authenticated()
+			);
+		return http.build();
+	}
+
+	/**
+	 * 스웨거 및 정적 리소스 전용 체인
+	 */
+	@Bean
+	@Order(2)
 	public SecurityFilterChain staticResourcesChain(HttpSecurity http) throws Exception {
 		http
 			// 정적 리소스 매칭
@@ -50,7 +80,7 @@ public class SecurityConfig {
 	 * API 요청용 체인: JWT 필터 적용
 	 */
 	@Bean
-	@Order(2)
+	@Order(3)
 	public SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
 		http
 			.securityMatcher("/api/**")
@@ -79,6 +109,48 @@ public class SecurityConfig {
 	}
 
 
-	// Flutter 앱에서는 CORS 설정이 불필요합니다.
-	// 웹 브라우저가 아닌 네이티브 앱이므로 브라우저의 동일 출처 정책에 영향받지 않습니다!
+	/**
+	 * CORS 설정 (웹 애플리케이션용)
+	 */
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration();
+
+		// 허용할 Origin 설정
+		configuration.setAllowedOrigins(Arrays.asList(
+			"http://localhost:3000",
+			"http://127.0.0.1:3000"
+		));
+
+		// 허용할 HTTP 메서드
+		configuration.setAllowedMethods(Arrays.asList(
+			"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+		));
+
+		// 허용할 헤더
+		configuration.setAllowedHeaders(Arrays.asList(
+			"Authorization",
+			"Content-Type",
+			"X-Requested-With",
+			"Accept",
+			"Origin"
+		));
+
+		// 노출할 헤더
+		configuration.setExposedHeaders(Arrays.asList(
+			"Authorization",
+			"Content-Type"
+		));
+
+		// 크리덴셜 허용
+		configuration.setAllowCredentials(true);
+
+		// Preflight 요청 캐시 시간 (초)
+		configuration.setMaxAge(3600L);
+
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/api/v2/**", configuration);
+
+		return source;
+	}
 }
