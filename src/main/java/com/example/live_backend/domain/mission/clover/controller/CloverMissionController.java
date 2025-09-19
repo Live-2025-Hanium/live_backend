@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/missions/clover")
@@ -25,10 +27,12 @@ public class CloverMissionController implements CloverMissionControllerDocs {
 	@GetMapping
 	@AuthenticatedApi(reason = "클로버 미션 리스트 조회는 로그인한 사용자만 가능합니다")
 	public ResponseHandler<CloverMissionListResponseDto> getCloverMissionList(
+			@RequestParam("lat") BigDecimal lat,
+			@RequestParam("lon") BigDecimal lon,
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
 		Long userId = userDetails.getMemberId();
-		CloverMissionListResponseDto response = cloverMissionService.getCloverMissionList(userId);
+		CloverMissionListResponseDto response = cloverMissionService.getCloverMissionList(userId, lat, lon);
 
 		return ResponseHandler.success(response);
 	}
@@ -90,10 +94,12 @@ public class CloverMissionController implements CloverMissionControllerDocs {
 	@GetMapping("/refill")
 	@AuthenticatedApi(reason = "클로버 미션 리필은 로그인한 사용자만 가능합니다")
 	public ResponseHandler<CloverMissionListResponseDto> refillCloverMission(
+			@RequestParam("lat") BigDecimal lat,
+			@RequestParam("lon") BigDecimal lon,
 			@AuthenticationPrincipal PrincipalDetails userDetails) {
 
 		Long userId = userDetails.getMemberId();
-		CloverMissionListResponseDto response = cloverMissionService.assignCloverMissionList(userId);
+		CloverMissionListResponseDto response = cloverMissionService.assignCloverMissionList(userId, lat, lon);
 
 		return ResponseHandler.success(response);
 	}

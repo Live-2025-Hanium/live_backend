@@ -43,7 +43,7 @@ public class CloverMissionService {
     private static final int DEFAULT_MISSION_COUNT = 10;
 
     @Transactional
-    public CloverMissionListResponseDto getCloverMissionList(Long memberId) {
+    public CloverMissionListResponseDto getCloverMissionList(Long memberId, double lat, double lon) {
 
         Member member = findUser(memberId);
         LocalDate today  = LocalDate.now();
