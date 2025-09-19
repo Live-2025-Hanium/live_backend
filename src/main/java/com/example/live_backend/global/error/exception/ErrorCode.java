@@ -75,6 +75,7 @@ public enum ErrorCode {
 	
 	/* ------------------ 502 BAD_GATEWAY : 외부 서비스 오류 ------------------ */
 	EXTERNAL_API_ERROR(BAD_GATEWAY, "외부 API 호출에 실패했습니다."),
+	KAKAO_AUTH_FAILED(BAD_GATEWAY, "카카오 인증 처리에 실패했습니다."),
 	
 	/* ------------------ 504 GATEWAY_TIMEOUT : 타임아웃 ------------------ */
 	EXTERNAL_API_TIMEOUT(GATEWAY_TIMEOUT, "외부 API 호출 시간이 초과되었습니다."),
