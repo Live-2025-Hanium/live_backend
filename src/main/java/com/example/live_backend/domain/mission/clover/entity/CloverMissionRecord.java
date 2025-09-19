@@ -66,9 +66,6 @@ public class CloverMissionRecord {
     @Column(name = "progress_in_seconds")
     private Integer progressInSeconds;
 
-    @Column(name = "target_place_category")
-    private String targetPlaceCategory;
-
     @Column(name = "place_name")
     private String placeName;
 
