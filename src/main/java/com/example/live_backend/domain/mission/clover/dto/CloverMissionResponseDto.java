@@ -45,8 +45,17 @@ public class CloverMissionResponseDto {
     @Schema(description = "거리 미션 남은 거리", example = "500")
     private Integer remainingDistance;
 
-    @Schema(description = "방문 미션 주소", example = "주소정보")
-    private String targetAddress;
+    @Schema(description = "추천 장소 이름", example = "스타벅스 OO점")
+    private String placeName;
+
+    @Schema(description = "추천 장소 주소", example = "서울시 강남구 ...")
+    private String address;
+
+    @Schema(description = "추천 장소 위도", example = "37.123456")
+    private String latitude;
+
+    @Schema(description = "추천 장소 경도", example = "127.123456")
+    private String longitude;
 
     @Schema(description = "일러스트레이션 주소", example = "S3 URL")
     private String illustrationUrl;
@@ -96,7 +105,10 @@ public class CloverMissionResponseDto {
     }
 
     private static void addVisitInfo(CloverMissionResponseDto.CloverMissionResponseDtoBuilder builder, CloverMissionRecord missionRecord) {
-        builder.targetAddress(missionRecord.getTargetAddress());
+        builder.placeName(missionRecord.getPlaceName())
+                .address(missionRecord.getAddress())
+                .latitude(missionRecord.getLatitude())
+                .longitude(missionRecord.getLongitude());
     }
 
     private static void addPhotoInfo(CloverMissionResponseDto.CloverMissionResponseDtoBuilder builder, CloverMissionRecord missionRecord) {
