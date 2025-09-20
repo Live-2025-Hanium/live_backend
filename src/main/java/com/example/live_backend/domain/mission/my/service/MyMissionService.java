@@ -75,7 +75,9 @@ public class MyMissionService {
 
     public List<MyMissionResponseDto> getMyMissionsList(Long memberId) {
 
-        List<MyMission> myMissions = myMissionRepository.findAllByMemberId(memberId);
+        LocalDate today = LocalDate.now();
+
+        List<MyMission> myMissions = myMissionRepository.findMissionsByDate(memberId, today);
 
         return myMissions.stream()
                 .map(MyMissionResponseDto::from)

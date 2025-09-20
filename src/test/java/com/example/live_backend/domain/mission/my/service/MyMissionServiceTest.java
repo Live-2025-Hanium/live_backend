@@ -298,12 +298,18 @@ class MyMissionServiceTest {
     class GetMyMissionsList {
 
         @Test
-        @DisplayName("성공 - 사용자의 마이미션 목록 조회")
-        void getMyMissionsList_Success() {
+        @DisplayName("성공 - 오늘 날짜가 포함된 마이미션 목록 조회")
+        void getMyMissionsList_Success_IncludesToday() {
 
             // --- Given ---
-            List<MyMission> mockMissions = List.of(mockMyMission);
-            given(myMissionRepository.findAllByMemberId(TEST_MEMBER_ID)).willReturn(mockMissions);
+            MyMission activeMission = MyMission.builder()
+                    .startDate(LocalDate.now().minusDays(1))
+                    .endDate(LocalDate.now().plusDays(1))
+                    .build();
+            List<MyMission> mockMissions = List.of(activeMission);
+
+            given(myMissionRepository.findMissionsByDate(eq(TEST_MEMBER_ID), any(LocalDate.class)))
+                    .willReturn(mockMissions);
 
             // --- When ---
             List<MyMissionResponseDto> result = myMissionService.getMyMissionsList(TEST_MEMBER_ID);
@@ -311,15 +317,16 @@ class MyMissionServiceTest {
             // --- Then ---
             assertThat(result).isNotNull();
             assertThat(result.size()).isEqualTo(1);
-            verify(myMissionRepository).findAllByMemberId(TEST_MEMBER_ID);
+            verify(myMissionRepository).findMissionsByDate(eq(TEST_MEMBER_ID), any(LocalDate.class));
         }
 
         @Test
-        @DisplayName("성공 - 빈 목록 반환")
-        void getMyMissionsList_Success_EmptyList() {
+        @DisplayName("성공 - 오늘 날짜가 포함된 미션이 없어 빈 목록 반환")
+        void getMyMissionsList_Success_EmptyListWhenNotActive() {
 
             // --- Given ---
-            given(myMissionRepository.findAllByMemberId(TEST_MEMBER_ID)).willReturn(Collections.emptyList());
+            given(myMissionRepository.findMissionsByDate(eq(TEST_MEMBER_ID), any(LocalDate.class)))
+                    .willReturn(Collections.emptyList());
 
             // --- When ---
             List<MyMissionResponseDto> result = myMissionService.getMyMissionsList(TEST_MEMBER_ID);
@@ -327,7 +334,7 @@ class MyMissionServiceTest {
             // --- Then ---
             assertThat(result).isNotNull();
             assertThat(result.size()).isEqualTo(0);
-            verify(myMissionRepository).findAllByMemberId(TEST_MEMBER_ID);
+            verify(myMissionRepository).findMissionsByDate(eq(TEST_MEMBER_ID), any(LocalDate.class));
         }
     }
 
@@ -379,6 +386,39 @@ class MyMissionServiceTest {
             // --- Then ---
             assertThat(result).isNotNull();
             verify(memberRepository).findById(TEST_MEMBER_ID);
+            verify(myMissionRecordRepository).saveAll(anyList());
+        }
+
+        @Test
+        @DisplayName("성공 - 반복 타입이 없는(오늘만) 미션에 대한 레코드 생성")
+        void getTodayMissions_Success_CreateRecordForNonRepeatingMission() {
+
+            // --- Given ---
+            LocalDate today = LocalDate.now();
+            MyMission missionForTodayOnly = MyMission.builder()
+                    .member(mockMember)
+                    .title("오늘만 하는 미션")
+                    .isActive(true)
+                    .startDate(today)
+                    .endDate(today)
+                    .scheduledTime(LocalTime.of(15, 0))
+                    .repeatType(null)
+                    .build();
+            MyMissionRecord recordForToday = MyMissionRecord.from(missionForTodayOnly, mockMember);
+
+            given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
+            given(myMissionRecordRepository.findByMemberAndAssignedDate(mockMember, today))
+                    .willReturn(Collections.emptyList())
+                    .willReturn(List.of(recordForToday));
+            given(myMissionRepository.findAllByMemberId(TEST_MEMBER_ID)).willReturn(List.of(missionForTodayOnly));
+            given(myMissionRecordRepository.saveAll(anyList())).willReturn(List.of(recordForToday));
+
+            // --- When ---
+            List<MyMissionRecordResponseDto> result = myMissionService.getTodayMissions(TEST_MEMBER_ID);
+
+            // --- Then ---
+            assertThat(result).isNotNull();
+            assertThat(result.size()).isEqualTo(1);
             verify(myMissionRecordRepository).saveAll(anyList());
         }
 
