@@ -29,6 +29,8 @@ public class KakaoAuthService {
 
     public KakaoLoginRequestDto processOAuthLogin(String code, String redirectUri) {
         try {
+            log.debug("카카오 OAuth 시작 - code: {}, redirectUri: {}", code, redirectUri);
+            log.debug("사용할 clientId: {}", clientId);
 
             KakaoTokenResponse tokenResponse = kakaoOAuthFeign.getToken(
                 "authorization_code",
@@ -37,10 +39,13 @@ public class KakaoAuthService {
                 code,
                 redirectUri
             );
+            log.debug("토큰 교환 성공 - accessToken 길이: {}",
+                tokenResponse.accessToken() != null ? tokenResponse.accessToken().length() : 0);
 
             KakaoUserResponse userResponse = kakaoUserFeign.getUserInfo(
                 "Bearer " + tokenResponse.accessToken()
             );
+            log.debug("사용자 정보 조회 성공 - userId: {}", userResponse.id());
 
             return convertToLoginRequest(userResponse);
 
