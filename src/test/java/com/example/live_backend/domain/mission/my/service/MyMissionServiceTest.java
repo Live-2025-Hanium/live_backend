@@ -125,6 +125,37 @@ class MyMissionServiceTest {
         }
 
         @Test
+        @DisplayName("성공 - 날짜 미지정(startDate, EndDate 모두) 시 오늘 날짜로 마이미션 생성")
+        void createMyMission_Success_NullDates() {
+
+            // --- Given ---
+            MyMissionRequestDto requestDto = MyMissionRequestDto.builder()
+                    .missionTitle("날짜 없는 마이미션")
+                    .startDate(null)
+                    .endDate(null)
+                    .scheduledTime(LocalTime.of(10, 0))
+                    .repeatType(null)
+                    .build();
+
+            MyMission missionWithNullDates = MyMission.from(requestDto, mockMember);
+
+            given(memberRepository.findById(TEST_MEMBER_ID)).willReturn(Optional.of(mockMember));
+            given(myMissionRepository.save(any(MyMission.class))).willReturn(missionWithNullDates);
+
+            // --- When ---
+            MyMissionResponseDto result = myMissionService.createMyMission(requestDto, TEST_MEMBER_ID);
+
+            // --- Then ---
+            assertThat(result).isNotNull();
+            assertThat(result.getStartDate()).isEqualTo(LocalDate.now());
+            assertThat(result.getEndDate()).isEqualTo(LocalDate.now());
+            assertThat(result.getRepeatType()).isNull();
+
+            verify(memberRepository).findById(TEST_MEMBER_ID);
+            verify(myMissionRepository).save(any(MyMission.class));
+        }
+
+        @Test
         @DisplayName("실패 - 존재하지 않는 사용자")
         void createMyMission_Fail_UserNotFound() {
 

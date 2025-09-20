@@ -121,6 +121,10 @@ public class MyMissionService {
         boolean isDateValid = !mission.getStartDate().isAfter(today) &&
                 !mission.getEndDate().isBefore(today);
 
+        if (mission.getRepeatType() == null) {
+            return mission.isActive() && isDateValid;
+        }
+
         boolean isRepeatDayValid = mission.getRepeatType().includes(todayOfWeek);
 
         return mission.isActive() && isDateValid && isRepeatDayValid;

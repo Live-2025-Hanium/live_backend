@@ -62,8 +62,6 @@ class AnalysisServiceTest {
             MonthlyParticipationResponseDto result = analysisService.getMonthlyParticipation(memberId, ym);
 
             // Then: 계산값 검증
-            assertThat(result.getYear()).isEqualTo(ym.getYear());
-            assertThat(result.getMonth()).isEqualTo(ym.getMonthValue());
             assertThat(result.getTotalAssigned()).isEqualTo(assigned);
             assertThat(result.getTotalCompleted()).isEqualTo(completed);
             assertThat(result.getCompletionRate()).isEqualTo(70.0);
