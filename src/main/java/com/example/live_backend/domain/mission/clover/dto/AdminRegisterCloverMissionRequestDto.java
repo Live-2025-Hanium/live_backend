@@ -22,7 +22,7 @@ public class AdminRegisterCloverMissionRequestDto {
     private int requiredMeters;
     private int requiredSeconds;
     private String illustrationUrl;
-    private String targetAddress;
+    private String targetPlaceCategory;
 
     private String relatedFeature;
     private String activityDescription;

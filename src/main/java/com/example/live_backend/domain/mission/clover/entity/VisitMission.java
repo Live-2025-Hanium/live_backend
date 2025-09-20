@@ -11,11 +11,11 @@ import lombok.NoArgsConstructor;
 @Getter
 public class VisitMission extends CloverMission {
 
-    @Column(name = "target_address")
-    private String targetAddress;
+    @Column(name = "target_place_category")
+    private String targetPlaceCategory;
 
-    public VisitMission(String targetAddress) {
-        this.targetAddress = targetAddress;
+    public VisitMission(String targetPlaceCategory) {
+        this.targetPlaceCategory = targetPlaceCategory;
     }
 
     @Override

@@ -57,14 +57,20 @@ public class CloverMissionListResponseDto {
      */
     public static CloverMissionListResponseDto of(Long userId, List<CloverMissionRecord> missionRecords) {
         List<CloverMissionList> missionDtoList = missionRecords.stream()
-                .map(record -> CloverMissionList.builder()
-                        .userMissionId(record.getId())
-                        .missionTitle(record.getMissionTitle())
-                        .cloverType(record.getCloverType())
-                        .missionStatus(record.getCloverMissionStatus())
-                        .missionDifficulty(record.getMissionDifficulty())
-                        .missionCategory(record.getMissionCategory())
-                        .build())
+                .map(record -> {
+                    String missionTitle = record.getMissionTitle();
+                    if (record.getCloverType() == CloverType.VISIT && record.getPlaceName() != null && !record.getPlaceName().isEmpty()) {
+                        missionTitle = String.format("%s (%s)", record.getMissionTitle(), record.getPlaceName());
+                    }
+                    return CloverMissionList.builder()
+                            .userMissionId(record.getId())
+                            .missionTitle(missionTitle)
+                            .cloverType(record.getCloverType())
+                            .missionStatus(record.getCloverMissionStatus())
+                            .missionDifficulty(record.getMissionDifficulty())
+                            .missionCategory(record.getMissionCategory())
+                            .build();
+                })
                 .toList();
 
         return CloverMissionListResponseDto.builder()

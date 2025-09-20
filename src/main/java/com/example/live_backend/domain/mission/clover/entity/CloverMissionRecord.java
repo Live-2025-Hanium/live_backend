@@ -66,8 +66,17 @@ public class CloverMissionRecord {
     @Column(name = "progress_in_seconds")
     private Integer progressInSeconds;
 
-    @Column(name = "target_address")
-    private String targetAddress;
+    @Column(name = "place_name")
+    private String placeName;
+
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "latitude")
+    private String latitude;
+
+    @Column(name = "longitude")
+    private String longitude;
 
     @Column(name = "illustration_url")
     private String illustrationUrl;
@@ -183,6 +192,13 @@ public class CloverMissionRecord {
         if (imageUrl != null) {
             this.imageUrl = imageUrl;
         }
+    }
+
+    public void setVisitPlace(String placeName, String address, String latitude, String longitude) {
+        this.placeName = placeName;
+        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 }
 

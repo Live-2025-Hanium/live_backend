@@ -10,12 +10,17 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.math.BigDecimal;
 
 @Tag(name = "Clover Mission", description = "클로버 미션 관련 API")
 public interface CloverMissionControllerDocs {
 
     @Operation(summary = "클로버 미션 리스트 조회 ", description = "클로버 미션 리스트를 조회합니다.")
     ResponseHandler<CloverMissionListResponseDto> getCloverMissionList(
+            @Parameter(description = "사용자 현재 위도") @RequestParam("lat") BigDecimal lat,
+            @Parameter(description = "사용자 현재 경도") @RequestParam("lon") BigDecimal lon,
             @Parameter(hidden = true)
             @AuthenticationPrincipal PrincipalDetails userDetails
     );
@@ -50,6 +55,8 @@ public interface CloverMissionControllerDocs {
 
     @Operation(summary = "클로버 리필", description = "클로버 미션을 새롭게 할당합니다.")
     ResponseHandler<CloverMissionListResponseDto> refillCloverMission(
+            @Parameter(description = "사용자 현재 위도") @RequestParam("lat") BigDecimal lat,
+            @Parameter(description = "사용자 현재 경도") @RequestParam("lon") BigDecimal lon,
             @Parameter(hidden = true)
             @AuthenticationPrincipal PrincipalDetails userDetails
     );

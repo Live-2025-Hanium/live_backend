@@ -48,7 +48,7 @@ class CloverAdminServiceTest {
                 .requiredSeconds(600)
                 .requiredMeters(1000)
                 .illustrationUrl("https://image.url/photo.jpg")
-                .targetAddress("서울시 강남구 테헤란로")
+                .targetPlaceCategory("카페")
                 .relatedFeature("건강 취약층")
                 .activityDescription("도보 활동을 장려")
                 .expectedEffect("심폐지구력 향상")

@@ -16,6 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -35,6 +37,8 @@ class CloverMissionControllerTest {
 
     private final Long TEST_MEMBER_ID = 1L;
     private final Long TEST_USER_MISSION_ID = 100L;
+    private final BigDecimal TEST_LAT = new BigDecimal("37.123456");
+    private final BigDecimal TEST_LON = new BigDecimal("127.123456");
 
     @Nested
     @DisplayName("GET /api/v1/missions/clover")
@@ -47,16 +51,16 @@ class CloverMissionControllerTest {
             // Given
             CloverMissionListResponseDto mockResponse = new CloverMissionListResponseDto();
             given(principalDetails.getMemberId()).willReturn(TEST_MEMBER_ID);
-            given(cloverMissionService.getCloverMissionList(TEST_MEMBER_ID)).willReturn(mockResponse);
+            given(cloverMissionService.getCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON)).willReturn(mockResponse);
 
             // When
             ResponseHandler<CloverMissionListResponseDto> response =
-                    cloverMissionController.getCloverMissionList(principalDetails);
+                    cloverMissionController.getCloverMissionList(TEST_LAT, TEST_LON, principalDetails);
 
             // Then
             assertTrue(response.isSuccess());
             assertEquals(mockResponse, response.getData());
-            verify(cloverMissionService).getCloverMissionList(TEST_MEMBER_ID);
+            verify(cloverMissionService).getCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
         }
     }
 
@@ -276,16 +280,16 @@ class CloverMissionControllerTest {
             // Given
             CloverMissionListResponseDto mockResponse = new CloverMissionListResponseDto();
             given(principalDetails.getMemberId()).willReturn(TEST_MEMBER_ID);
-            given(cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID)).willReturn(mockResponse);
+            given(cloverMissionService.assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON)).willReturn(mockResponse);
 
             // When
             ResponseHandler<CloverMissionListResponseDto> response = 
-                cloverMissionController.refillCloverMission(principalDetails);
+                cloverMissionController.refillCloverMission(TEST_LAT, TEST_LON, principalDetails);
 
             // Then
             assertTrue(response.isSuccess());
             assertEquals(mockResponse, response.getData());
-            verify(cloverMissionService).assignCloverMissionList(TEST_MEMBER_ID);
+            verify(cloverMissionService).assignCloverMissionList(TEST_MEMBER_ID, TEST_LAT, TEST_LON);
         }
     }
 }
