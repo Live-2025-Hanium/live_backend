@@ -9,7 +9,7 @@ import com.example.live_backend.infra.kakao.oauth.dto.KakaoUserResponse;
 @FeignClient(
     name = "kakao-user",
     url = "https://kapi.kakao.com",
-    configuration = KakaoOAuthFeignConfig.class
+    configuration = KakaoUserFeignConfig.class
 )
 public interface KakaoUserFeign {
 
