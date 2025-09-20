@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,14 +29,16 @@ public class AnalysisController implements AnalysisControllerDocs {
     private final AnalysisService analysisService;
 
     @Override
-    @AuthenticatedApi(reason = "금월 미션 완료율 조회는 로그인한 사용자만 가능합니다")
+    @AuthenticatedApi(reason = "월별 미션 완료율 조회는 로그인한 사용자만 가능합니다")
     @GetMapping("/participation")
     public ResponseHandler<MonthlyParticipationResponseDto> getParticipation(
-            @AuthenticationPrincipal PrincipalDetails userDetails
+            @AuthenticationPrincipal PrincipalDetails userDetails,
+            @RequestParam(name = "yearMonth") String yearMonth
     ) {
 
         Long memberId = userDetails.getMemberId();
-        YearMonth ym = YearMonth.now();
+        YearMonth ym = YearMonth.parse(yearMonth, DateTimeFormatter.ofPattern("yyyy-MM"));
+
         return ResponseHandler.success(analysisService.getMonthlyParticipation(memberId, ym));
     }
 

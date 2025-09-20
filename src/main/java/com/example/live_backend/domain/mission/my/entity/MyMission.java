@@ -44,18 +44,29 @@ public class MyMission {
     private LocalTime scheduledTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "repeat_type", nullable = false)
+    @Column(name = "repeat_type")
     private RepeatType repeatType;
 
     public static MyMission from(MyMissionRequestDto dto, Member member) {
+
+        LocalDate startDate = dto.getStartDate();
+        LocalDate endDate = dto.getEndDate();
+        RepeatType repeatType = dto.getRepeatType();
+
+        if (startDate == null && endDate == null) {
+            startDate = LocalDate.now();
+            endDate = LocalDate.now();
+            repeatType = null;
+        }
+
         return MyMission.builder()
                 .member(member)
                 .title(dto.getMissionTitle())
                 .isActive(true)
-                .startDate(dto.getStartDate())
-                .endDate(dto.getEndDate())
+                .startDate(startDate)
+                .endDate(endDate)
                 .scheduledTime(dto.getScheduledTime())
-                .repeatType(dto.getRepeatType() != null ? dto.getRepeatType() : RepeatType.EVERYDAY)
+                .repeatType(repeatType)
                 .build();
     }
 

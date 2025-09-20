@@ -75,7 +75,9 @@ public class MyMissionService {
 
     public List<MyMissionResponseDto> getMyMissionsList(Long memberId) {
 
-        List<MyMission> myMissions = myMissionRepository.findAllByMemberId(memberId);
+        LocalDate today = LocalDate.now();
+
+        List<MyMission> myMissions = myMissionRepository.findMissionsByDate(memberId, today);
 
         return myMissions.stream()
                 .map(MyMissionResponseDto::from)
@@ -120,6 +122,10 @@ public class MyMissionService {
 
         boolean isDateValid = !mission.getStartDate().isAfter(today) &&
                 !mission.getEndDate().isBefore(today);
+
+        if (mission.getRepeatType() == null) {
+            return mission.isActive() && isDateValid;
+        }
 
         boolean isRepeatDayValid = mission.getRepeatType().includes(todayOfWeek);
 

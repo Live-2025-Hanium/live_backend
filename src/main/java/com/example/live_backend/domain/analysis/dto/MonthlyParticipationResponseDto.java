@@ -3,22 +3,16 @@ package com.example.live_backend.domain.analysis.dto;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.YearMonth;
-
 @Getter
 @Builder
 public class MonthlyParticipationResponseDto {
 
-    private int year;
-    private int month;
     private long totalAssigned;
     private long totalCompleted;
-    private double completionRate; // 0.0 ~ 100.0
+    private double completionRate; // 소수점 둘째자리에서 반올림
 
-    public static MonthlyParticipationResponseDto from(YearMonth ym, Long assigned, Long completed, double rate) {
+    public static MonthlyParticipationResponseDto from(Long assigned, Long completed, double rate) {
         return MonthlyParticipationResponseDto.builder()
-                .year(ym.getYear())
-                .month(ym.getMonthValue())
                 .totalAssigned(assigned)
                 .totalCompleted(completed)
                 .completionRate(rate)

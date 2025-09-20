@@ -61,11 +61,11 @@ class AnalysisControllerTest {
         void returnsSuccessAndDelegatesToService() {
             // Given
             YearMonth expectedYm = YearMonth.now();
-            MonthlyParticipationResponseDto dto = MonthlyParticipationResponseDto.from(expectedYm, 10L, 7L, 70.0);
+            MonthlyParticipationResponseDto dto = MonthlyParticipationResponseDto.from(10L, 7L, 70.0);
             given(analysisService.getMonthlyParticipation(eq(MEMBER_ID), any(YearMonth.class))).willReturn(dto);
 
             // When
-            ResponseHandler<MonthlyParticipationResponseDto> response = analysisController.getParticipation(member);
+            ResponseHandler<MonthlyParticipationResponseDto> response = analysisController.getParticipation(member,String.valueOf(expectedYm));
 
             // Then
             assertThat(response.isSuccess()).isTrue();

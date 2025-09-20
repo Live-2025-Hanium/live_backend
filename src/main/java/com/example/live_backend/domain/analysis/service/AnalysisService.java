@@ -37,9 +37,9 @@ public class AnalysisService {
                 memberId, CloverMissionStatus.COMPLETED, monthStartDateTime, monthEndDateTime
         );
 
-        double rate = assigned == 0 ? 0.0 : (completed * 100.0) / assigned;
+        double rate = assigned == 0 ? 0.0 : Math.round((completed * 100.0) / assigned * 100.0) / 100.0;
 
-        return MonthlyParticipationResponseDto.from(ym, assigned, completed, rate);
+        return MonthlyParticipationResponseDto.from(assigned, completed, rate);
     }
 
     public WeeklyMissionSummaryResponseDto getWeeklySummary(Long memberId, LocalDate date) {

@@ -18,10 +18,12 @@ import java.time.LocalDate;
 @Tag(name = "Analysis", description = "미션 분석(통계) API")
 public interface AnalysisControllerDocs {
 
-    @Operation(summary = "금월 미션 완료율 조회", description = "금월의 미션 완료율을 조회합니다.")
+    @Operation(summary = "월별 미션 완료율 조회", description = "월별 미션 완료율을 조회합니다.")
     ResponseHandler<MonthlyParticipationResponseDto> getParticipation(
             @Parameter(hidden = true)
-            @AuthenticationPrincipal PrincipalDetails userDetails
+            @AuthenticationPrincipal PrincipalDetails userDetails,
+            @Parameter(description = "조회 기준 년,월", example = "2025-08")
+            @RequestParam(name = "yearMonth") String yearMonth
     );
 
     @Operation(summary = "주간 미션 완료 현황 조회", description = "지정한 날짜가 포함된 주간의 완료 현황을 조회합니다. date 필수(2025-08-15)")
