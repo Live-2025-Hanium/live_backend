@@ -1,43 +1,17 @@
 package com.example.live_backend.infra.kakao.feign;
 
-import feign.Logger;
-import feign.Request;
-import feign.RequestInterceptor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.EnableFeignClients;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.concurrent.TimeUnit;
-
+/**
+ * 카카오 Feign 클라이언트 활성화 설정
+ * 각 Feign 클라이언트는 자체 Config 클래스를 사용
+ */
 @Configuration
 @EnableFeignClients(basePackages = {
     "com.example.live_backend.infra.kakao.feign",
     "com.example.live_backend.infra.kakao.oauth.feign"
 })
 public class KakaoFeignConfig {
-
-    @Value("${kakao.local.rest-api-key}")
-    private String kakaoApiKey;
-
-    @Bean
-    public RequestInterceptor kakaoRequestInterceptor() {
-        return requestTemplate -> {
-            requestTemplate.header("Authorization", "KakaoAK " + kakaoApiKey);
-        };
-    }
-
-    @Bean
-    public Request.Options kakaoRequestOptions() {
-        return new Request.Options(
-            1000, TimeUnit.MILLISECONDS,  // connectTimeout
-            2500, TimeUnit.MILLISECONDS,  // readTimeout
-            true  // followRedirects
-        );
-    }
-
-    @Bean
-    public Logger.Level kakaoFeignLoggerLevel() {
-        return Logger.Level.BASIC;
-    }
+    // 전역 Bean 없음 - 각 Feign 클라이언트가 자체 설정 사용
 }
