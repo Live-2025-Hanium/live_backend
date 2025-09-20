@@ -48,21 +48,16 @@ public interface AuthControllerV2Docs {
                         "code": "SUCCESS",
                         "message": "성공",
                         "data": {
-                            "token": {
-                                "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-                                "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
-                                "accessTokenExpiresIn": 3600,
-                                "refreshTokenExpiresIn": 604800
-                            },
                             "user": {
-                                "userId": 1,
+                                "id": 1,
                                 "email": "user@example.com",
                                 "nickname": "사용자닉네임",
                                 "profileImageUrl": "https://k.kakaocdn.net/profile/sample.jpg",
-                                "gender": "MALE",
-                                "age": 25,
-                                "isOnboarded": false
-                            }
+                                "role": "USER"
+                            },
+                            "isNewUser": false,
+                            "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+                            "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
                         }
                     }
                     """)
