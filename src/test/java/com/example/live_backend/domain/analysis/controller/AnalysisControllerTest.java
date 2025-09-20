@@ -65,7 +65,7 @@ class AnalysisControllerTest {
             given(analysisService.getMonthlyParticipation(eq(MEMBER_ID), any(YearMonth.class))).willReturn(dto);
 
             // When
-            ResponseHandler<MonthlyParticipationResponseDto> response = analysisController.getParticipation(member);
+            ResponseHandler<MonthlyParticipationResponseDto> response = analysisController.getParticipation(member,String.valueOf(expectedYm));
 
             // Then
             assertThat(response.isSuccess()).isTrue();
