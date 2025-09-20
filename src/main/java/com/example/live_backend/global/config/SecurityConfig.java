@@ -68,8 +68,8 @@ public class SecurityConfig {
 			.cors(cors -> cors.configurationSource(request -> createCorsConfiguration()))
 			.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 			.authorizeHttpRequests(auth -> auth
-
-
+				// 로그인/회원가입 API는 누구나 접근 가능하도록 허용
+				.requestMatchers("/api/**", "/api/v2/auth/**").permitAll()
 
 				// 나머지는 인증 필요 (세부 권한은 @PublicApi 등 메타 어노테이션으로)
 				.anyRequest().authenticated()
