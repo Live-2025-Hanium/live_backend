@@ -12,6 +12,7 @@ import com.example.live_backend.domain.survey.dto.response.SurveyResponseListDto
 import com.example.live_backend.domain.survey.entity.SurveyAnswer;
 import com.example.live_backend.domain.survey.entity.SurveyResponse;
 import com.example.live_backend.domain.survey.entity.SurveyQuestion;
+import com.example.live_backend.domain.survey.entity.SurveyQuestion.QuestionType;
 import com.example.live_backend.domain.survey.entity.SurveyQuestionOption;
 import com.example.live_backend.domain.survey.repository.SurveyResponseRepository;
 import com.example.live_backend.domain.survey.repository.SurveyQuestionRepository;
@@ -42,7 +43,6 @@ public class SurveyService {
 
 
     private static final int MIN_ANSWER_NUMBER = 1;
-    private static final int MAX_ANSWER_NUMBER = 8;
 
 
     @Transactional
@@ -77,18 +77,39 @@ public class SurveyService {
 
         for (var dto : answers) {
             SurveyQuestion question = questionMap.get(dto.getQuestionNumber());
-            
-            SurveyQuestionOption selectedOption = question.getOptions().stream()
-                .filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
-                .findFirst()
-                .orElse(null);
-            
-            SurveyAnswer answer = SurveyAnswer.builder()
-                .surveyQuestion(question)
-                .selectedOption(selectedOption)
-                .numberAnswer(dto.getAnswerNumber())
-                .build();
-            surveyResponse.addAnswer(answer);
+
+            if (question.getQuestionType() == QuestionType.MULTIPLE_CHOICE && dto.isMultipleChoice()) {
+
+                for (Integer optionNumber : dto.getAnswerNumbers()) {
+                    SurveyQuestionOption selectedOption = question.getOptions().stream()
+                        .filter(opt -> opt.getOptionNumber().equals(optionNumber))
+                        .findFirst()
+                        .orElse(null);
+
+                    SurveyAnswer answer = SurveyAnswer.builder()
+                        .surveyQuestion(question)
+                        .selectedOption(selectedOption)
+                        .numberAnswer(optionNumber)
+                        .build();
+                    surveyResponse.addAnswer(answer);
+                }
+            } else if (question.getQuestionType() == QuestionType.SINGLE_CHOICE && dto.isSingleChoice()) {
+
+                SurveyQuestionOption selectedOption = question.getOptions().stream()
+                    .filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
+                    .findFirst()
+                    .orElse(null);
+
+                SurveyAnswer answer = SurveyAnswer.builder()
+                    .surveyQuestion(question)
+                    .selectedOption(selectedOption)
+                    .numberAnswer(dto.getAnswerNumber())
+                    .build();
+                surveyResponse.addAnswer(answer);
+            } else {
+                throw new CustomException(ErrorCode.INVALID_INPUT,
+                    String.format("문제 %d번의 답변 형식이 올바르지 않습니다.", dto.getQuestionNumber()));
+            }
         }
 
         SurveyResponse saved = surveyResponseRepository.save(surveyResponse);
@@ -110,49 +131,73 @@ public class SurveyService {
             .build();
     }
 
-    private void validateAnswers(List<SurveySubmissionDto.SurveyAnswerDto> answers, 
+    private void validateAnswers(List<SurveySubmissionDto.SurveyAnswerDto> answers,
                                  List<SurveyQuestion> activeQuestions) {
         if (answers.size() != activeQuestions.size()) {
             throw new CustomException(
                 ErrorCode.INVALID_INPUT,
-                String.format("설문 문제는 총 %d개입니다. 현재 답변 개수: %d", 
+                String.format("설문 문제는 총 %d개입니다. 현재 답변 개수: %d",
                     activeQuestions.size(), answers.size())
             );
         }
-        
-        Set<Integer> activeQuestionNumbers = activeQuestions.stream()
-            .map(SurveyQuestion::getQuestionNumber)
-            .collect(Collectors.toSet());
-        
+
+        Map<Integer, SurveyQuestion> questionMap = activeQuestions.stream()
+            .collect(Collectors.toMap(SurveyQuestion::getQuestionNumber, q -> q));
+
         Set<Integer> answeredQuestions = new HashSet<>();
-        
+
         for (var dto : answers) {
-            if (!activeQuestionNumbers.contains(dto.getQuestionNumber())) {
+            SurveyQuestion question = questionMap.get(dto.getQuestionNumber());
+
+            if (question == null) {
                 throw new CustomException(
                     ErrorCode.INVALID_INPUT,
-                    String.format("문제 번호 %d는 현재 활성화되지 않았거나 존재하지 않습니다.", 
+                    String.format("문제 번호 %d는 현재 활성화되지 않았거나 존재하지 않습니다.",
                         dto.getQuestionNumber())
                 );
             }
-            
+
             if (!answeredQuestions.add(dto.getQuestionNumber())) {
                 throw new CustomException(
                     ErrorCode.INVALID_INPUT,
                     String.format("문제 번호 %d가 중복되었습니다.", dto.getQuestionNumber())
                 );
             }
-            
-            if (dto.getAnswerNumber() < MIN_ANSWER_NUMBER || 
-                dto.getAnswerNumber() > MAX_ANSWER_NUMBER) {
+
+            int maxOptionNumber = question.getOptions().stream()
+                .mapToInt(SurveyQuestionOption::getOptionNumber)
+                .max()
+                .orElse(0);
+
+            if (dto.isSingleChoice()) {
+                if (dto.getAnswerNumber() < MIN_ANSWER_NUMBER ||
+                    dto.getAnswerNumber() > maxOptionNumber) {
+                    throw new CustomException(
+                        ErrorCode.INVALID_INPUT,
+                        String.format("문제 %d번의 답변 번호는 %d-%d 범위여야 합니다. 입력된 값: %d",
+                            dto.getQuestionNumber(), MIN_ANSWER_NUMBER, maxOptionNumber, dto.getAnswerNumber())
+                    );
+                }
+            } else if (dto.isMultipleChoice()) {
+                for (Integer answerNumber : dto.getAnswerNumbers()) {
+                    if (answerNumber < MIN_ANSWER_NUMBER ||
+                        answerNumber > maxOptionNumber) {
+                        throw new CustomException(
+                            ErrorCode.INVALID_INPUT,
+                            String.format("문제 %d번의 답변 번호는 %d-%d 범위여야 합니다. 입력된 값: %d",
+                                dto.getQuestionNumber(), MIN_ANSWER_NUMBER, maxOptionNumber, answerNumber)
+                        );
+                    }
+                }
+            } else {
                 throw new CustomException(
                     ErrorCode.INVALID_INPUT,
-                    String.format("답변 번호는 %d-%d 범위여야 합니다. 입력된 값: %d",
-                        MIN_ANSWER_NUMBER, MAX_ANSWER_NUMBER, dto.getAnswerNumber())
+                    String.format("문제 %d번에 대한 답변이 없습니다.", dto.getQuestionNumber())
                 );
             }
         }
-        
-        for (Integer questionNumber : activeQuestionNumbers) {
+
+        for (Integer questionNumber : questionMap.keySet()) {
             if (!answeredQuestions.contains(questionNumber)) {
                 throw new CustomException(
                     ErrorCode.INVALID_INPUT,
