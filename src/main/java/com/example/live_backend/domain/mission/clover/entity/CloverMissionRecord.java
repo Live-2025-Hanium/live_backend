@@ -95,7 +95,7 @@ public class CloverMissionRecord {
     private MissionDifficulty feedbackDifficulty;
 
     @Column(name = "image_url")
-    private String imageUrl;
+    private String imageUrl; // Photo 미션일 경우의 인증샷 이미지의 URL
 
     public static CloverMissionRecord from(CloverMission cloverMission, Member member) {
         CloverMissionRecord.CloverMissionRecordBuilder builder = CloverMissionRecord.builder()
