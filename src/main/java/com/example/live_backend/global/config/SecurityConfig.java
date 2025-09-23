@@ -82,7 +82,9 @@ public class SecurityConfig {
 
 		configuration.setAllowedOrigins(List.of(
 			"http://localhost:3000",
-			"http://127.0.0.1:3000"
+			"http://127.0.0.1:3000",
+			"https://www.live-hanium.app",
+			"https://live-hanium.app"
 		));
 
 		configuration.setAllowedMethods(List.of("*"));
