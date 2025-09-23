@@ -24,13 +24,23 @@ public class SurveySubmissionDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SurveyAnswerDto {
-        
-        @Schema(description = "문제 번호 (1-5)", example = "1")
+
+        @Schema(description = "문제 번호", example = "1")
         @NotNull(message = "문제 번호는 필수입니다.")
         private Integer questionNumber;
 
-        @Schema(description = "선택한 답변 번호 (1-5)", example = "3")
-        @NotNull(message = "답변 번호는 필수입니다.")
+        @Schema(description = "단일 선택 답변 번호 (단일 선택 문항용)", example = "3")
         private Integer answerNumber;
+
+        @Schema(description = "다중 선택 답변 번호 목록 (다중 선택 문항용)", example = "[1, 2, 3]")
+        private List<Integer> answerNumbers;
+
+        public boolean isMultipleChoice() {
+            return answerNumbers != null && !answerNumbers.isEmpty();
+        }
+
+        public boolean isSingleChoice() {
+            return answerNumber != null;
+        }
     }
 } 
