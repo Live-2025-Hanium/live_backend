@@ -51,6 +51,7 @@ public class SurveyQuestionService {
         SurveyQuestion question = SurveyQuestion.builder()
                 .questionNumber(request.getQuestionNumber())
                 .questionText(request.getQuestionText())
+                .questionType(request.getQuestionType())
                 .isRequired(request.isRequired())
                 .isActive(request.isActive())
                 .build();
@@ -84,6 +85,7 @@ public class SurveyQuestionService {
         
         question.updateQuestion(
                 request.getQuestionText(),
+                question.getQuestionType(), // 기존 타입 유지
                 request.isRequired(),
                 request.isActive()
         );
@@ -104,6 +106,7 @@ public class SurveyQuestionService {
         
         question.updateQuestion(
                 question.getQuestionText(),
+                question.getQuestionType(), // 기존 타입 유지
                 question.isRequired(),
                 false // 비활성화
         );

@@ -1,5 +1,6 @@
 package com.example.live_backend.domain.survey.dto.request;
 
+import com.example.live_backend.domain.survey.entity.SurveyQuestion;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -16,9 +17,11 @@ public class CreateQuestionRequest {
     
     @NotBlank(message = "질문 내용은 필수입니다")
     private String questionText;
-    
+
+    private SurveyQuestion.QuestionType questionType = SurveyQuestion.QuestionType.SINGLE_CHOICE;
+
     private boolean isRequired = true;
-    
+
     private boolean isActive = true;
     
     private List<CreateOptionRequest> options;
