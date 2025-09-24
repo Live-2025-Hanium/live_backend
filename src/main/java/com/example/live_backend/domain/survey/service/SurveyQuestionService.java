@@ -3,6 +3,7 @@ package com.example.live_backend.domain.survey.service;
 import com.example.live_backend.domain.survey.dto.request.CreateQuestionRequest;
 import com.example.live_backend.domain.survey.dto.request.UpdateQuestionRequest;
 import com.example.live_backend.domain.survey.dto.response.SurveyQuestionDto;
+import com.example.live_backend.domain.survey.dto.response.SurveyPageResponse;
 import com.example.live_backend.domain.survey.entity.SurveyQuestion;
 import com.example.live_backend.domain.survey.entity.SurveyQuestionOption;
 import com.example.live_backend.domain.survey.repository.SurveyQuestionRepository;
@@ -24,7 +25,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional(readOnly = true)
 public class SurveyQuestionService {
-    
+
+    private static final int QUESTIONS_PER_PAGE = 5;
+
     private final SurveyQuestionRepository questionRepository;
     private final SurveyQuestionOptionRepository optionRepository;
     
@@ -35,6 +38,52 @@ public class SurveyQuestionService {
         return questions.stream()
                 .map(SurveyQuestionDto::from)
                 .collect(Collectors.toList());
+    }
+
+    public SurveyPageResponse getQuestionsByPage(int pageNumber) {
+        log.info("설문 질문 페이지별 조회 - 페이지: {}", pageNumber);
+
+        if (pageNumber < 1) {
+            throw new CustomException(ErrorCode.INVALID_INPUT, "페이지 번호는 1 이상이어야 합니다");
+        }
+
+        List<SurveyQuestionDto> allQuestions = getAllActiveQuestions();
+
+        int totalQuestions = allQuestions.size();
+        int totalPages = (int) Math.ceil((double) totalQuestions / QUESTIONS_PER_PAGE);
+
+        if (pageNumber > totalPages && totalPages > 0) {
+            throw new CustomException(ErrorCode.INVALID_INPUT,
+                    String.format("페이지 번호가 범위를 초과했습니다. 최대 페이지: %d", totalPages));
+        }
+
+        if (totalQuestions == 0) {
+            return SurveyPageResponse.of(
+                    List.of(),
+                    1,
+                    0,
+                    0,
+                    QUESTIONS_PER_PAGE
+            );
+        }
+
+        int startIndex = (pageNumber - 1) * QUESTIONS_PER_PAGE;
+        int endIndex = Math.min(startIndex + QUESTIONS_PER_PAGE, totalQuestions);
+
+        List<SurveyQuestionDto> pageQuestions = allQuestions.subList(startIndex, endIndex);
+
+        log.info("페이지 {} - 질문 {}번부터 {}번까지 반환",
+                pageNumber,
+                pageQuestions.get(0).getQuestionNumber(),
+                pageQuestions.get(pageQuestions.size() - 1).getQuestionNumber());
+
+        return SurveyPageResponse.of(
+                pageQuestions,
+                pageNumber,
+                totalPages,
+                totalQuestions,
+                QUESTIONS_PER_PAGE
+        );
     }
     
     @CacheEvict(value = "activeQuestions", allEntries = true)

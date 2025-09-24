@@ -4,6 +4,7 @@ import com.example.live_backend.domain.survey.controller.docs.SurveyQuestionCont
 import com.example.live_backend.domain.survey.dto.request.CreateQuestionRequest;
 import com.example.live_backend.domain.survey.dto.request.UpdateQuestionRequest;
 import com.example.live_backend.domain.survey.dto.response.SurveyQuestionDto;
+import com.example.live_backend.domain.survey.dto.response.SurveyPageResponse;
 import com.example.live_backend.domain.survey.service.SurveyQuestionService;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import jakarta.validation.Valid;
@@ -17,7 +18,7 @@ import java.util.List;
 @RequestMapping("/api/v1/survey/questions")
 @RequiredArgsConstructor
 public class SurveyQuestionController implements SurveyQuestionControllerDocs {
-    
+
     private final SurveyQuestionService surveyQuestionService;
     
     @Override
@@ -25,6 +26,13 @@ public class SurveyQuestionController implements SurveyQuestionControllerDocs {
     public ResponseHandler<List<SurveyQuestionDto>> getAllActiveQuestions() {
         List<SurveyQuestionDto> questions = surveyQuestionService.getAllActiveQuestions();
         return ResponseHandler.success(questions);
+    }
+
+    @GetMapping("/page/{pageNumber}")
+    public ResponseHandler<SurveyPageResponse> getQuestionsByPage(
+            @PathVariable int pageNumber) {
+        SurveyPageResponse response = surveyQuestionService.getQuestionsByPage(pageNumber);
+        return ResponseHandler.success(response);
     }
     
     @Override
