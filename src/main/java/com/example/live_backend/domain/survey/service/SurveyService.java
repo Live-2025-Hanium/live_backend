@@ -2,6 +2,8 @@ package com.example.live_backend.domain.survey.service;
 
 import com.example.live_backend.domain.survey.vitality.dto.VitalityResultDto;
 import com.example.live_backend.domain.survey.vitality.service.VitalityService;
+import com.example.live_backend.domain.survey.validator.SurveyAnswerValidator;
+import com.example.live_backend.domain.survey.factory.SurveyAnswerFactory;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.domain.memeber.entity.Member;
@@ -42,7 +44,6 @@ public class SurveyService {
     private final VitalityService vitalityService;
 
 
-    private static final int MIN_ANSWER_NUMBER = 1;
 
 
     @Transactional
@@ -77,39 +78,8 @@ public class SurveyService {
 
         for (var dto : answers) {
             SurveyQuestion question = questionMap.get(dto.getQuestionNumber());
-
-            if (question.getQuestionType() == QuestionType.MULTIPLE_CHOICE && dto.isMultipleChoice()) {
-
-                for (Integer optionNumber : dto.getAnswerNumbers()) {
-                    SurveyQuestionOption selectedOption = question.getOptions().stream()
-                        .filter(opt -> opt.getOptionNumber().equals(optionNumber))
-                        .findFirst()
-                        .orElse(null);
-
-                    SurveyAnswer answer = SurveyAnswer.builder()
-                        .surveyQuestion(question)
-                        .selectedOption(selectedOption)
-                        .numberAnswer(optionNumber)
-                        .build();
-                    surveyResponse.addAnswer(answer);
-                }
-            } else if (question.getQuestionType() == QuestionType.SINGLE_CHOICE && dto.isSingleChoice()) {
-
-                SurveyQuestionOption selectedOption = question.getOptions().stream()
-                    .filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
-                    .findFirst()
-                    .orElse(null);
-
-                SurveyAnswer answer = SurveyAnswer.builder()
-                    .surveyQuestion(question)
-                    .selectedOption(selectedOption)
-                    .numberAnswer(dto.getAnswerNumber())
-                    .build();
-                surveyResponse.addAnswer(answer);
-            } else {
-                throw new CustomException(ErrorCode.INVALID_INPUT,
-                    String.format("문제 %d번의 답변 형식이 올바르지 않습니다.", dto.getQuestionNumber()));
-            }
+            SurveyAnswerValidator.validateQuestionTypeMatch(dto, question);
+            SurveyAnswerFactory.createAndAddAnswers(surveyResponse, dto, question);
         }
 
         SurveyResponse saved = surveyResponseRepository.save(surveyResponse);
@@ -133,14 +103,6 @@ public class SurveyService {
 
     private void validateAnswers(List<SurveySubmissionDto.SurveyAnswerDto> answers,
                                  List<SurveyQuestion> activeQuestions) {
-        if (answers.size() != activeQuestions.size()) {
-            throw new CustomException(
-                ErrorCode.INVALID_INPUT,
-                String.format("설문 문제는 총 %d개입니다. 현재 답변 개수: %d",
-                    activeQuestions.size(), answers.size())
-            );
-        }
-
         Map<Integer, SurveyQuestion> questionMap = activeQuestions.stream()
             .collect(Collectors.toMap(SurveyQuestion::getQuestionNumber, q -> q));
 
@@ -150,61 +112,19 @@ public class SurveyService {
             SurveyQuestion question = questionMap.get(dto.getQuestionNumber());
 
             if (question == null) {
-                throw new CustomException(
-                    ErrorCode.INVALID_INPUT,
-                    String.format("문제 번호 %d는 현재 활성화되지 않았거나 존재하지 않습니다.",
-                        dto.getQuestionNumber())
-                );
+                throw new CustomException(ErrorCode.INVALID_INPUT,
+                    String.format("문제 번호 %d는 현재 활성화되지 않았거나 존재하지 않습니다.", dto.getQuestionNumber()));
             }
 
             if (!answeredQuestions.add(dto.getQuestionNumber())) {
-                throw new CustomException(
-                    ErrorCode.INVALID_INPUT,
-                    String.format("문제 번호 %d가 중복되었습니다.", dto.getQuestionNumber())
-                );
+                throw new CustomException(ErrorCode.INVALID_INPUT,
+                    String.format("문제 번호 %d가 중복되었습니다.", dto.getQuestionNumber()));
             }
 
-            int maxOptionNumber = question.getOptions().stream()
-                .mapToInt(SurveyQuestionOption::getOptionNumber)
-                .max()
-                .orElse(0);
-
-            if (dto.isSingleChoice()) {
-                if (dto.getAnswerNumber() < MIN_ANSWER_NUMBER ||
-                    dto.getAnswerNumber() > maxOptionNumber) {
-                    throw new CustomException(
-                        ErrorCode.INVALID_INPUT,
-                        String.format("문제 %d번의 답변 번호는 %d-%d 범위여야 합니다. 입력된 값: %d",
-                            dto.getQuestionNumber(), MIN_ANSWER_NUMBER, maxOptionNumber, dto.getAnswerNumber())
-                    );
-                }
-            } else if (dto.isMultipleChoice()) {
-                for (Integer answerNumber : dto.getAnswerNumbers()) {
-                    if (answerNumber < MIN_ANSWER_NUMBER ||
-                        answerNumber > maxOptionNumber) {
-                        throw new CustomException(
-                            ErrorCode.INVALID_INPUT,
-                            String.format("문제 %d번의 답변 번호는 %d-%d 범위여야 합니다. 입력된 값: %d",
-                                dto.getQuestionNumber(), MIN_ANSWER_NUMBER, maxOptionNumber, answerNumber)
-                        );
-                    }
-                }
-            } else {
-                throw new CustomException(
-                    ErrorCode.INVALID_INPUT,
-                    String.format("문제 %d번에 대한 답변이 없습니다.", dto.getQuestionNumber())
-                );
-            }
+            SurveyAnswerValidator.validateAnswerFormat(dto, question);
         }
 
-        for (Integer questionNumber : questionMap.keySet()) {
-            if (!answeredQuestions.contains(questionNumber)) {
-                throw new CustomException(
-                    ErrorCode.INVALID_INPUT,
-                    String.format("문제 %d번에 대한 답변이 누락되었습니다.", questionNumber)
-                );
-            }
-        }
+        SurveyAnswerValidator.validateAnswerCompleteness(answers, activeQuestions, answeredQuestions);
     }
      
      /**
