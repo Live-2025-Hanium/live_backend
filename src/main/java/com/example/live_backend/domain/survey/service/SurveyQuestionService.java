@@ -6,8 +6,10 @@ import com.example.live_backend.domain.survey.dto.response.SurveyQuestionDto;
 import com.example.live_backend.domain.survey.dto.response.SurveyPageResponse;
 import com.example.live_backend.domain.survey.entity.SurveyQuestion;
 import com.example.live_backend.domain.survey.entity.SurveyQuestionOption;
+import com.example.live_backend.domain.survey.factory.SurveyQuestionFactory;
 import com.example.live_backend.domain.survey.repository.SurveyQuestionRepository;
 import com.example.live_backend.domain.survey.repository.SurveyQuestionOptionRepository;
+import com.example.live_backend.domain.survey.util.PaginationHelper;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -43,34 +45,19 @@ public class SurveyQuestionService {
     public SurveyPageResponse getQuestionsByPage(int pageNumber) {
         log.info("설문 질문 페이지별 조회 - 페이지: {}", pageNumber);
 
-        if (pageNumber < 1) {
-            throw new CustomException(ErrorCode.INVALID_INPUT, "페이지 번호는 1 이상이어야 합니다");
-        }
-
         List<SurveyQuestionDto> allQuestions = getAllActiveQuestions();
-
         int totalQuestions = allQuestions.size();
-        int totalPages = (int) Math.ceil((double) totalQuestions / QUESTIONS_PER_PAGE);
-
-        if (pageNumber > totalPages && totalPages > 0) {
-            throw new CustomException(ErrorCode.INVALID_INPUT,
-                    String.format("페이지 번호가 범위를 초과했습니다. 최대 페이지: %d", totalPages));
-        }
 
         if (totalQuestions == 0) {
-            return SurveyPageResponse.of(
-                    List.of(),
-                    1,
-                    0,
-                    0,
-                    QUESTIONS_PER_PAGE
-            );
+            return PaginationHelper.createEmptyResponse(QUESTIONS_PER_PAGE);
         }
 
-        int startIndex = (pageNumber - 1) * QUESTIONS_PER_PAGE;
-        int endIndex = Math.min(startIndex + QUESTIONS_PER_PAGE, totalQuestions);
+        int totalPages = PaginationHelper.calculateTotalPages(totalQuestions, QUESTIONS_PER_PAGE);
+        PaginationHelper.validatePageNumber(pageNumber, totalPages);
 
-        List<SurveyQuestionDto> pageQuestions = allQuestions.subList(startIndex, endIndex);
+        int startIndex = PaginationHelper.calculateStartIndex(pageNumber, QUESTIONS_PER_PAGE);
+        int endIndex = PaginationHelper.calculateEndIndex(startIndex, QUESTIONS_PER_PAGE, totalQuestions);
+        List<SurveyQuestionDto> pageQuestions = PaginationHelper.getPageSubList(allQuestions, startIndex, endIndex);
 
         log.info("페이지 {} - 질문 {}번부터 {}번까지 반환",
                 pageNumber,
@@ -93,30 +80,12 @@ public class SurveyQuestionService {
         
         // 질문 번호 중복 체크
         if (questionRepository.existsByQuestionNumber(request.getQuestionNumber())) {
-            throw new CustomException(ErrorCode.INVALID_INPUT, 
+            throw new CustomException(ErrorCode.INVALID_INPUT,
                     "이미 존재하는 질문 번호입니다: " + request.getQuestionNumber());
         }
-        
-        SurveyQuestion question = SurveyQuestion.builder()
-                .questionNumber(request.getQuestionNumber())
-                .questionText(request.getQuestionText())
-                .questionType(request.getQuestionType())
-                .isRequired(request.isRequired())
-                .isActive(request.isActive())
-                .build();
-        
-        // 옵션이 있는 경우 추가
-        if (request.getOptions() != null && !request.getOptions().isEmpty()) {
-            for (CreateQuestionRequest.CreateOptionRequest optionRequest : request.getOptions()) {
-                SurveyQuestionOption option = SurveyQuestionOption.builder()
-                        .surveyQuestion(question)
-                        .optionNumber(optionRequest.getOptionNumber())
-                        .optionText(optionRequest.getOptionText())
-                        .isActive(optionRequest.isActive())
-                        .build();
-                question.addOption(option);
-            }
-        }
+
+        SurveyQuestion question = SurveyQuestionFactory.createQuestion(request);
+        SurveyQuestionFactory.addOptionsToQuestion(question, request.getOptions());
         
         SurveyQuestion saved = questionRepository.save(question);
         log.info("질문 생성 완료 - ID: {}", saved.getId());
