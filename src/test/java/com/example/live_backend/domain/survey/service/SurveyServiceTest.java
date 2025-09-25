@@ -78,34 +78,36 @@ class SurveyServiceTest {
 		given(memberRepository.findById(MOCK_USER_ID)).willReturn(Optional.of(mockMember));
 		
 		List<SurveySubmissionDto.SurveyAnswerDto> answers = Arrays.asList(
-			new SurveySubmissionDto.SurveyAnswerDto(1, 1),
-			new SurveySubmissionDto.SurveyAnswerDto(2, 2),
-			new SurveySubmissionDto.SurveyAnswerDto(3, 3),
-			new SurveySubmissionDto.SurveyAnswerDto(4, 4),
-			new SurveySubmissionDto.SurveyAnswerDto(5, 5),
-			new SurveySubmissionDto.SurveyAnswerDto(6, 1),
-			new SurveySubmissionDto.SurveyAnswerDto(7, 2),
-			new SurveySubmissionDto.SurveyAnswerDto(8, 3),
-			new SurveySubmissionDto.SurveyAnswerDto(9, 4),
-			new SurveySubmissionDto.SurveyAnswerDto(10, 5),
-			new SurveySubmissionDto.SurveyAnswerDto(11, 1),
-			new SurveySubmissionDto.SurveyAnswerDto(12, 2),
-			new SurveySubmissionDto.SurveyAnswerDto(13, 3),
-			new SurveySubmissionDto.SurveyAnswerDto(14, 4),
-			new SurveySubmissionDto.SurveyAnswerDto(15, 5)
+			new SurveySubmissionDto.SurveyAnswerDto(1, null, Arrays.asList(1, 2)),
+			new SurveySubmissionDto.SurveyAnswerDto(2, null, Arrays.asList(2, 3)),
+			new SurveySubmissionDto.SurveyAnswerDto(3, null, Arrays.asList(1, 3)),
+			new SurveySubmissionDto.SurveyAnswerDto(4, null, Arrays.asList(4)),
+			new SurveySubmissionDto.SurveyAnswerDto(5, 5, null),
+			new SurveySubmissionDto.SurveyAnswerDto(6, 1, null),
+			new SurveySubmissionDto.SurveyAnswerDto(7, 2, null),
+			new SurveySubmissionDto.SurveyAnswerDto(8, 3, null),
+			new SurveySubmissionDto.SurveyAnswerDto(9, 4, null),
+			new SurveySubmissionDto.SurveyAnswerDto(10, 5, null),
+			new SurveySubmissionDto.SurveyAnswerDto(11, 1, null),
+			new SurveySubmissionDto.SurveyAnswerDto(12, 2, null),
+			new SurveySubmissionDto.SurveyAnswerDto(13, 3, null)
 		);
 		validRequest = new SurveySubmissionDto(answers);
 
 
 		List<SurveyQuestion> allQuestions = new ArrayList<>();
-		for (int i = 1; i <= 15; i++) {
+		for (int i = 1; i <= 13; i++) {
 			SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
 			given(mockQuestion.getId()).willReturn((long) i);
 			given(mockQuestion.getQuestionNumber()).willReturn(i);
 			given(mockQuestion.getQuestionText()).willReturn("Question " + i);
+			given(mockQuestion.getQuestionType()).willReturn(
+				i <= 4 ? SurveyQuestion.QuestionType.MULTIPLE_CHOICE : SurveyQuestion.QuestionType.SINGLE_CHOICE
+			);
 
 			List<SurveyQuestionOption> mockOptions = new java.util.ArrayList<>();
-			for (int j = 1; j <= 5; j++) {
+			int maxOptions = (i >= 1 && i <= 4) ? 4 : 8;
+			for (int j = 1; j <= maxOptions; j++) {
 				SurveyQuestionOption mockOption = org.mockito.Mockito.mock(SurveyQuestionOption.class);
 				given(mockOption.getId()).willReturn((long) (i * 10 + j));
 				given(mockOption.getOptionNumber()).willReturn(j);
@@ -130,17 +132,35 @@ class SurveyServiceTest {
 
 		answers.forEach(dto -> {
 			SurveyQuestion mockQuestion = surveyQuestionRepository.findByQuestionNumber(dto.getQuestionNumber()).orElse(null);
-			SurveyQuestionOption mockOption = mockQuestion != null ? 
-				mockQuestion.getOptions().stream()
-					.filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
-					.findFirst().orElse(null) : null;
-			
-			SurveyAnswer answer = SurveyAnswer.builder()
-				.surveyQuestion(mockQuestion)
-				.selectedOption(mockOption)
-				.numberAnswer(dto.getAnswerNumber())
-				.build();
-			mockSurveyResponse.addAnswer(answer);
+
+			if (dto.isMultipleChoice()) {
+				for (Integer answerNum : dto.getAnswerNumbers()) {
+					SurveyQuestionOption mockOption = mockQuestion != null ?
+						mockQuestion.getOptions().stream()
+							.filter(opt -> opt.getOptionNumber().equals(answerNum))
+							.findFirst().orElse(null) : null;
+
+					SurveyAnswer answer = SurveyAnswer.builder()
+						.surveyQuestion(mockQuestion)
+						.selectedOption(mockOption)
+						.numberAnswer(answerNum)
+						.build();
+					mockSurveyResponse.addAnswer(answer);
+				}
+			} else {
+
+				SurveyQuestionOption mockOption = mockQuestion != null ?
+					mockQuestion.getOptions().stream()
+						.filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
+						.findFirst().orElse(null) : null;
+
+				SurveyAnswer answer = SurveyAnswer.builder()
+					.surveyQuestion(mockQuestion)
+					.selectedOption(mockOption)
+					.numberAnswer(dto.getAnswerNumber())
+					.build();
+				mockSurveyResponse.addAnswer(answer);
+			}
 		});
 	}
 
@@ -153,10 +173,23 @@ class SurveyServiceTest {
 		void givenValidRequest_whenSubmitSurvey_thenSuccessfulSubmission() {
 			// given
 			List<SurveyQuestion> activeQuestions = new ArrayList<>();
-			for (int i = 1; i <= 15; i++) {
+			for (int i = 1; i <= 13; i++) {
 				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
 				given(mockQuestion.getQuestionNumber()).willReturn(i);
 				given(mockQuestion.isActive()).willReturn(true);
+				given(mockQuestion.isRequired()).willReturn(true);
+				given(mockQuestion.getQuestionType()).willReturn(
+					i <= 4 ? SurveyQuestion.QuestionType.MULTIPLE_CHOICE : SurveyQuestion.QuestionType.SINGLE_CHOICE
+				);
+
+				List<SurveyQuestionOption> options = new ArrayList<>();
+				int maxOptions = (i >= 1 && i <= 4) ? 4 : 8;
+				for (int j = 1; j <= maxOptions; j++) {
+					SurveyQuestionOption option = org.mockito.Mockito.mock(SurveyQuestionOption.class);
+					given(option.getOptionNumber()).willReturn(j);
+					options.add(option);
+				}
+				given(mockQuestion.getOptions()).willReturn(options);
 				activeQuestions.add(mockQuestion);
 			}
 			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
@@ -169,11 +202,24 @@ class SurveyServiceTest {
 			for (var dto : validRequest.getAnswers()) {
 				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
 				given(mockQuestion.getQuestionNumber()).willReturn(dto.getQuestionNumber());
-				SurveyAnswer answer = SurveyAnswer.builder()
-					.surveyQuestion(mockQuestion)
-					.numberAnswer(dto.getAnswerNumber())
-					.build();
-				savedAnswers.add(answer);
+
+				if (dto.isMultipleChoice()) {
+
+					for (Integer answerNum : dto.getAnswerNumbers()) {
+						SurveyAnswer answer = SurveyAnswer.builder()
+							.surveyQuestion(mockQuestion)
+							.numberAnswer(answerNum)
+							.build();
+						savedAnswers.add(answer);
+					}
+				} else {
+
+					SurveyAnswer answer = SurveyAnswer.builder()
+						.surveyQuestion(mockQuestion)
+						.numberAnswer(dto.getAnswerNumber())
+						.build();
+					savedAnswers.add(answer);
+				}
 			}
 			given(savedResponse.getAnswers()).willReturn(savedAnswers);
 			
@@ -195,7 +241,7 @@ class SurveyServiceTest {
 			assertThat(result).isNotNull();
 			assertThat(result.getResponseId()).isEqualTo(123L);
 			assertThat(result.getSubmittedAt()).isEqualTo(expectedTime);
-			assertThat(result.getTotalAnswers()).isEqualTo(15);
+			assertThat(result.getTotalAnswers()).isEqualTo(16);
 
 			verify(memberRepository).findById(MOCK_USER_ID);
 			verify(surveyResponseRepository).save(any(SurveyResponse.class));
@@ -209,15 +255,28 @@ class SurveyServiceTest {
 		void submitSurvey_InsufficientAnswers_ThrowsException() {
 			// Given
 			List<SurveyQuestion> activeQuestions = new ArrayList<>();
-			for (int i = 1; i <= 15; i++) {
+			for (int i = 1; i <= 13; i++) {
 				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
 				given(mockQuestion.getQuestionNumber()).willReturn(i);
 				given(mockQuestion.isActive()).willReturn(true);
+				given(mockQuestion.isRequired()).willReturn(true);
+				given(mockQuestion.getQuestionType()).willReturn(
+					i <= 4 ? SurveyQuestion.QuestionType.MULTIPLE_CHOICE : SurveyQuestion.QuestionType.SINGLE_CHOICE
+				);
+
+				List<SurveyQuestionOption> options = new ArrayList<>();
+				int maxOptions = (i >= 1 && i <= 4) ? 4 : 8;
+				for (int j = 1; j <= maxOptions; j++) {
+					SurveyQuestionOption option = org.mockito.Mockito.mock(SurveyQuestionOption.class);
+					given(option.getOptionNumber()).willReturn(j);
+					options.add(option);
+				}
+				given(mockQuestion.getOptions()).willReturn(options);
 				activeQuestions.add(mockQuestion);
 			}
 			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
-			
-			List<SurveySubmissionDto.SurveyAnswerDto> insufficient = validRequest.getAnswers().subList(0, 14);
+
+			List<SurveySubmissionDto.SurveyAnswerDto> insufficient = validRequest.getAnswers().subList(0, 12);
 			SurveySubmissionDto req = new SurveySubmissionDto(insufficient);
 
 			// When & Then
@@ -225,7 +284,7 @@ class SurveyServiceTest {
 
 			assertThat(t)
 				.isInstanceOf(CustomException.class)
-				.hasMessageContaining("설문 문제는 총 15개입니다. 현재 답변 개수: 14");
+				.hasMessageContaining("설문 문제는 총 13개입니다. 현재 답변 개수: 12");
 			assertThat(((CustomException)t).getErrorCode())
 				.isEqualTo(ErrorCode.INVALID_INPUT);
 		}
@@ -235,30 +294,41 @@ class SurveyServiceTest {
 		void submitSurvey_DuplicateQuestionNumber_ThrowsException() {
 			// Given
 			List<SurveyQuestion> activeQuestions = new ArrayList<>();
-			for (int i = 1; i <= 15; i++) {
+			for (int i = 1; i <= 13; i++) {
 				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
 				given(mockQuestion.getQuestionNumber()).willReturn(i);
 				given(mockQuestion.isActive()).willReturn(true);
+				given(mockQuestion.isRequired()).willReturn(true);
+				given(mockQuestion.getQuestionType()).willReturn(
+					i <= 4 ? SurveyQuestion.QuestionType.MULTIPLE_CHOICE : SurveyQuestion.QuestionType.SINGLE_CHOICE
+				);
+
+				List<SurveyQuestionOption> options = new ArrayList<>();
+				int maxOptions = (i >= 1 && i <= 4) ? 4 : 8;
+				for (int j = 1; j <= maxOptions; j++) {
+					SurveyQuestionOption option = org.mockito.Mockito.mock(SurveyQuestionOption.class);
+					given(option.getOptionNumber()).willReturn(j);
+					options.add(option);
+				}
+				given(mockQuestion.getOptions()).willReturn(options);
 				activeQuestions.add(mockQuestion);
 			}
 			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
 			
 			List<SurveySubmissionDto.SurveyAnswerDto> dup = Arrays.asList(
-				new SurveySubmissionDto.SurveyAnswerDto(1, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(1, 2),
-				new SurveySubmissionDto.SurveyAnswerDto(3, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(4, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(5, 5),
-				new SurveySubmissionDto.SurveyAnswerDto(6, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(7, 2),
-				new SurveySubmissionDto.SurveyAnswerDto(8, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(9, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(10, 5),
-				new SurveySubmissionDto.SurveyAnswerDto(11, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(12, 2),
-				new SurveySubmissionDto.SurveyAnswerDto(13, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(14, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(15, 5)
+				new SurveySubmissionDto.SurveyAnswerDto(1, null, Arrays.asList(3)),
+				new SurveySubmissionDto.SurveyAnswerDto(1, null, Arrays.asList(2)),
+				new SurveySubmissionDto.SurveyAnswerDto(3, null, Arrays.asList(4)),
+				new SurveySubmissionDto.SurveyAnswerDto(4, null, Arrays.asList(1)),
+				new SurveySubmissionDto.SurveyAnswerDto(5, 5, null),
+				new SurveySubmissionDto.SurveyAnswerDto(6, 1, null),
+				new SurveySubmissionDto.SurveyAnswerDto(7, 2, null),
+				new SurveySubmissionDto.SurveyAnswerDto(8, 3, null),
+				new SurveySubmissionDto.SurveyAnswerDto(9, 4, null),
+				new SurveySubmissionDto.SurveyAnswerDto(10, 5, null),
+				new SurveySubmissionDto.SurveyAnswerDto(11, 1, null),
+				new SurveySubmissionDto.SurveyAnswerDto(12, 2, null),
+				new SurveySubmissionDto.SurveyAnswerDto(13, 3, null)
 			);
 			SurveySubmissionDto req = new SurveySubmissionDto(dup);
 
@@ -273,34 +343,45 @@ class SurveyServiceTest {
 		}
 
 		@Test
-		@DisplayName("설문 제출 - 비활성 문제 번호 시 예외 (16번)")
+		@DisplayName("설문 제출 - 비활성 문제 번호 시 예외 (14번)")
 		void submitSurvey_QuestionNumberOutOfRange_ThrowsException() {
 			// Given
 			List<SurveyQuestion> activeQuestions = new ArrayList<>();
-			for (int i = 1; i <= 15; i++) {
+			for (int i = 1; i <= 13; i++) {
 				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
 				given(mockQuestion.getQuestionNumber()).willReturn(i);
 				given(mockQuestion.isActive()).willReturn(true);
+				given(mockQuestion.isRequired()).willReturn(true);
+				given(mockQuestion.getQuestionType()).willReturn(
+					i <= 4 ? SurveyQuestion.QuestionType.MULTIPLE_CHOICE : SurveyQuestion.QuestionType.SINGLE_CHOICE
+				);
+
+				List<SurveyQuestionOption> options = new ArrayList<>();
+				int maxOptions = (i >= 1 && i <= 4) ? 4 : 8;
+				for (int j = 1; j <= maxOptions; j++) {
+					SurveyQuestionOption option = org.mockito.Mockito.mock(SurveyQuestionOption.class);
+					given(option.getOptionNumber()).willReturn(j);
+					options.add(option);
+				}
+				given(mockQuestion.getOptions()).willReturn(options);
 				activeQuestions.add(mockQuestion);
 			}
 			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
 			
 			List<SurveySubmissionDto.SurveyAnswerDto> missing = Arrays.asList(
-				new SurveySubmissionDto.SurveyAnswerDto(1, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(3, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(4, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(5, 5),
-				new SurveySubmissionDto.SurveyAnswerDto(6, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(7, 2),
-				new SurveySubmissionDto.SurveyAnswerDto(8, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(9, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(10, 5),
-				new SurveySubmissionDto.SurveyAnswerDto(11, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(12, 2),
-				new SurveySubmissionDto.SurveyAnswerDto(13, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(14, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(15, 5),
-				new SurveySubmissionDto.SurveyAnswerDto(16, 1)
+				new SurveySubmissionDto.SurveyAnswerDto(1, null, Arrays.asList(3)),
+				new SurveySubmissionDto.SurveyAnswerDto(3, null, Arrays.asList(4)),
+				new SurveySubmissionDto.SurveyAnswerDto(4, null, Arrays.asList(1)),
+				new SurveySubmissionDto.SurveyAnswerDto(5, 5, null),
+				new SurveySubmissionDto.SurveyAnswerDto(6, 1, null),
+				new SurveySubmissionDto.SurveyAnswerDto(7, 2, null),
+				new SurveySubmissionDto.SurveyAnswerDto(8, 3, null),
+				new SurveySubmissionDto.SurveyAnswerDto(9, 4, null),
+				new SurveySubmissionDto.SurveyAnswerDto(10, 5, null),
+				new SurveySubmissionDto.SurveyAnswerDto(11, 1, null),
+				new SurveySubmissionDto.SurveyAnswerDto(12, 2, null),
+				new SurveySubmissionDto.SurveyAnswerDto(13, 3, null),
+				new SurveySubmissionDto.SurveyAnswerDto(14, 1, null)
 			);
 			SurveySubmissionDto req = new SurveySubmissionDto(missing);
 
@@ -309,7 +390,7 @@ class SurveyServiceTest {
 
 			assertThat(t)
 				.isInstanceOf(CustomException.class)
-				.hasMessageContaining("문제 번호 16는 현재 활성화되지 않았거나 존재하지 않습니다");
+				.hasMessageContaining("문제 번호 14는 현재 활성화되지 않았거나 존재하지 않습니다");
 			assertThat(((CustomException)t).getErrorCode())
 				.isEqualTo(ErrorCode.INVALID_INPUT);
 		}
@@ -319,30 +400,41 @@ class SurveyServiceTest {
 		void submitSurvey_InvalidQuestionNumber_ThrowsException() {
 			// Given
 			List<SurveyQuestion> activeQuestions = new ArrayList<>();
-			for (int i = 1; i <= 15; i++) {
+			for (int i = 1; i <= 13; i++) {
 				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
 				given(mockQuestion.getQuestionNumber()).willReturn(i);
 				given(mockQuestion.isActive()).willReturn(true);
+				given(mockQuestion.isRequired()).willReturn(true);
+				given(mockQuestion.getQuestionType()).willReturn(
+					i <= 4 ? SurveyQuestion.QuestionType.MULTIPLE_CHOICE : SurveyQuestion.QuestionType.SINGLE_CHOICE
+				);
+
+				List<SurveyQuestionOption> options = new ArrayList<>();
+				int maxOptions = (i >= 1 && i <= 4) ? 4 : 8;
+				for (int j = 1; j <= maxOptions; j++) {
+					SurveyQuestionOption option = org.mockito.Mockito.mock(SurveyQuestionOption.class);
+					given(option.getOptionNumber()).willReturn(j);
+					options.add(option);
+				}
+				given(mockQuestion.getOptions()).willReturn(options);
 				activeQuestions.add(mockQuestion);
 			}
 			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
 			
 			List<SurveySubmissionDto.SurveyAnswerDto> outOfRange = Arrays.asList(
-				new SurveySubmissionDto.SurveyAnswerDto(1, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(2, 2),
-				new SurveySubmissionDto.SurveyAnswerDto(3, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(4, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(5, 5),
-				new SurveySubmissionDto.SurveyAnswerDto(6, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(7, 2),
-				new SurveySubmissionDto.SurveyAnswerDto(8, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(9, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(10, 5),
-				new SurveySubmissionDto.SurveyAnswerDto(11, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(12, 2),
-				new SurveySubmissionDto.SurveyAnswerDto(13, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(14, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(16, 5)
+				new SurveySubmissionDto.SurveyAnswerDto(1, null, Arrays.asList(3)),
+				new SurveySubmissionDto.SurveyAnswerDto(2, null, Arrays.asList(2)),
+				new SurveySubmissionDto.SurveyAnswerDto(3, null, Arrays.asList(4)),
+				new SurveySubmissionDto.SurveyAnswerDto(4, null, Arrays.asList(1)),
+				new SurveySubmissionDto.SurveyAnswerDto(5, 5, null),
+				new SurveySubmissionDto.SurveyAnswerDto(6, 1, null),
+				new SurveySubmissionDto.SurveyAnswerDto(7, 2, null),
+				new SurveySubmissionDto.SurveyAnswerDto(8, 3, null),
+				new SurveySubmissionDto.SurveyAnswerDto(9, 4, null),
+				new SurveySubmissionDto.SurveyAnswerDto(10, 5, null),
+				new SurveySubmissionDto.SurveyAnswerDto(11, 1, null),
+				new SurveySubmissionDto.SurveyAnswerDto(12, 2, null),
+				new SurveySubmissionDto.SurveyAnswerDto(14, 5, null)
 			);
 			SurveySubmissionDto req = new SurveySubmissionDto(outOfRange);
 
@@ -351,7 +443,7 @@ class SurveyServiceTest {
 
 			assertThat(t)
 				.isInstanceOf(CustomException.class)
-				.hasMessageContaining("문제 번호 16는 현재 활성화되지 않았거나 존재하지 않습니다");
+				.hasMessageContaining("문제 번호 14는 현재 활성화되지 않았거나 존재하지 않습니다");
 			assertThat(((CustomException)t).getErrorCode())
 				.isEqualTo(ErrorCode.INVALID_INPUT);
 		}
@@ -361,30 +453,41 @@ class SurveyServiceTest {
 		void submitSurvey_InvalidAnswerNumber_ThrowsException() {
 			// Given
 			List<SurveyQuestion> activeQuestions = new ArrayList<>();
-			for (int i = 1; i <= 15; i++) {
+			for (int i = 1; i <= 13; i++) {
 				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
 				given(mockQuestion.getQuestionNumber()).willReturn(i);
 				given(mockQuestion.isActive()).willReturn(true);
+				given(mockQuestion.isRequired()).willReturn(true);
+				given(mockQuestion.getQuestionType()).willReturn(
+					i <= 4 ? SurveyQuestion.QuestionType.MULTIPLE_CHOICE : SurveyQuestion.QuestionType.SINGLE_CHOICE
+				);
+
+				List<SurveyQuestionOption> options = new ArrayList<>();
+				int maxOptions = (i >= 1 && i <= 4) ? 4 : 8;
+				for (int j = 1; j <= maxOptions; j++) {
+					SurveyQuestionOption option = org.mockito.Mockito.mock(SurveyQuestionOption.class);
+					given(option.getOptionNumber()).willReturn(j);
+					options.add(option);
+				}
+				given(mockQuestion.getOptions()).willReturn(options);
 				activeQuestions.add(mockQuestion);
 			}
 			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
-			
+
 			List<SurveySubmissionDto.SurveyAnswerDto> badAnswer = Arrays.asList(
-				new SurveySubmissionDto.SurveyAnswerDto(1, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(2, 2),
-				new SurveySubmissionDto.SurveyAnswerDto(3, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(4, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(5, 5),
-				new SurveySubmissionDto.SurveyAnswerDto(6, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(7, 2),
-				new SurveySubmissionDto.SurveyAnswerDto(8, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(9, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(10, 5),
-				new SurveySubmissionDto.SurveyAnswerDto(11, 1),
-				new SurveySubmissionDto.SurveyAnswerDto(12, 2),
-				new SurveySubmissionDto.SurveyAnswerDto(13, 3),
-				new SurveySubmissionDto.SurveyAnswerDto(14, 4),
-				new SurveySubmissionDto.SurveyAnswerDto(15, 16)
+				new SurveySubmissionDto.SurveyAnswerDto(1, null, Arrays.asList(3)),
+				new SurveySubmissionDto.SurveyAnswerDto(2, null, Arrays.asList(2)),
+				new SurveySubmissionDto.SurveyAnswerDto(3, null, Arrays.asList(4)),
+				new SurveySubmissionDto.SurveyAnswerDto(4, null, Arrays.asList(1)),
+				new SurveySubmissionDto.SurveyAnswerDto(5, 5, null),
+				new SurveySubmissionDto.SurveyAnswerDto(6, 1, null),
+				new SurveySubmissionDto.SurveyAnswerDto(7, 2, null),
+				new SurveySubmissionDto.SurveyAnswerDto(8, 3, null),
+				new SurveySubmissionDto.SurveyAnswerDto(9, 4, null),
+				new SurveySubmissionDto.SurveyAnswerDto(10, 5, null),
+				new SurveySubmissionDto.SurveyAnswerDto(11, 1, null),
+				new SurveySubmissionDto.SurveyAnswerDto(12, 2, null),
+				new SurveySubmissionDto.SurveyAnswerDto(13, 16, null)
 			);
 			SurveySubmissionDto req = new SurveySubmissionDto(badAnswer);
 
@@ -393,7 +496,7 @@ class SurveyServiceTest {
 
 			assertThat(t)
 					.isInstanceOf(CustomException.class)
-					.hasMessageContaining("답변 번호는 1-8 범위여야 합니다. 입력된 값: 16");
+					.hasMessageContaining("답변 번호는");
 			assertThat(((CustomException)t).getErrorCode())
 					.isEqualTo(ErrorCode.INVALID_INPUT);
 		}
@@ -403,10 +506,23 @@ class SurveyServiceTest {
 		void submitSurvey_SecurityContextUserId_Success() {
 			// Given
 			List<SurveyQuestion> activeQuestions = new ArrayList<>();
-			for (int i = 1; i <= 15; i++) {
+			for (int i = 1; i <= 13; i++) {
 				SurveyQuestion mockQuestion = org.mockito.Mockito.mock(SurveyQuestion.class);
 				given(mockQuestion.getQuestionNumber()).willReturn(i);
 				given(mockQuestion.isActive()).willReturn(true);
+				given(mockQuestion.isRequired()).willReturn(true);
+				given(mockQuestion.getQuestionType()).willReturn(
+					i <= 4 ? SurveyQuestion.QuestionType.MULTIPLE_CHOICE : SurveyQuestion.QuestionType.SINGLE_CHOICE
+				);
+
+				List<SurveyQuestionOption> options = new ArrayList<>();
+				int maxOptions = (i >= 1 && i <= 4) ? 4 : 8;
+				for (int j = 1; j <= maxOptions; j++) {
+					SurveyQuestionOption option = org.mockito.Mockito.mock(SurveyQuestionOption.class);
+					given(option.getOptionNumber()).willReturn(j);
+					options.add(option);
+				}
+				given(mockQuestion.getOptions()).willReturn(options);
 				activeQuestions.add(mockQuestion);
 			}
 			given(surveyQuestionRepository.findActiveQuestionsWithOptions()).willReturn(activeQuestions);
@@ -464,7 +580,7 @@ class SurveyServiceTest {
 			assertThat(result.getTotalResponseCount()).isEqualTo(1L);
 			assertThat(result.getResponses()).hasSize(1);
 			assertThat(result.getResponses().get(0).getUserId()).isEqualTo(MOCK_USER_ID);
-			assertThat(result.getResponses().get(0).getAnswers()).hasSize(15);
+			assertThat(result.getResponses().get(0).getAnswers()).hasSize(16);
 
 			verify(surveyResponseRepository)
 				.findByMember_IdOrderByCreatedAtDesc(MOCK_USER_ID);
@@ -489,7 +605,7 @@ class SurveyServiceTest {
 			// Then
 			assertThat(result).hasSize(1);
 			assertThat(result.get(0).getUserId()).isEqualTo(MOCK_USER_ID);
-			assertThat(result.get(0).getAnswers()).hasSize(15);
+			assertThat(result.get(0).getAnswers()).hasSize(16);
 
 			verify(surveyResponseRepository)
 				.findByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class));

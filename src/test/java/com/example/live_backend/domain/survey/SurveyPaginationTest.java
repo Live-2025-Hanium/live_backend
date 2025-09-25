@@ -2,8 +2,13 @@ package com.example.live_backend.domain.survey;
 
 import com.example.live_backend.domain.survey.dto.response.SurveyPageResponse;
 import com.example.live_backend.domain.survey.dto.response.SurveyQuestionDto;
+import com.example.live_backend.domain.survey.entity.SurveyQuestion;
+import com.example.live_backend.domain.survey.entity.SurveyQuestionOption;
+import com.example.live_backend.domain.survey.repository.SurveyQuestionRepository;
+import com.example.live_backend.domain.survey.repository.SurveyQuestionOptionRepository;
 import com.example.live_backend.domain.survey.service.SurveyQuestionService;
 import com.example.live_backend.global.error.exception.CustomException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +24,46 @@ class SurveyPaginationTest {
 
 	@Autowired
 	private SurveyQuestionService surveyQuestionService;
+
+	@Autowired
+	private SurveyQuestionRepository surveyQuestionRepository;
+
+	@Autowired
+	private SurveyQuestionOptionRepository surveyQuestionOptionRepository;
+
+	@BeforeEach
+	void setUp() {
+		// 기존 데이터 삭제
+		surveyQuestionOptionRepository.deleteAll();
+		surveyQuestionRepository.deleteAll();
+
+		// 13개의 테스트 문항 생성
+		for (int i = 1; i <= 13; i++) {
+			SurveyQuestion.QuestionType type = i <= 4 ? SurveyQuestion.QuestionType.MULTIPLE_CHOICE : SurveyQuestion.QuestionType.SINGLE_CHOICE;
+
+			SurveyQuestion question = SurveyQuestion.builder()
+					.questionNumber(i)
+					.questionText("테스트 질문 " + i)
+					.questionType(type)
+					.isRequired(true)
+					.isActive(true)
+					.build();
+
+			question = surveyQuestionRepository.save(question);
+
+			// 각 질문에 대한 옵션 생성
+			int optionCount = i <= 4 ? 4 : 5; // 1-4번은 4개 옵션, 나머지는 5개 옵션
+			for (int j = 1; j <= optionCount; j++) {
+				SurveyQuestionOption option = SurveyQuestionOption.builder()
+						.surveyQuestion(question)
+						.optionNumber(j)
+						.optionText("옵션 " + j)
+						.isActive(true)
+						.build();
+				surveyQuestionOptionRepository.save(option);
+			}
+		}
+	}
 
 	@Test
 	@DisplayName("첫 페이지 조회 - 5개 문항 반환")
