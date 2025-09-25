@@ -24,13 +24,13 @@ import java.util.List;
 @Tag(name = "Survey", description = "설문 응답 관련 API")
 public interface SurveyControllerDocs {
 
-    @Operation(summary = "설문 응답 제출", 
-        description = "설문 응답을 제출합니다. 15문제에 대한 설문을 모두 작성한 뒤 응답 제출을 합니다.")
+    @Operation(summary = "설문 응답 제출",
+        description = "설문 응답을 제출합니다. 13개 문항에 대한 설문을 모두 작성한 뒤 응답 제출을 합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "제출 성공",
             content = @Content(schema = @Schema(implementation = SurveySubmissionResponseDto.class))),
         @ApiResponse(responseCode = "400", description = "잘못된 입력값 (답변 개수 부족, 중복 문제 등)",
-            content = @Content(examples = @ExampleObject(value = "{\"message\": \"설문 문제는 총 15개입니다.\"}"))),
+            content = @Content(examples = @ExampleObject(value = "{\"message\": \"모든 필수 질문에 답변해야 합니다.\"}"))),
         @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
         @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
