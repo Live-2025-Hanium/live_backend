@@ -66,8 +66,9 @@ class SurveyPaginationTest {
 	}
 
 	@Test
-	@DisplayName("첫 페이지 조회 - 5개 문항 반환")
+	@DisplayName("첫 페이지 조회 - 5개 문항 반환 (기본값)")
 	void getFirstPage() {
+		// page 파라미터 없이 호출 시 기본값 1
 		SurveyPageResponse response = surveyQuestionService.getQuestionsByPage(1);
 
 		assertThat(response).isNotNull();

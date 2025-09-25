@@ -23,15 +23,9 @@ public class SurveyQuestionController implements SurveyQuestionControllerDocs {
     
     @Override
     @GetMapping
-    public ResponseHandler<List<SurveyQuestionDto>> getAllActiveQuestions() {
-        List<SurveyQuestionDto> questions = surveyQuestionService.getAllActiveQuestions();
-        return ResponseHandler.success(questions);
-    }
-
-    @GetMapping("/page/{pageNumber}")
-    public ResponseHandler<SurveyPageResponse> getQuestionsByPage(
-            @PathVariable int pageNumber) {
-        SurveyPageResponse response = surveyQuestionService.getQuestionsByPage(pageNumber);
+    public ResponseHandler<SurveyPageResponse> getAllActiveQuestions(
+            @RequestParam(defaultValue = "1") int page) {
+        SurveyPageResponse response = surveyQuestionService.getQuestionsByPage(page);
         return ResponseHandler.success(response);
     }
     

@@ -103,7 +103,7 @@ public class SurveyQuestionService {
         
         question.updateQuestion(
                 request.getQuestionText(),
-                question.getQuestionType(), // 기존 타입 유지
+                question.getQuestionType(),
                 request.isRequired(),
                 request.isActive()
         );
@@ -124,9 +124,9 @@ public class SurveyQuestionService {
         
         question.updateQuestion(
                 question.getQuestionText(),
-                question.getQuestionType(), // 기존 타입 유지
+                question.getQuestionType(),
                 question.isRequired(),
-                false // 비활성화
+                false
         );
         
         questionRepository.save(question);
