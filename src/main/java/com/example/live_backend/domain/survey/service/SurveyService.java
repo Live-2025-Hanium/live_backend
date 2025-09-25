@@ -2,6 +2,8 @@ package com.example.live_backend.domain.survey.service;
 
 import com.example.live_backend.domain.survey.vitality.dto.VitalityResultDto;
 import com.example.live_backend.domain.survey.vitality.service.VitalityService;
+import com.example.live_backend.domain.survey.validator.SurveyAnswerValidator;
+import com.example.live_backend.domain.survey.factory.SurveyAnswerFactory;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import com.example.live_backend.domain.memeber.entity.Member;
@@ -12,6 +14,7 @@ import com.example.live_backend.domain.survey.dto.response.SurveyResponseListDto
 import com.example.live_backend.domain.survey.entity.SurveyAnswer;
 import com.example.live_backend.domain.survey.entity.SurveyResponse;
 import com.example.live_backend.domain.survey.entity.SurveyQuestion;
+import com.example.live_backend.domain.survey.entity.SurveyQuestion.QuestionType;
 import com.example.live_backend.domain.survey.entity.SurveyQuestionOption;
 import com.example.live_backend.domain.survey.repository.SurveyResponseRepository;
 import com.example.live_backend.domain.survey.repository.SurveyQuestionRepository;
@@ -41,8 +44,6 @@ public class SurveyService {
     private final VitalityService vitalityService;
 
 
-    private static final int MIN_ANSWER_NUMBER = 1;
-    private static final int MAX_ANSWER_NUMBER = 8;
 
 
     @Transactional
@@ -77,18 +78,8 @@ public class SurveyService {
 
         for (var dto : answers) {
             SurveyQuestion question = questionMap.get(dto.getQuestionNumber());
-            
-            SurveyQuestionOption selectedOption = question.getOptions().stream()
-                .filter(opt -> opt.getOptionNumber().equals(dto.getAnswerNumber()))
-                .findFirst()
-                .orElse(null);
-            
-            SurveyAnswer answer = SurveyAnswer.builder()
-                .surveyQuestion(question)
-                .selectedOption(selectedOption)
-                .numberAnswer(dto.getAnswerNumber())
-                .build();
-            surveyResponse.addAnswer(answer);
+            SurveyAnswerValidator.validateQuestionTypeMatch(dto, question);
+            SurveyAnswerFactory.createAndAddAnswers(surveyResponse, dto, question);
         }
 
         SurveyResponse saved = surveyResponseRepository.save(surveyResponse);
@@ -110,56 +101,30 @@ public class SurveyService {
             .build();
     }
 
-    private void validateAnswers(List<SurveySubmissionDto.SurveyAnswerDto> answers, 
+    private void validateAnswers(List<SurveySubmissionDto.SurveyAnswerDto> answers,
                                  List<SurveyQuestion> activeQuestions) {
-        if (answers.size() != activeQuestions.size()) {
-            throw new CustomException(
-                ErrorCode.INVALID_INPUT,
-                String.format("설문 문제는 총 %d개입니다. 현재 답변 개수: %d", 
-                    activeQuestions.size(), answers.size())
-            );
-        }
-        
-        Set<Integer> activeQuestionNumbers = activeQuestions.stream()
-            .map(SurveyQuestion::getQuestionNumber)
-            .collect(Collectors.toSet());
-        
+        Map<Integer, SurveyQuestion> questionMap = activeQuestions.stream()
+            .collect(Collectors.toMap(SurveyQuestion::getQuestionNumber, q -> q));
+
         Set<Integer> answeredQuestions = new HashSet<>();
-        
+
         for (var dto : answers) {
-            if (!activeQuestionNumbers.contains(dto.getQuestionNumber())) {
-                throw new CustomException(
-                    ErrorCode.INVALID_INPUT,
-                    String.format("문제 번호 %d는 현재 활성화되지 않았거나 존재하지 않습니다.", 
-                        dto.getQuestionNumber())
-                );
+            SurveyQuestion question = questionMap.get(dto.getQuestionNumber());
+
+            if (question == null) {
+                throw new CustomException(ErrorCode.INVALID_INPUT,
+                    String.format("문제 번호 %d는 현재 활성화되지 않았거나 존재하지 않습니다.", dto.getQuestionNumber()));
             }
-            
+
             if (!answeredQuestions.add(dto.getQuestionNumber())) {
-                throw new CustomException(
-                    ErrorCode.INVALID_INPUT,
-                    String.format("문제 번호 %d가 중복되었습니다.", dto.getQuestionNumber())
-                );
+                throw new CustomException(ErrorCode.INVALID_INPUT,
+                    String.format("문제 번호 %d가 중복되었습니다.", dto.getQuestionNumber()));
             }
-            
-            if (dto.getAnswerNumber() < MIN_ANSWER_NUMBER || 
-                dto.getAnswerNumber() > MAX_ANSWER_NUMBER) {
-                throw new CustomException(
-                    ErrorCode.INVALID_INPUT,
-                    String.format("답변 번호는 %d-%d 범위여야 합니다. 입력된 값: %d",
-                        MIN_ANSWER_NUMBER, MAX_ANSWER_NUMBER, dto.getAnswerNumber())
-                );
-            }
+
+            SurveyAnswerValidator.validateAnswerFormat(dto, question);
         }
-        
-        for (Integer questionNumber : activeQuestionNumbers) {
-            if (!answeredQuestions.contains(questionNumber)) {
-                throw new CustomException(
-                    ErrorCode.INVALID_INPUT,
-                    String.format("문제 %d번에 대한 답변이 누락되었습니다.", questionNumber)
-                );
-            }
-        }
+
+        SurveyAnswerValidator.validateAnswerCompleteness(answers, activeQuestions, answeredQuestions);
     }
      
      /**

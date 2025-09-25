@@ -3,6 +3,7 @@ package com.example.live_backend.domain.survey.controller.docs;
 import com.example.live_backend.domain.survey.dto.request.CreateQuestionRequest;
 import com.example.live_backend.domain.survey.dto.request.UpdateQuestionRequest;
 import com.example.live_backend.domain.survey.dto.response.SurveyQuestionDto;
+import com.example.live_backend.domain.survey.dto.response.SurveyPageResponse;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,13 +21,15 @@ import java.util.List;
 @Tag(name = "Survey Question", description = "설문 질문 관리 API")
 public interface SurveyQuestionControllerDocs {
 
-    @Operation(summary = "활성 설문 질문 목록 조회", 
-        description = "현재 활성화된 모든 설문 질문과 옵션을 조회합니다. 프론트엔드에서 설문 화면을 구성할 때 사용합니다.")
+    @Operation(summary = "활성 설문 질문 페이지별 조회",
+        description = "현재 활성화된 설문 질문을 페이지별로 조회합니다. 한 페이지당 5개씩 반환합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공",
-            content = @Content(schema = @Schema(implementation = SurveyQuestionDto.class)))
+            content = @Content(schema = @Schema(implementation = SurveyPageResponse.class)))
     })
-    ResponseHandler<List<SurveyQuestionDto>> getAllActiveQuestions();
+    ResponseHandler<SurveyPageResponse> getAllActiveQuestions(
+        @Parameter(description = "페이지 번호 (1부터 시작)", example = "1") @RequestParam(defaultValue = "1") int page
+    );
 
     @Operation(summary = "새 질문 생성", 
         description = "새로운 설문 질문을 생성합니다. 객관식 질문의 경우 선택지도 함께 생성됩니다. (관리자 전용)")

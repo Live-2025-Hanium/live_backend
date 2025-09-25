@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class VitalityService {
@@ -68,11 +71,12 @@ public class VitalityService {
                 .build();
     }
 
-    // 정서적 고립: 1~4번 문항 중 하나라도 4번(없음) 선택
+    // 정서적 고립: 1~4번 문항 중 하나라도 4번(없음)만 선택
     private boolean isEmotionallyIsolated(SurveyResponse response) {
         for (int questionNum = 1; questionNum <= 4; questionNum++) {
-            int answer = getAnswerNumber(response, questionNum);
-            if (answer == 4) { // 4번: 없음
+            List<Integer> answers = getAnswerNumbers(response, questionNum);
+            // 다중 선택 문항에서 "없음"(4번)만 선택했는지 확인
+            if (answers.size() == 1 && answers.contains(4)) {
                 return true;
             }
         }
@@ -133,12 +137,20 @@ public class VitalityService {
                 .anyMatch(a -> a.getQuestionNumber() == questionNumber);
     }
 
-    // 특정 질문 번호의 답변 가져오기
+    // 특정 질문 번호의 답변 가져오기 (단일 선택용)
     private int getAnswerNumber(SurveyResponse response, int questionNumber) {
         return response.getAnswers().stream()
                 .filter(a -> a.getQuestionNumber() == questionNumber)
                 .map(SurveyAnswer::getAnswerNumber)
                 .findFirst()
                 .orElse(0);
+    }
+
+    // 특정 질문 번호의 답변들 가져오기 (다중 선택용)
+    private List<Integer> getAnswerNumbers(SurveyResponse response, int questionNumber) {
+        return response.getAnswers().stream()
+                .filter(a -> a.getQuestionNumber() == questionNumber)
+                .map(SurveyAnswer::getAnswerNumber)
+                .collect(Collectors.toList());
     }
 }
