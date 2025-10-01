@@ -533,6 +533,7 @@ class CloverMissionServiceTest {
 
             // --- Given ---
             CloverMissionRecord assignedMission = createTestMissionRecord(TEST_USER_MISSION_ID, CloverMissionStatus.STARTED, mockMember);
+            int initialCloverCount = mockMember.getCloverCount();
 
             given(cloverMissionRecordRepository.findByIdWithMember(anyLong())).willReturn(Optional.of(assignedMission));
 
@@ -541,6 +542,58 @@ class CloverMissionServiceTest {
 
             // --- Then ---
             assertThat(result.getMissionStatus()).isEqualTo(CloverMissionStatus.COMPLETED);
+            assertThat(mockMember.getCloverCount()).isEqualTo(initialCloverCount + 1);
+            verify(cloverMissionRecordRepository).findByIdWithMember(TEST_USER_MISSION_ID);
+        }
+
+        @Test
+        @DisplayName("성공 - 미션 완료 시 클로버 개수가 정확히 1 증가")
+        void completeCloverMission_Success_CloverCountIncreasedByOne() {
+
+            // --- Given ---
+            CloverMissionRecord mission1 = createTestMissionRecord(TEST_USER_MISSION_ID, CloverMissionStatus.STARTED, mockMember);
+            CloverMissionRecord mission2 = createTestMissionRecord(TEST_USER_MISSION_ID + 1, CloverMissionStatus.STARTED, mockMember);
+
+            int initialCount = mockMember.getCloverCount();
+
+            given(cloverMissionRecordRepository.findByIdWithMember(eq(TEST_USER_MISSION_ID)))
+                    .willReturn(Optional.of(mission1));
+            given(cloverMissionRecordRepository.findByIdWithMember(eq(TEST_USER_MISSION_ID + 1)))
+                    .willReturn(Optional.of(mission2));
+
+            // --- When ---
+            cloverMissionService.completeCloverMission(TEST_USER_MISSION_ID, TEST_MEMBER_ID);
+            int afterFirstCompletion = mockMember.getCloverCount();
+
+            cloverMissionService.completeCloverMission(TEST_USER_MISSION_ID + 1, TEST_MEMBER_ID);
+            int afterSecondCompletion = mockMember.getCloverCount();
+
+            // --- Then ---
+            assertThat(afterFirstCompletion).isEqualTo(initialCount + 1);
+            assertThat(afterSecondCompletion).isEqualTo(initialCount + 2);
+        }
+
+        @Test
+        @DisplayName("성공 - 여러 미션 완료 후 누적 클로버 개수 확인")
+        void completeCloverMission_Success_AccumulatedCloverCount() {
+
+            // --- Given ---
+            int completedMissionsCount = 5;
+            int initialCount = mockMember.getCloverCount();
+
+            for (int i = 0; i < completedMissionsCount; i++) {
+                CloverMissionRecord mission = createTestMissionRecord(TEST_USER_MISSION_ID + i, CloverMissionStatus.STARTED, mockMember);
+                given(cloverMissionRecordRepository.findByIdWithMember(eq(TEST_USER_MISSION_ID + i)))
+                        .willReturn(Optional.of(mission));
+            }
+
+            // --- When ---
+            for (int i = 0; i < completedMissionsCount; i++) {
+                cloverMissionService.completeCloverMission(TEST_USER_MISSION_ID + i, TEST_MEMBER_ID);
+            }
+
+            // --- Then ---
+            assertThat(mockMember.getCloverCount()).isEqualTo(initialCount + completedMissionsCount);
         }
 
         @Test
@@ -549,6 +602,7 @@ class CloverMissionServiceTest {
 
             // --- Given ---
             CloverMissionRecord assignedMission = createTestMissionRecord(TEST_USER_MISSION_ID, CloverMissionStatus.PAUSED, mockMember);
+            int initialCloverCount = mockMember.getCloverCount();
 
             given(cloverMissionRecordRepository.findByIdWithMember(anyLong())).willReturn(Optional.of(assignedMission));
 
@@ -558,6 +612,29 @@ class CloverMissionServiceTest {
             });
 
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_MISSION_STATUS);
+            // 클로버 개수는 증가하지 않아야 함
+            assertThat(mockMember.getCloverCount()).isEqualTo(initialCloverCount);
+        }
+
+        @Test
+        @DisplayName("실패 - 완료 시도했지만 예외 발생으로 클로버 개수 증가 안됨")
+        void completeCloverMission_Fail_CloverCountNotIncreasedOnException() {
+
+            // --- Given ---
+            Long invalidMissionId = 999L;
+            int initialCloverCount = mockMember.getCloverCount();
+
+            given(cloverMissionRecordRepository.findByIdWithMember(eq(invalidMissionId)))
+                    .willReturn(Optional.empty());
+
+            // --- When & Then ---
+            CustomException exception = assertThrows(CustomException.class, () -> {
+                cloverMissionService.completeCloverMission(invalidMissionId, TEST_MEMBER_ID);
+            });
+
+            assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MISSION_NOT_FOUND);
+            // 예외 발생으로 클로버 개수는 변하지 않음
+            assertThat(mockMember.getCloverCount()).isEqualTo(initialCloverCount);
         }
     }
 
