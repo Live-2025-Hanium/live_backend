@@ -1,20 +1,13 @@
 package com.example.live_backend.domain.memeber.entity;
 
+import com.example.live_backend.domain.clover.entity.Clover;
 import com.example.live_backend.domain.memeber.Gender;
 import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.memeber.entity.vo.BirthDate;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
 
 import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -64,6 +57,9 @@ public class Member {
 	@Column(name = "last_survey_submitted_at")
 	private LocalDateTime lastSurveySubmittedAt;
 
+	@OneToOne(mappedBy = "member", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	private Clover clover;
+
 	@Builder
 	public Member(String oauthId,
 		String email,
@@ -81,6 +77,8 @@ public class Member {
 		this.birthDate = birthDate;
 		this.occupation = occupation;
 		this.occupationDetail = occupationDetail;
+		this.clover = new Clover(this); // Member 생성 시 Clover 객체도 함께 생성
+
 	}
 
 	public void updateProfile(Profile newProfile) {
@@ -100,5 +98,13 @@ public class Member {
 
 	public void updateVitalityLevel(VitalityLevel vitalityLevel) {
 		this.vitalityLevel = vitalityLevel;
+	}
+
+	public void increaseCloverCount() {
+		this.clover.increase(1);
+	}
+
+	public int getCloverCount() {
+		return this.clover.getCount();
 	}
 }
