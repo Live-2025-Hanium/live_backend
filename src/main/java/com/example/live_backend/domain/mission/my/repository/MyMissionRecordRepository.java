@@ -36,4 +36,12 @@ public interface MyMissionRecordRepository  extends JpaRepository<MyMissionRecor
                                                 @Param("status") MyMissionStatus status,
                                                 @Param("start") LocalDateTime start,
                                                 @Param("end") LocalDateTime end);
+
+    @Query("SELECT mmr FROM MyMissionRecord mmr " +
+            "JOIN FETCH mmr.myMission " +
+            "WHERE mmr.member.id = :memberId AND mmr.myMissionStatus = :status " +
+            "AND DATE(mmr.completedAt) = DATE(:date) ORDER BY mmr.completedAt ASC")
+    List<MyMissionRecord> findCompletedOnDate(@Param("memberId") Long memberId,
+                                              @Param("status") MyMissionStatus status,
+                                              @Param("date") LocalDate date);
 }
