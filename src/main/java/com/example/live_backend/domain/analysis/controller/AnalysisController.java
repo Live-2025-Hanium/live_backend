@@ -86,4 +86,15 @@ public class AnalysisController implements AnalysisControllerDocs {
 
         return ResponseHandler.success(analysisService.getMonthlyMyMissionCompletionRate(memberId, ym));
     }
+
+    @Override
+    @AuthenticatedApi(reason = "마이미션 주간 완료 현황 조회는 로그인한 사용자만 가능합니다")
+    @GetMapping("/my/weekly")
+    public ResponseHandler<WeeklyMyMissionSummaryResponseDto> getWeeklyMyMissions(
+            @RequestParam(name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ) {
+        Long memberId = userDetails.getMemberId();
+        return ResponseHandler.success(analysisService.getWeeklyMyMissionSummary(memberId, date));
+    }
 }

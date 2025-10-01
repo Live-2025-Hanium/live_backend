@@ -52,4 +52,12 @@ public interface AnalysisControllerDocs {
             @Parameter(hidden = true)
             @AuthenticationPrincipal PrincipalDetails userDetails
     );
+
+    @Operation(summary = "마이미션 주간 완료 현황 조회", description = "지정한 날짜가 포함된 주간의 마이미션 완료 현황을 조회합니다. date 필수(2025-10-01)")
+    ResponseHandler<WeeklyMyMissionSummaryResponseDto> getWeeklyMyMissions(
+            @Parameter(description = "조회 기준 날짜", example = "2025-10-01")
+            @RequestParam(name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    );
 }
