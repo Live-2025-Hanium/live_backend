@@ -1,10 +1,7 @@
 package com.example.live_backend.domain.analysis.controller;
 
 import com.example.live_backend.domain.analysis.controller.docs.AnalysisControllerDocs;
-import com.example.live_backend.domain.analysis.dto.DailyCompletedMissionsResponseDto;
-import com.example.live_backend.domain.analysis.dto.MonthlyGrowthResponseDto;
-import com.example.live_backend.domain.analysis.dto.MonthlyParticipationResponseDto;
-import com.example.live_backend.domain.analysis.dto.WeeklyMissionSummaryResponseDto;
+import com.example.live_backend.domain.analysis.dto.*;
 import com.example.live_backend.domain.analysis.service.AnalysisService;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
@@ -80,7 +77,7 @@ public class AnalysisController implements AnalysisControllerDocs {
     @Override
     @AuthenticatedApi(reason = "마이미션 월별 완료율 조회는 로그인한 사용자만 가능합니다")
     @GetMapping("/my/participation")
-    public ResponseHandler<MonthlyMyMissionCompletionRateResponseDto> getMyMissionParticipation(
+    public ResponseHandler<MonthlyMyMissionParticipationResponseDto> getMyMissionParticipation(
             @RequestParam(name = "yearMonth") String yearMonth,
             @AuthenticationPrincipal PrincipalDetails userDetails
     ) {

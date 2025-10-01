@@ -1,9 +1,6 @@
 package com.example.live_backend.domain.analysis.controller.docs;
 
-import com.example.live_backend.domain.analysis.dto.DailyCompletedMissionsResponseDto;
-import com.example.live_backend.domain.analysis.dto.MonthlyGrowthResponseDto;
-import com.example.live_backend.domain.analysis.dto.MonthlyParticipationResponseDto;
-import com.example.live_backend.domain.analysis.dto.WeeklyMissionSummaryResponseDto;
+import com.example.live_backend.domain.analysis.dto.*;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,7 +46,7 @@ public interface AnalysisControllerDocs {
     );
 
     @Operation(summary = "마이미션 월별 완료율 조회", description = "마이미션의 월별 완료율을 조회합니다.")
-    ResponseHandler<MonthlyMyMissionCompletionRateResponseDto> getMyMissionParticipation(
+    ResponseHandler<MonthlyMyMissionParticipationResponseDto> getMyMissionParticipation(
             @Parameter(description = "조회 기준 년,월", example = "2025-10")
             @RequestParam(name = "yearMonth") String yearMonth,
             @Parameter(hidden = true)
