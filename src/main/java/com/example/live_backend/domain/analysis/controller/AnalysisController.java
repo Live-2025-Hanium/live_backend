@@ -29,8 +29,8 @@ public class AnalysisController implements AnalysisControllerDocs {
     private final AnalysisService analysisService;
 
     @Override
-    @AuthenticatedApi(reason = "월별 미션 완료율 조회는 로그인한 사용자만 가능합니다")
-    @GetMapping("/participation")
+    @AuthenticatedApi(reason = "클로버 미션의 월별 미션 완료율 조회는 로그인한 사용자만 가능합니다")
+    @GetMapping("/clover/participation")
     public ResponseHandler<MonthlyParticipationResponseDto> getParticipation(
             @AuthenticationPrincipal PrincipalDetails userDetails,
             @RequestParam(name = "yearMonth") String yearMonth
@@ -44,7 +44,7 @@ public class AnalysisController implements AnalysisControllerDocs {
 
     @Override
     @AuthenticatedApi(reason = "주간 미션 완료 현황 조회는 로그인한 사용자만 가능합니다")
-    @GetMapping("/missions/weekly")
+    @GetMapping("/clover/weekly")
     public ResponseHandler<WeeklyMissionSummaryResponseDto> getWeeklyMissions(
             @RequestParam(name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal PrincipalDetails userDetails
@@ -55,7 +55,7 @@ public class AnalysisController implements AnalysisControllerDocs {
 
     @Override
     @AuthenticatedApi(reason = "일간 미션 완료 현황 조회는 로그인한 사용자만 가능합니다")
-    @GetMapping("/missions/daily")
+    @GetMapping("/clover/daily")
     public ResponseHandler<DailyCompletedMissionsResponseDto> getDailyMissions(
             @RequestParam(name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal PrincipalDetails userDetails
@@ -66,7 +66,7 @@ public class AnalysisController implements AnalysisControllerDocs {
 
     @Override
     @AuthenticatedApi(reason = "전월 대비 클로버 미션 TOP3 성장 카테고리 조회는 로그인한 사용자만 가능합니다")
-    @GetMapping("/monthly-growth")
+    @GetMapping("/clover/monthly-growth")
     public ResponseHandler<MonthlyGrowthResponseDto> getMonthlyGrowth(
             @AuthenticationPrincipal PrincipalDetails userDetails
     ) {
@@ -75,5 +75,18 @@ public class AnalysisController implements AnalysisControllerDocs {
         YearMonth ym = YearMonth.now();
 
         return ResponseHandler.success(analysisService.getMonthlyGrowthTop3(memberId, ym));
+    }
+
+    @Override
+    @AuthenticatedApi(reason = "마이미션 월별 완료율 조회는 로그인한 사용자만 가능합니다")
+    @GetMapping("/my/participation")
+    public ResponseHandler<MonthlyMyMissionCompletionRateResponseDto> getMyMissionParticipation(
+            @RequestParam(name = "yearMonth") String yearMonth,
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ) {
+        Long memberId = userDetails.getMemberId();
+        YearMonth ym = YearMonth.parse(yearMonth, DateTimeFormatter.ofPattern("yyyy-MM"));
+
+        return ResponseHandler.success(analysisService.getMonthlyMyMissionCompletionRate(memberId, ym));
     }
 }
