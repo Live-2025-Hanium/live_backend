@@ -128,4 +128,12 @@ public class AnalysisService {
 
         return WeeklyMyMissionSummaryResponseDto.from(weekStartDate, weekEndDate, completedList);
     }
+
+    public DailyCompletedMyMissionsResponseDto getDailyCompletedMyMissions(Long memberId, LocalDate date) {
+        List<MyMissionRecord> completed = myMissionRecordRepository.findCompletedOnDate(
+                memberId, MyMissionStatus.COMPLETED, date
+        );
+
+        return DailyCompletedMyMissionsResponseDto.from(date, completed);
+    }
 }
