@@ -115,6 +115,8 @@ public class CloverMissionService {
 
         missionRecord.completeMission();
 
+        missionRecord.getMember().increaseCloverCount();
+
         return CloverMissionStatusResponseDto.from(missionRecord);
     }
 

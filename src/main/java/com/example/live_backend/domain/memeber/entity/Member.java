@@ -77,7 +77,7 @@ public class Member {
 		this.birthDate = birthDate;
 		this.occupation = occupation;
 		this.occupationDetail = occupationDetail;
-		this.clover = new Clover(this); // Member 생성 시 Clover 객체도 함께 생성
+		this.clover = new Clover(this);
 
 	}
 
