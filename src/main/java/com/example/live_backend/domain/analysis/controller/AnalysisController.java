@@ -97,4 +97,15 @@ public class AnalysisController implements AnalysisControllerDocs {
         Long memberId = userDetails.getMemberId();
         return ResponseHandler.success(analysisService.getWeeklyMyMissionSummary(memberId, date));
     }
+
+    @Override
+    @AuthenticatedApi(reason = "마이미션 일별 완료 목록 조회는 로그인한 사용자만 가능합니다")
+    @GetMapping("/my/daily")
+    public ResponseHandler<DailyCompletedMyMissionsResponseDto> getDailyMyMissions(
+            @RequestParam(name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ) {
+        Long memberId = userDetails.getMemberId();
+        return ResponseHandler.success(analysisService.getDailyCompletedMyMissions(memberId, date));
+    }
 }
