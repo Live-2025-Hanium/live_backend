@@ -185,11 +185,11 @@ class AnalysisServiceTest {
             assertThat(result.getWeekEndDate()).isEqualTo(weekEnd);
             assertThat(result.getWeeklySummary().size()).isEqualTo(7);
             assertThat(result.getWeeklySummary().get(0).getDate()).isEqualTo(weekStart);
-            assertThat(result.getWeeklySummary().get(0).getCloverMissionCount()).isEqualTo(1);
+            assertThat(result.getWeeklySummary().get(0).getMissionCount()).isEqualTo(1);
             assertThat(result.getWeeklySummary().get(2).getDate()).isEqualTo(weekStart.plusDays(2));
-            assertThat(result.getWeeklySummary().get(2).getCloverMissionCount()).isEqualTo(1);
+            assertThat(result.getWeeklySummary().get(2).getMissionCount()).isEqualTo(1);
             assertThat(result.getWeeklySummary().get(6).getDate()).isEqualTo(weekEnd);
-            assertThat(result.getWeeklySummary().get(6).getCloverMissionCount()).isEqualTo(1);
+            assertThat(result.getWeeklySummary().get(6).getMissionCount()).isEqualTo(1);
 
             ArgumentCaptor<LocalDateTime> startCap = ArgumentCaptor.forClass(LocalDateTime.class);
             ArgumentCaptor<LocalDateTime> endCap = ArgumentCaptor.forClass(LocalDateTime.class);
@@ -487,11 +487,11 @@ class AnalysisServiceTest {
             assertThat(result.getWeekEndDate()).isEqualTo(weekEnd);
             assertThat(result.getWeeklySummary().size()).isEqualTo(7);
             assertThat(result.getWeeklySummary().get(0).getDate()).isEqualTo(weekStart);
-            assertThat(result.getWeeklySummary().get(0).getMyMissionCount()).isEqualTo(1);
+            assertThat(result.getWeeklySummary().get(0).getMissionCount()).isEqualTo(1);
             assertThat(result.getWeeklySummary().get(2).getDate()).isEqualTo(weekStart.plusDays(2));
-            assertThat(result.getWeeklySummary().get(2).getMyMissionCount()).isEqualTo(1);
+            assertThat(result.getWeeklySummary().get(2).getMissionCount()).isEqualTo(1);
             assertThat(result.getWeeklySummary().get(6).getDate()).isEqualTo(weekEnd);
-            assertThat(result.getWeeklySummary().get(6).getMyMissionCount()).isEqualTo(1);
+            assertThat(result.getWeeklySummary().get(6).getMissionCount()).isEqualTo(1);
 
             ArgumentCaptor<LocalDateTime> startCap = ArgumentCaptor.forClass(LocalDateTime.class);
             ArgumentCaptor<LocalDateTime> endCap = ArgumentCaptor.forClass(LocalDateTime.class);

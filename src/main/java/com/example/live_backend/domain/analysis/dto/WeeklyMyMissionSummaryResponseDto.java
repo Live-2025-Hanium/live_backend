@@ -24,7 +24,7 @@ public class WeeklyMyMissionSummaryResponseDto {
     public static class DaySummary {
         private LocalDate date;
         private DayOfWeek dayOfWeek;
-        private int myMissionCount;
+        private int missionCount;
     }
 
     public static WeeklyMyMissionSummaryResponseDto from(LocalDate weekStartDate, LocalDate weekEndDate, List<MyMissionRecord> completedInWeek) {
@@ -40,7 +40,7 @@ public class WeeklyMyMissionSummaryResponseDto {
             days.add(DaySummary.builder()
                     .date(d)
                     .dayOfWeek(d.getDayOfWeek())
-                    .myMissionCount(counts.getOrDefault(d, 0))
+                    .missionCount(counts.getOrDefault(d, 0))
                     .build());
         }
 

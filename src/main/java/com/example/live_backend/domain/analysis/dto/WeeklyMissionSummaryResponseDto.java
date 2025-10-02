@@ -24,7 +24,7 @@ public class WeeklyMissionSummaryResponseDto {
     public static class DaySummary {
         private LocalDate date;
         private DayOfWeek dayOfWeek;
-        private int cloverMissionCount;
+        private int missionCount;
     }
 
     public static WeeklyMissionSummaryResponseDto from(LocalDate weekStartDate, LocalDate weekEndDate, List<CloverMissionRecord> completedInWeek) {
@@ -40,7 +40,7 @@ public class WeeklyMissionSummaryResponseDto {
             days.add(DaySummary.builder()
                     .date(d)
                     .dayOfWeek(d.getDayOfWeek())
-                    .cloverMissionCount(counts.getOrDefault(d, 0))
+                    .missionCount(counts.getOrDefault(d, 0))
                     .build());
         }
 
