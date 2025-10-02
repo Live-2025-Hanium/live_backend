@@ -24,13 +24,15 @@ public class WeeklyMyMissionSummaryResponseDto {
     public static class DaySummary {
         private LocalDate date;
         private DayOfWeek dayOfWeek;
-        private long myMissionCount;
+        private int myMissionCount;
     }
 
     public static WeeklyMyMissionSummaryResponseDto from(LocalDate weekStartDate, LocalDate weekEndDate, List<MyMissionRecord> completedInWeek) {
 
-        Map<LocalDate, Long> counts = completedInWeek.stream()
-                .collect(Collectors.groupingBy(r -> r.getCompletedAt().toLocalDate(), Collectors.counting()));
+        Map<LocalDate, Integer> counts = completedInWeek.stream()
+                .collect(Collectors.groupingBy(
+                        r -> r.getCompletedAt().toLocalDate(),
+                        Collectors.summingInt(e -> 1)));
 
         List<DaySummary> days = new ArrayList<>(7);
         for (int i = 0; i < 7; i++) {
@@ -38,7 +40,7 @@ public class WeeklyMyMissionSummaryResponseDto {
             days.add(DaySummary.builder()
                     .date(d)
                     .dayOfWeek(d.getDayOfWeek())
-                    .myMissionCount(counts.getOrDefault(d, 0L).intValue())
+                    .myMissionCount(counts.getOrDefault(d, 0))
                     .build());
         }
 
