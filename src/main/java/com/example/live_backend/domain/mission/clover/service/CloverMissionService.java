@@ -1,5 +1,7 @@
 package com.example.live_backend.domain.mission.clover.service;
 
+import com.example.live_backend.domain.clover.entity.CloverHistory;
+import com.example.live_backend.domain.clover.repository.CloverHistoryRepository;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.repository.MemberRepository;
 import com.example.live_backend.domain.mission.clover.Enum.MissionScoreCalculator;
@@ -24,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
+import static com.example.live_backend.global.constant.CloverConstants.CLOVER_MISSION_REWARD;
 import static java.util.Collections.emptyList;
 
 @Service
@@ -40,6 +43,7 @@ public class CloverMissionService {
 
     private final CloverMissionRecordService cloverMissionRecordService;
     private final LLMBasedQueryGeneratorService llmBasedQueryGeneratorService;
+    private final CloverHistoryRepository cloverHistoryRepository;
 
     private static final int DEFAULT_MISSION_COUNT = 10;
     private static final int KAKAO_SEARCH_RADIUS = 2000;
@@ -115,7 +119,11 @@ public class CloverMissionService {
 
         missionRecord.completeMission();
 
-        missionRecord.getMember().increaseCloverCount();
+        Member member = missionRecord.getMember();
+        member.increaseCloverCount(CLOVER_MISSION_REWARD);
+
+        CloverHistory cloverHistory = CloverHistory.fromMissionCompletion(member, missionRecord.getMissionTitle());
+        cloverHistoryRepository.save(cloverHistory);
 
         return CloverMissionStatusResponseDto.from(missionRecord);
     }

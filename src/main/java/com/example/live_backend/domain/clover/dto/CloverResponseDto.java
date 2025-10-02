@@ -1,11 +1,8 @@
 package com.example.live_backend.domain.clover.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+public record CloverResponseDto(int cloverCount) {
 
-@Data
-@AllArgsConstructor
-public class CloverResponseDto {
-
-    private int cloverCount;
+    public static CloverResponseDto of(int cloverCount) {
+        return new CloverResponseDto(cloverCount);
+    }
 }

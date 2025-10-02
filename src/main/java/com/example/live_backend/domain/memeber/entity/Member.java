@@ -1,6 +1,5 @@
 package com.example.live_backend.domain.memeber.entity;
 
-import com.example.live_backend.domain.clover.entity.Clover;
 import com.example.live_backend.domain.memeber.Gender;
 import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.memeber.entity.vo.BirthDate;
@@ -57,8 +56,8 @@ public class Member {
 	@Column(name = "last_survey_submitted_at")
 	private LocalDateTime lastSurveySubmittedAt;
 
-	@OneToOne(mappedBy = "member", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-	private Clover clover;
+	@Column(name = "clover_count", nullable = false)
+	private int cloverCount = 0;
 
 	@Builder
 	public Member(String oauthId,
@@ -77,8 +76,7 @@ public class Member {
 		this.birthDate = birthDate;
 		this.occupation = occupation;
 		this.occupationDetail = occupationDetail;
-		this.clover = new Clover(this);
-
+		this.cloverCount = 0;
 	}
 
 	public void updateProfile(Profile newProfile) {
@@ -100,11 +98,11 @@ public class Member {
 		this.vitalityLevel = vitalityLevel;
 	}
 
-	public void increaseCloverCount() {
-		this.clover.increase(1);
+	public void increaseCloverCount(int amount) {
+		this.cloverCount += amount;
 	}
 
 	public int getCloverCount() {
-		return this.clover.getCount();
+		return this.cloverCount;
 	}
 }

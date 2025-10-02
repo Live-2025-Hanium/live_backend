@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/clover")
-public class cloverController implements CloverControllerDocs {
+public class CloverController implements CloverControllerDocs {
 
-    private CloverService cloverService;
+    private final CloverService cloverService;
 
     @Override
     @AuthenticatedApi(reason = "클로버 개수 조회는 로그인한 사용자만 가능합니다")

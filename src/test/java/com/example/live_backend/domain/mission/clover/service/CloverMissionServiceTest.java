@@ -1,5 +1,7 @@
 package com.example.live_backend.domain.mission.clover.service;
 
+import com.example.live_backend.domain.clover.entity.CloverHistory;
+import com.example.live_backend.domain.clover.repository.CloverHistoryRepository;
 import com.example.live_backend.domain.memeber.Gender;
 import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.memeber.entity.Member;
@@ -70,6 +72,8 @@ class CloverMissionServiceTest {
     @Mock
     private KakaoLocalFeign kakaoLocalFeign;
 
+    @Mock
+    private CloverHistoryRepository cloverHistoryRepository;
 
     private Member mockMember;
     private final Long TEST_MEMBER_ID = 1L;
@@ -543,6 +547,8 @@ class CloverMissionServiceTest {
             // --- Then ---
             assertThat(result.getMissionStatus()).isEqualTo(CloverMissionStatus.COMPLETED);
             assertThat(mockMember.getCloverCount()).isEqualTo(initialCloverCount + 1);
+
+            verify(cloverHistoryRepository).save(any(CloverHistory.class));
             verify(cloverMissionRecordRepository).findByIdWithMember(TEST_USER_MISSION_ID);
         }
 
@@ -571,6 +577,8 @@ class CloverMissionServiceTest {
             // --- Then ---
             assertThat(afterFirstCompletion).isEqualTo(initialCount + 1);
             assertThat(afterSecondCompletion).isEqualTo(initialCount + 2);
+
+            verify(cloverHistoryRepository, times(2)).save(any(CloverHistory.class));
         }
 
         @Test
@@ -594,6 +602,8 @@ class CloverMissionServiceTest {
 
             // --- Then ---
             assertThat(mockMember.getCloverCount()).isEqualTo(initialCount + completedMissionsCount);
+
+            verify(cloverHistoryRepository, times(completedMissionsCount)).save(any(CloverHistory.class));
         }
 
         @Test
@@ -614,6 +624,8 @@ class CloverMissionServiceTest {
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_MISSION_STATUS);
             // 클로버 개수는 증가하지 않아야 함
             assertThat(mockMember.getCloverCount()).isEqualTo(initialCloverCount);
+
+            verify(cloverHistoryRepository, never()).save(any(CloverHistory.class));
         }
 
         @Test
@@ -635,6 +647,32 @@ class CloverMissionServiceTest {
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MISSION_NOT_FOUND);
             // 예외 발생으로 클로버 개수는 변하지 않음
             assertThat(mockMember.getCloverCount()).isEqualTo(initialCloverCount);
+
+            // CloverHistory가 저장되지 않았는지 검증
+            verify(cloverHistoryRepository, never()).save(any(CloverHistory.class));
+        }
+
+        @Test
+        @DisplayName("성공 - CloverHistory에 정확한 정보가 저장됨")
+        void completeCloverMission_Success_CloverHistorySavedCorrectly() {
+
+            // --- Given ---
+            CloverMissionRecord mission = createTestMissionRecord(TEST_USER_MISSION_ID, CloverMissionStatus.STARTED, mockMember);
+            given(cloverMissionRecordRepository.findByIdWithMember(anyLong())).willReturn(Optional.of(mission));
+
+            ArgumentCaptor<CloverHistory> historyCaptor = ArgumentCaptor.forClass(CloverHistory.class);
+
+            // --- When ---
+            cloverMissionService.completeCloverMission(TEST_USER_MISSION_ID, TEST_MEMBER_ID);
+
+            // --- Then ---
+            verify(cloverHistoryRepository).save(historyCaptor.capture());
+            CloverHistory savedHistory = historyCaptor.getValue();
+
+            assertThat(savedHistory.getMember()).isEqualTo(mockMember);
+            assertThat(savedHistory.getAmount()).isEqualTo(1);
+            assertThat(savedHistory.getReason()).contains("클로버 미션 완료");
+            assertThat(savedHistory.getReason()).contains(mission.getMissionTitle());
         }
     }
 
