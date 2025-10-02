@@ -6,15 +6,7 @@ import com.example.live_backend.domain.memeber.entity.vo.BirthDate;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
 
 import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -64,6 +56,9 @@ public class Member {
 	@Column(name = "last_survey_submitted_at")
 	private LocalDateTime lastSurveySubmittedAt;
 
+	@Column(name = "clover_count", nullable = false)
+	private int cloverCount = 0;
+
 	@Builder
 	public Member(String oauthId,
 		String email,
@@ -81,6 +76,7 @@ public class Member {
 		this.birthDate = birthDate;
 		this.occupation = occupation;
 		this.occupationDetail = occupationDetail;
+		this.cloverCount = 0;
 	}
 
 	public void updateProfile(Profile newProfile) {
@@ -100,5 +96,13 @@ public class Member {
 
 	public void updateVitalityLevel(VitalityLevel vitalityLevel) {
 		this.vitalityLevel = vitalityLevel;
+	}
+
+	public void increaseCloverCount(int amount) {
+		this.cloverCount += amount;
+	}
+
+	public int getCloverCount() {
+		return this.cloverCount;
 	}
 }
