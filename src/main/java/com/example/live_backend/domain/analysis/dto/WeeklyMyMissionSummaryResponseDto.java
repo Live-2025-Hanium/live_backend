@@ -1,6 +1,6 @@
 package com.example.live_backend.domain.analysis.dto;
 
-import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
+import com.example.live_backend.domain.mission.my.entity.MyMissionRecord;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 @Getter
 @Builder
-public class WeeklyMissionSummaryResponseDto {
+public class WeeklyMyMissionSummaryResponseDto {
 
     private LocalDate weekStartDate;
     private LocalDate weekEndDate;
@@ -24,10 +24,10 @@ public class WeeklyMissionSummaryResponseDto {
     public static class DaySummary {
         private LocalDate date;
         private DayOfWeek dayOfWeek;
-        private int cloverMissionCount;
+        private int myMissionCount;
     }
 
-    public static WeeklyMissionSummaryResponseDto from(LocalDate weekStartDate, LocalDate weekEndDate, List<CloverMissionRecord> completedInWeek) {
+    public static WeeklyMyMissionSummaryResponseDto from(LocalDate weekStartDate, LocalDate weekEndDate, List<MyMissionRecord> completedInWeek) {
 
         Map<LocalDate, Integer> counts = completedInWeek.stream()
                 .collect(Collectors.groupingBy(
@@ -40,11 +40,11 @@ public class WeeklyMissionSummaryResponseDto {
             days.add(DaySummary.builder()
                     .date(d)
                     .dayOfWeek(d.getDayOfWeek())
-                    .cloverMissionCount(counts.getOrDefault(d, 0))
+                    .myMissionCount(counts.getOrDefault(d, 0))
                     .build());
         }
 
-        return WeeklyMissionSummaryResponseDto.builder()
+        return WeeklyMyMissionSummaryResponseDto.builder()
                 .weekStartDate(weekStartDate)
                 .weekEndDate(weekEndDate)
                 .weeklySummary(days)

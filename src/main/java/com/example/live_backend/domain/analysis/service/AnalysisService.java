@@ -1,13 +1,13 @@
 package com.example.live_backend.domain.analysis.service;
 
-import com.example.live_backend.domain.analysis.dto.DailyCompletedMissionsResponseDto;
-import com.example.live_backend.domain.analysis.dto.MonthlyGrowthResponseDto;
-import com.example.live_backend.domain.analysis.dto.MonthlyParticipationResponseDto;
-import com.example.live_backend.domain.analysis.dto.WeeklyMissionSummaryResponseDto;
+import com.example.live_backend.domain.analysis.dto.*;
 import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
 import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
+import com.example.live_backend.domain.mission.my.Enum.MyMissionStatus;
+import com.example.live_backend.domain.mission.my.entity.MyMissionRecord;
+import com.example.live_backend.domain.mission.my.repository.MyMissionRecordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +21,8 @@ import java.util.Map;
 public class AnalysisService {
 
     private final CloverMissionRecordRepository cloverMissionRecordRepository;
+    private final MyMissionRecordRepository myMissionRecordRepository;
+
 
     public MonthlyParticipationResponseDto getMonthlyParticipation(Long memberId, YearMonth ym) {
         LocalDate monthStartDate = ym.atDay(1);
@@ -92,5 +94,46 @@ public class AnalysisService {
             map.put((MissionCategory) row[0], (Long) row[1]);
         }
         return map;
+    }
+
+    public MonthlyMyMissionParticipationResponseDto getMonthlyMyMissionCompletionRate(Long memberId, YearMonth ym) {
+        LocalDate monthStartDate = ym.atDay(1);
+        LocalDate monthEndDate = ym.atEndOfMonth();
+
+        long assigned = myMissionRecordRepository.countAssignedInPeriod(
+                memberId, monthStartDate, monthEndDate
+        );
+
+        LocalDateTime monthStartDateTime = monthStartDate.atStartOfDay();
+        LocalDateTime monthEndDateTime = monthEndDate.atTime(LocalTime.MAX);
+
+        long completed = myMissionRecordRepository.countCompletedInPeriod(
+                memberId, MyMissionStatus.COMPLETED, monthStartDateTime, monthEndDateTime
+        );
+
+        double rate = assigned == 0 ? 0.0 : Math.round((completed * 100.0) / assigned * 100.0) / 100.0;
+
+        return MonthlyMyMissionParticipationResponseDto.from(assigned, completed, rate);
+    }
+
+    public WeeklyMyMissionSummaryResponseDto getWeeklyMyMissionSummary(Long memberId, LocalDate date) {
+        LocalDate weekStartDate = date.with(DayOfWeek.MONDAY);
+        LocalDate weekEndDate = date.with(DayOfWeek.SUNDAY);
+
+        LocalDateTime weekStartDateTime = weekStartDate.atStartOfDay();
+        LocalDateTime weekEndDateTime = weekEndDate.atTime(LocalTime.MAX);
+
+        List<MyMissionRecord> completedList = myMissionRecordRepository.findCompletedInPeriod(
+                memberId, MyMissionStatus.COMPLETED, weekStartDateTime, weekEndDateTime);
+
+        return WeeklyMyMissionSummaryResponseDto.from(weekStartDate, weekEndDate, completedList);
+    }
+
+    public DailyCompletedMyMissionsResponseDto getDailyCompletedMyMissions(Long memberId, LocalDate date) {
+        List<MyMissionRecord> completed = myMissionRecordRepository.findCompletedOnDate(
+                memberId, MyMissionStatus.COMPLETED, date
+        );
+
+        return DailyCompletedMyMissionsResponseDto.from(date, completed);
     }
 }

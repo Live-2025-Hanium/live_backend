@@ -1,13 +1,14 @@
 package com.example.live_backend.domain.analysis.service;
 
-import com.example.live_backend.domain.analysis.dto.MonthlyGrowthResponseDto;
-import com.example.live_backend.domain.analysis.dto.MonthlyParticipationResponseDto;
-import com.example.live_backend.domain.analysis.dto.WeeklyMissionSummaryResponseDto;
-import com.example.live_backend.domain.analysis.dto.DailyCompletedMissionsResponseDto;
+import com.example.live_backend.domain.analysis.dto.*;
 import com.example.live_backend.domain.mission.clover.Enum.CloverMissionStatus;
 import com.example.live_backend.domain.mission.clover.Enum.MissionCategory;
 import com.example.live_backend.domain.mission.clover.entity.CloverMissionRecord;
 import com.example.live_backend.domain.mission.clover.repository.CloverMissionRecordRepository;
+import com.example.live_backend.domain.mission.my.Enum.MyMissionStatus;
+import com.example.live_backend.domain.mission.my.entity.MyMission;
+import com.example.live_backend.domain.mission.my.entity.MyMissionRecord;
+import com.example.live_backend.domain.mission.my.repository.MyMissionRecordRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,9 @@ class AnalysisServiceTest {
 
     @Mock
     private CloverMissionRecordRepository cloverMissionRecordRepository;
+
+    @Mock
+    private MyMissionRecordRepository myMissionRecordRepository;
 
     @Nested
     @DisplayName("getMonthlyParticipation()")
@@ -319,8 +323,8 @@ class AnalysisServiceTest {
 
             given(cloverMissionRecordRepository.countCompletedByCategoryInPeriod(
                     eq(memberId), eq(CloverMissionStatus.COMPLETED), any(LocalDateTime.class), any(LocalDateTime.class)
-            )).willReturn(List.of()) 
-                    .willReturn(List.of()); 
+            )).willReturn(List.of())
+                    .willReturn(List.of());
 
             // When
             analysisService.getMonthlyGrowthTop3(memberId, ym);
@@ -344,6 +348,211 @@ class AnalysisServiceTest {
             assertThat(ends.get(0)).isEqualTo(currEnd);
             assertThat(starts.get(1)).isEqualTo(prevStart);
             assertThat(ends.get(1)).isEqualTo(prevEnd);
+        }
+    }
+
+    @Nested
+    @DisplayName("getMonthlyMyMissionCompletionRate()")
+    class GetMonthlyMyMissionCompletionRate {
+
+        @Test
+        @DisplayName("성공 - 마이미션 월별 완료율 정상 계산 및 Repository 호출 파라미터 검증")
+        void computesRateAndCallsRepositoryWithCorrectDates() {
+            // Given
+            Long memberId = 50L;
+            YearMonth ym = YearMonth.of(2025, 10);
+            long assigned = 15L;
+            long completed = 12L;
+
+            given(myMissionRecordRepository.countAssignedInPeriod(eq(memberId), any(LocalDate.class), any(LocalDate.class)))
+                    .willReturn(assigned);
+            given(myMissionRecordRepository.countCompletedInPeriod(eq(memberId), eq(MyMissionStatus.COMPLETED), any(LocalDateTime.class), any(LocalDateTime.class)))
+                    .willReturn(completed);
+
+            // When
+            MonthlyMyMissionParticipationResponseDto result = analysisService.getMonthlyMyMissionCompletionRate(memberId, ym);
+
+            // Then: 계산값 검증
+            assertThat(result.getTotalAssigned()).isEqualTo(assigned);
+            assertThat(result.getTotalCompleted()).isEqualTo(completed);
+            assertThat(result.getCompletionRate()).isEqualTo(80.0);
+
+            // Then: Repository 호출 파라미터 검증
+            ArgumentCaptor<LocalDate> startDateCap = ArgumentCaptor.forClass(LocalDate.class);
+            ArgumentCaptor<LocalDate> endDateCap = ArgumentCaptor.forClass(LocalDate.class);
+            verify(myMissionRecordRepository)
+                    .countAssignedInPeriod(eq(memberId), startDateCap.capture(), endDateCap.capture());
+            assertThat(startDateCap.getValue()).isEqualTo(ym.atDay(1));
+            assertThat(endDateCap.getValue()).isEqualTo(ym.atEndOfMonth());
+
+            ArgumentCaptor<LocalDateTime> startDateTimeCap = ArgumentCaptor.forClass(LocalDateTime.class);
+            ArgumentCaptor<LocalDateTime> endDateTimeCap = ArgumentCaptor.forClass(LocalDateTime.class);
+            verify(myMissionRecordRepository)
+                    .countCompletedInPeriod(eq(memberId), eq(MyMissionStatus.COMPLETED), startDateTimeCap.capture(), endDateTimeCap.capture());
+            assertThat(startDateTimeCap.getValue()).isEqualTo(ym.atDay(1).atStartOfDay());
+            assertThat(endDateTimeCap.getValue()).isEqualTo(ym.atEndOfMonth().atTime(LocalTime.MAX));
+        }
+
+        @Test
+        @DisplayName("성공 - 할당 마이미션이 0건인 경우 완료율은 0.0")
+        void assignedZero_YieldsZeroRate() {
+            // Given
+            Long memberId = 51L;
+            YearMonth ym = YearMonth.of(2025, 10);
+
+            given(myMissionRecordRepository.countAssignedInPeriod(eq(memberId), any(LocalDate.class), any(LocalDate.class)))
+                    .willReturn(0L);
+            given(myMissionRecordRepository.countCompletedInPeriod(eq(memberId), eq(MyMissionStatus.COMPLETED), any(LocalDateTime.class), any(LocalDateTime.class)))
+                    .willReturn(0L);
+
+            // When
+            MonthlyMyMissionParticipationResponseDto result = analysisService.getMonthlyMyMissionCompletionRate(memberId, ym);
+
+            // Then
+            assertThat(result.getTotalAssigned()).isEqualTo(0L);
+            assertThat(result.getTotalCompleted()).isEqualTo(0L);
+            assertThat(result.getCompletionRate()).isEqualTo(0.0);
+        }
+
+        @Test
+        @DisplayName("성공 - 완료 마이미션이 0건인 경우 완료율은 0.0")
+        void completedZero_YieldsZeroRate() {
+            // Given
+            Long memberId = 52L;
+            YearMonth ym = YearMonth.of(2025, 10);
+
+            given(myMissionRecordRepository.countAssignedInPeriod(eq(memberId), any(LocalDate.class), any(LocalDate.class)))
+                    .willReturn(20L);
+            given(myMissionRecordRepository.countCompletedInPeriod(eq(memberId), eq(MyMissionStatus.COMPLETED), any(LocalDateTime.class), any(LocalDateTime.class)))
+                    .willReturn(0L);
+
+            // When
+            MonthlyMyMissionParticipationResponseDto result = analysisService.getMonthlyMyMissionCompletionRate(memberId, ym);
+
+            // Then
+            assertThat(result.getTotalAssigned()).isEqualTo(20L);
+            assertThat(result.getTotalCompleted()).isEqualTo(0L);
+            assertThat(result.getCompletionRate()).isEqualTo(0.0);
+        }
+    }
+
+    @Nested
+    @DisplayName("getWeeklyMyMissionSummary()")
+    class GetWeeklyMyMissionSummary {
+
+        @Test
+        @DisplayName("성공 - 마이미션 주간 완료 목록 조회 및 주차 범위/호출 파라미터 검증")
+        void returnsWeeklySummary_AndCallsRepositoryWithWeekRange() {
+            // Given
+            Long memberId = 60L;
+            LocalDate date = LocalDate.of(2025, 9, 30);
+            LocalDate weekStart = date.with(DayOfWeek.MONDAY);
+            LocalDate weekEnd = date.with(DayOfWeek.SUNDAY);
+            LocalDateTime startDateTime = weekStart.atStartOfDay();
+            LocalDateTime endDateTime = weekEnd.atTime(LocalTime.MAX);
+
+            MyMission myMission1 = MyMission.builder().title("운동하기").build();
+            MyMission myMission2 = MyMission.builder().title("독서하기").build();
+            MyMission myMission3 = MyMission.builder().title("명상하기").build();
+
+            MyMissionRecord r1 = MyMissionRecord.builder()
+                    .myMission(myMission1)
+                    .completedAt(weekStart.atTime(10, 0))
+                    .build();
+
+            MyMissionRecord r2 = MyMissionRecord.builder()
+                    .myMission(myMission2)
+                    .completedAt(weekStart.plusDays(2).atTime(14, 30))
+                    .build();
+
+            MyMissionRecord r3 = MyMissionRecord.builder()
+                    .myMission(myMission3)
+                    .completedAt(weekEnd.atTime(20, 0))
+                    .build();
+
+            List<MyMissionRecord> completed = List.of(r1, r2, r3);
+
+            given(myMissionRecordRepository.findCompletedInPeriod(
+                    eq(memberId),
+                    eq(MyMissionStatus.COMPLETED),
+                    any(LocalDateTime.class),
+                    any(LocalDateTime.class)
+            )).willReturn(completed);
+
+            // When
+            WeeklyMyMissionSummaryResponseDto result = analysisService.getWeeklyMyMissionSummary(memberId, date);
+
+            // Then
+            assertThat(result.getWeekStartDate()).isEqualTo(weekStart);
+            assertThat(result.getWeekEndDate()).isEqualTo(weekEnd);
+            assertThat(result.getWeeklySummary().size()).isEqualTo(7);
+            assertThat(result.getWeeklySummary().get(0).getDate()).isEqualTo(weekStart);
+            assertThat(result.getWeeklySummary().get(0).getMyMissionCount()).isEqualTo(1);
+            assertThat(result.getWeeklySummary().get(2).getDate()).isEqualTo(weekStart.plusDays(2));
+            assertThat(result.getWeeklySummary().get(2).getMyMissionCount()).isEqualTo(1);
+            assertThat(result.getWeeklySummary().get(6).getDate()).isEqualTo(weekEnd);
+            assertThat(result.getWeeklySummary().get(6).getMyMissionCount()).isEqualTo(1);
+
+            ArgumentCaptor<LocalDateTime> startCap = ArgumentCaptor.forClass(LocalDateTime.class);
+            ArgumentCaptor<LocalDateTime> endCap = ArgumentCaptor.forClass(LocalDateTime.class);
+            verify(myMissionRecordRepository).findCompletedInPeriod(
+                    eq(memberId),
+                    eq(MyMissionStatus.COMPLETED),
+                    startCap.capture(),
+                    endCap.capture()
+            );
+            assertThat(startCap.getValue()).isEqualTo(startDateTime);
+            assertThat(endCap.getValue()).isEqualTo(endDateTime);
+        }
+    }
+
+    @Nested
+    @DisplayName("getDailyCompletedMyMissions()")
+    class GetDailyCompletedMyMissions {
+
+        @Test
+        @DisplayName("성공 - 마이미션 일별 완료 목록 조회 및 호출 파라미터 검증")
+        void returnsDailyCompleted_AndCallsRepositoryWithDate() {
+            // Given
+            Long memberId = 70L;
+            LocalDate date = LocalDate.of(2025, 10, 1);
+
+            MyMission myMission1 = MyMission.builder().title("아침 조깅").build();
+            MyMission myMission2 = MyMission.builder().title("저녁 산책").build();
+
+            MyMissionRecord r1 = MyMissionRecord.builder()
+                    .myMission(myMission1)
+                    .completedAt(date.atTime(7, 0))
+                    .build();
+
+            MyMissionRecord r2 = MyMissionRecord.builder()
+                    .myMission(myMission2)
+                    .completedAt(date.atTime(19, 30))
+                    .build();
+
+            List<MyMissionRecord> completed = List.of(r1, r2);
+
+            given(myMissionRecordRepository.findCompletedOnDate(
+                    eq(memberId),
+                    eq(MyMissionStatus.COMPLETED),
+                    eq(date)
+            )).willReturn(completed);
+
+            // When
+            DailyCompletedMyMissionsResponseDto result = analysisService.getDailyCompletedMyMissions(memberId, date);
+
+            // Then
+            assertThat(result.getDate()).isEqualTo(date);
+            assertThat(result.getDayOfWeek()).isEqualTo(date.getDayOfWeek());
+            assertThat(result.getCompletedMyMissions().size()).isEqualTo(2);
+            assertThat(result.getCompletedMyMissions().get(0).getMissionTitle()).isEqualTo("아침 조깅");
+            assertThat(result.getCompletedMyMissions().get(1).getMissionTitle()).isEqualTo("저녁 산책");
+
+            verify(myMissionRecordRepository).findCompletedOnDate(
+                    eq(memberId),
+                    eq(MyMissionStatus.COMPLETED),
+                    eq(date)
+            );
         }
     }
 }

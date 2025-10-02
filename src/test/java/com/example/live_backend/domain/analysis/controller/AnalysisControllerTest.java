@@ -1,9 +1,6 @@
 package com.example.live_backend.domain.analysis.controller;
 
-import com.example.live_backend.domain.analysis.dto.DailyCompletedMissionsResponseDto;
-import com.example.live_backend.domain.analysis.dto.MonthlyGrowthResponseDto;
-import com.example.live_backend.domain.analysis.dto.MonthlyParticipationResponseDto;
-import com.example.live_backend.domain.analysis.dto.WeeklyMissionSummaryResponseDto;
+import com.example.live_backend.domain.analysis.dto.*;
 import com.example.live_backend.domain.analysis.service.AnalysisService;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
@@ -53,11 +50,11 @@ class AnalysisControllerTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/analysis/participation")
+    @DisplayName("GET /api/v1/analysis/clover/participation")
     class GetParticipation {
 
         @Test
-        @DisplayName("성공 및 서비스 위임 확인 - 월별 미션 완료율 조회")
+        @DisplayName("성공 및 서비스 위임 확인 - 월별 클로버 미션 완료율 조회")
         void returnsSuccessAndDelegatesToService() {
             // Given
             YearMonth expectedYm = YearMonth.now();
@@ -78,7 +75,7 @@ class AnalysisControllerTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/analysis/missions (weekly/daily 개별 엔드포인트)")
+    @DisplayName("GET /api/v1/analysis/clover (weekly/daily 개별 엔드포인트)")
     class GetMissions {
 
         @Test
@@ -121,7 +118,7 @@ class AnalysisControllerTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/analysis/monthly-growth")
+    @DisplayName("GET /api/v1/analysis/clover/monthly-growth")
     class GetMonthlyGrowth {
 
         @Test
@@ -158,6 +155,92 @@ class AnalysisControllerTest {
             ArgumentCaptor<YearMonth> ymCaptor = ArgumentCaptor.forClass(YearMonth.class);
             verify(analysisService).getMonthlyGrowthTop3(eq(MEMBER_ID), ymCaptor.capture());
             assertThat(ymCaptor.getValue()).isEqualTo(expectedYm);
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/analysis/my/participation")
+    class GetMyMissionCompletionRate {
+
+        @Test
+        @DisplayName("성공 및 서비스 위임 확인 - 마이미션 월별 완료율 조회")
+        void returnsSuccessAndDelegatesToService() {
+            // Given
+            YearMonth expectedYm = YearMonth.of(2025, 10);
+            MonthlyMyMissionParticipationResponseDto dto =
+                    MonthlyMyMissionParticipationResponseDto.from(15L, 12L, 80.0);
+            given(analysisService.getMonthlyMyMissionCompletionRate(eq(MEMBER_ID), any(YearMonth.class)))
+                    .willReturn(dto);
+
+            // When
+            ResponseHandler<MonthlyMyMissionParticipationResponseDto> response =
+                    analysisController.getMyMissionParticipation("2025-10", member);
+
+            // Then
+            assertThat(response.isSuccess()).isTrue();
+            assertThat(response.getData()).isEqualTo(dto);
+            assertThat(response.getData().getTotalAssigned()).isEqualTo(15L);
+            assertThat(response.getData().getTotalCompleted()).isEqualTo(12L);
+            assertThat(response.getData().getCompletionRate()).isEqualTo(80.0);
+
+            ArgumentCaptor<YearMonth> ymCaptor = ArgumentCaptor.forClass(YearMonth.class);
+            verify(analysisService).getMonthlyMyMissionCompletionRate(eq(MEMBER_ID), ymCaptor.capture());
+            assertThat(ymCaptor.getValue()).isEqualTo(expectedYm);
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/analysis/my/weekly")
+    class GetWeeklyMyMissions {
+
+        @Test
+        @DisplayName("성공 및 서비스 위임 확인 - 마이미션 주간 완료 현황 조회")
+        void returnsSuccessAndDelegatesToService() {
+            // Given
+            LocalDate date = LocalDate.of(2025, 10, 1);
+            WeeklyMyMissionSummaryResponseDto dto = WeeklyMyMissionSummaryResponseDto.from(
+                    date.with(DayOfWeek.MONDAY),
+                    date.with(DayOfWeek.SUNDAY),
+                    Collections.emptyList()
+            );
+            given(analysisService.getWeeklyMyMissionSummary(eq(MEMBER_ID), eq(date))).willReturn(dto);
+
+            // When
+            ResponseHandler<WeeklyMyMissionSummaryResponseDto> response =
+                    analysisController.getWeeklyMyMissions(date, member);
+
+            // Then
+            assertThat(response.isSuccess()).isTrue();
+            assertThat(response.getData()).isEqualTo(dto);
+            assertThat(response.getData().getWeekStartDate()).isEqualTo(date.with(DayOfWeek.MONDAY));
+            assertThat(response.getData().getWeekEndDate()).isEqualTo(date.with(DayOfWeek.SUNDAY));
+            verify(analysisService).getWeeklyMyMissionSummary(eq(MEMBER_ID), eq(date));
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/analysis/my/daily")
+    class GetDailyMyMissions {
+
+        @Test
+        @DisplayName("성공 및 서비스 위임 확인 - 마이미션 일별 완료 목록 조회")
+        void returnsSuccessAndDelegatesToService() {
+            // Given
+            LocalDate date = LocalDate.of(2025, 10, 1);
+            DailyCompletedMyMissionsResponseDto dto =
+                    DailyCompletedMyMissionsResponseDto.from(date, Collections.emptyList());
+            given(analysisService.getDailyCompletedMyMissions(eq(MEMBER_ID), eq(date))).willReturn(dto);
+
+            // When
+            ResponseHandler<DailyCompletedMyMissionsResponseDto> response =
+                    analysisController.getDailyMyMissions(date, member);
+
+            // Then
+            assertThat(response.isSuccess()).isTrue();
+            assertThat(response.getData()).isEqualTo(dto);
+            assertThat(response.getData().getDate()).isEqualTo(date);
+            assertThat(response.getData().getDayOfWeek()).isEqualTo(DayOfWeek.WEDNESDAY);
+            verify(analysisService).getDailyCompletedMyMissions(eq(MEMBER_ID), eq(date));
         }
     }
 }
