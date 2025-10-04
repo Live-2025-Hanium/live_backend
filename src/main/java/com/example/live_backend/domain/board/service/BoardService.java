@@ -55,9 +55,9 @@ public class BoardService {
     public Long createBoard(BoardCreateRequestDto requestDto, Long authorId) {
         Member author = memberRepository.findById(authorId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        
+
         Category category = categoryRepository.findById(requestDto.getCategoryId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CATEGORY));
 
         Board board = Board.builder()
                 .title(requestDto.getTitle())
@@ -84,8 +84,8 @@ public class BoardService {
         Board board = findBoardById(boardId);
         
         Category category = categoryRepository.findById(requestDto.getCategoryId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CATEGORY));
+
         board.update(requestDto.getTitle(), requestDto.getContent(), category, requestDto.getRelatedOrganization());
 
         board.getBoardImages().clear();
@@ -283,7 +283,7 @@ public class BoardService {
 
     private Board findBoardById(Long boardId) {
         return boardRepository.findByIdAndNotDeleted(boardId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.BOARD_NOT_FOUND));
     }
 
     private Map<ReactionType, Long> getReactionCounts(Long boardId) {
