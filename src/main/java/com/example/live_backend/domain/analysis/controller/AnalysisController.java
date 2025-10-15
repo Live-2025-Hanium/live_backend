@@ -65,11 +65,12 @@ public class AnalysisController implements AnalysisControllerDocs {
     @AuthenticatedApi(reason = "전월 대비 클로버 미션 TOP3 성장 카테고리 조회는 로그인한 사용자만 가능합니다")
     @GetMapping("/clover/monthly-growth")
     public ResponseHandler<MonthlyGrowthResponseDto> getMonthlyGrowth(
-            @AuthenticationPrincipal PrincipalDetails userDetails
+            @AuthenticationPrincipal PrincipalDetails userDetails,
+            @RequestParam(name = "yearMonth") String yearMonth
     ) {
 
         Long memberId = userDetails.getMemberId();
-        YearMonth ym = YearMonth.now();
+        YearMonth ym = YearMonth.parse(yearMonth, DateTimeFormatter.ofPattern("yyyy-MM"));
 
         return ResponseHandler.success(analysisService.getMonthlyGrowthTop3(memberId, ym));
     }

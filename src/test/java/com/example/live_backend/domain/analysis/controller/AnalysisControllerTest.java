@@ -146,7 +146,7 @@ class AnalysisControllerTest {
             given(analysisService.getMonthlyGrowthTop3(eq(MEMBER_ID), any(YearMonth.class))).willReturn(dto);
 
             // When
-            ResponseHandler<MonthlyGrowthResponseDto> response = analysisController.getMonthlyGrowth(member);
+            ResponseHandler<MonthlyGrowthResponseDto> response = analysisController.getMonthlyGrowth(member, String.valueOf(expectedYm));
 
             // Then
             assertThat(response.isSuccess()).isTrue();
