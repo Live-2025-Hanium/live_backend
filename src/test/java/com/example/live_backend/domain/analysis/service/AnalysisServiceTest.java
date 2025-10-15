@@ -243,9 +243,9 @@ class AnalysisServiceTest {
             assertThat(result.getDate()).isEqualTo(date);
             assertThat(result.getDayOfWeek()).isEqualTo(date.getDayOfWeek());
             assertThat(result.getCompletedMissions().size()).isEqualTo(2);
-            assertThat(result.getCompletedMissions().get(0).getUserMissionId()).isEqualTo(101L);
+            assertThat(result.getCompletedMissions().get(0).getMissionId()).isEqualTo(101L);
             assertThat(result.getCompletedMissions().get(0).getMissionTitle()).isEqualTo("Daily-1");
-            assertThat(result.getCompletedMissions().get(1).getUserMissionId()).isEqualTo(102L);
+            assertThat(result.getCompletedMissions().get(1).getMissionId()).isEqualTo(102L);
             assertThat(result.getCompletedMissions().get(1).getMissionTitle()).isEqualTo("Daily-2");
 
             verify(cloverMissionRecordRepository).findCompletedOnDate(
@@ -544,9 +544,9 @@ class AnalysisServiceTest {
             // Then
             assertThat(result.getDate()).isEqualTo(date);
             assertThat(result.getDayOfWeek()).isEqualTo(date.getDayOfWeek());
-            assertThat(result.getCompletedMyMissions().size()).isEqualTo(2);
-            assertThat(result.getCompletedMyMissions().get(0).getMissionTitle()).isEqualTo("아침 조깅");
-            assertThat(result.getCompletedMyMissions().get(1).getMissionTitle()).isEqualTo("저녁 산책");
+            assertThat(result.getCompletedMissions().size()).isEqualTo(2);
+            assertThat(result.getCompletedMissions().get(0).getMissionTitle()).isEqualTo("아침 조깅");
+            assertThat(result.getCompletedMissions().get(1).getMissionTitle()).isEqualTo("저녁 산책");
 
             verify(myMissionRecordRepository).findCompletedOnDate(
                     eq(memberId),

@@ -42,7 +42,9 @@ public interface AnalysisControllerDocs {
     @Operation(summary = "전월 대비 클로버 미션 TOP3 성장 카테고리 조회", description = "현재 월 기준 전월 대비 성장한 TOP3 클로버 미션의 카테고리를 조회합니다.")
     ResponseHandler<MonthlyGrowthResponseDto> getMonthlyGrowth(
             @Parameter(hidden = true)
-            @AuthenticationPrincipal PrincipalDetails userDetails
+            @AuthenticationPrincipal PrincipalDetails userDetails,
+            @Parameter(description = "조회 기준 년,월", example = "2025-08")
+            @RequestParam(name = "yearMonth") String yearMonth
     );
 
     @Operation(summary = "마이미션 월별 완료율 조회", description = "마이미션의 월별 완료율을 조회합니다.")

@@ -15,13 +15,13 @@ public class DailyCompletedMyMissionsResponseDto {
 
     private LocalDate date;
     private DayOfWeek dayOfWeek;
-    private List<CompletedMyMission> completedMyMissions;
+    private List<CompletedMyMission> completedMissions;
 
     @Getter
     @Builder
     public static class CompletedMyMission {
-        private Long myMissionRecordId;
-        private Long myMissionId;
+        private Long missionId;
+        private Long missionRecordId;
         private String missionTitle;
         private LocalDateTime completedAt;
     }
@@ -29,8 +29,8 @@ public class DailyCompletedMyMissionsResponseDto {
     public static DailyCompletedMyMissionsResponseDto from(LocalDate date, List<MyMissionRecord> completed) {
         List<CompletedMyMission> completedMyMissions = completed.stream()
                 .map(r -> CompletedMyMission.builder()
-                        .myMissionRecordId(r.getId())
-                        .myMissionId(r.getMyMission().getId())
+                        .missionRecordId(r.getId())
+                        .missionId(r.getMyMission().getId())
                         .missionTitle(r.getMyMission().getTitle())
                         .completedAt(r.getCompletedAt())
                         .build())
@@ -39,7 +39,7 @@ public class DailyCompletedMyMissionsResponseDto {
         return DailyCompletedMyMissionsResponseDto.builder()
                 .date(date)
                 .dayOfWeek(date.getDayOfWeek())
-                .completedMyMissions(completedMyMissions)
+                .completedMissions(completedMyMissions)
                 .build();
     }
 }

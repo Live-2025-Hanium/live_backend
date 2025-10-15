@@ -20,7 +20,8 @@ public class DailyCompletedMissionsResponseDto {
     @Getter
     @Builder
     public static class CompletedMission {
-        private Long userMissionId;
+        private Long missionId;
+        private Long missionRecordId;
         private String missionTitle;
         private LocalDateTime completedAt;
     }
@@ -28,7 +29,8 @@ public class DailyCompletedMissionsResponseDto {
     public static DailyCompletedMissionsResponseDto from(LocalDate date, List<CloverMissionRecord> completed) {
         List<CompletedMission> CompletedMissions = completed.stream()
                 .map(r -> CompletedMission.builder()
-                        .userMissionId(r.getMissionId())
+                        .missionId(r.getMissionId())
+                        .missionRecordId(r.getId())
                         .missionTitle(r.getMissionTitle())
                         .completedAt(r.getCompletedAt())
                         .build())
