@@ -113,6 +113,8 @@ class AnalysisControllerTest {
             // Then
             assertThat(response.isSuccess()).isTrue();
             assertThat(response.getData()).isEqualTo(dto);
+            assertThat(response.getData().getDate()).isEqualTo(date);
+            assertThat(response.getData().getDayOfWeek()).isEqualTo(DayOfWeek.SATURDAY);
             verify(analysisService).getDailyCompleted(eq(MEMBER_ID), eq(date));
         }
     }
