@@ -1,9 +1,9 @@
 name: Mirror to GitLab
 
 on:
-  push: # 임시 추가 - 테스트 후 제거
+  push:
     branches:
-      - chore/#105
+      - 'chore/#105'
   workflow_dispatch:
     inputs:
       branch:
@@ -43,19 +43,22 @@ jobs:
           git ls-remote gitlab
           echo "✅ Connection successful!"
 
-      - name: Mirror to GitLab (Dry Run)
-        if: ${{ github.event.inputs.dry_run == 'true' }}
+      # push 이벤트이거나 dry_run이 true일 때 실행 (테스트만)
+      - name: Dry Run - Test Only
+        if: github.event_name == 'push' || github.event.inputs.dry_run == 'true'
         run: |
           echo "🧪 DRY RUN MODE - No actual push will be performed"
-          echo "Branch to mirror: ${{ github.event.inputs.branch }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Branch: ${{ github.event.inputs.branch || github.ref_name }}"
           echo "GitLab URL: ${{ secrets.GITLAB_URL }}"
-          echo "Command that would run: git push gitlab ${{ github.event.inputs.branch }} --force"
+          echo "Command that would run: git push gitlab ${{ github.event.inputs.branch || github.ref_name }} --force"
           echo "✅ Dry run completed - Configuration is valid!"
 
-      - name: Mirror to GitLab (Actual Push)
-        if: ${{ github.event.inputs.dry_run == 'false' }}
+      # workflow_dispatch이고 dry_run이 false일 때만 실제 푸시
+      - name: Actual Push to GitLab
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false'
         run: |
-          BRANCH_NAME=${{ github.event.inputs.branch || github.ref_name }}
-          echo "🔄 Pushing ${{ github.event.inputs.branch }} to GitLab..."
-          git push gitlab ${{ github.event.inputs.branch }} --force
-          echo "✅ Successfully mirrored ${{ github.event.inputs.branch }} to GitLab!"
+          BRANCH_NAME=${{ github.event.inputs.branch }}
+          echo "🔄 Pushing ${BRANCH_NAME} to GitLab..."
+          git push gitlab ${BRANCH_NAME} --force
+          echo "✅ Successfully mirrored ${BRANCH_NAME} to GitLab!"
