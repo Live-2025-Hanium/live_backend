@@ -29,5 +29,6 @@ public class CloverController implements CloverControllerDocs {
 
         CloverResponseDto responseDto = cloverService.getCloverCount(memberId);
         return ResponseHandler.success(responseDto);
+        
     }
 }
