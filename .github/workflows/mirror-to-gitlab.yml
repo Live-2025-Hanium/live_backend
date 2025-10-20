@@ -1,0 +1,57 @@
+name: Mirror to GitLab
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to mirror (GitLab에 푸시할 브랜치)'
+        required: true
+        default: 'develop'
+        type: string
+      dry_run:
+        description: 'Dry run (실제 푸시 없이 테스트만)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          fetch-depth: 0
+
+      - name: Setup GitLab remote
+        env:
+          GITLAB_URL: ${{ secrets.GITLAB_URL }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+        run: |
+          echo "🔧 Setting up GitLab remote..."
+          git remote add gitlab https://oauth2:${GITLAB_TOKEN}@${GITLAB_URL}
+          echo "✅ GitLab remote configured"
+          git remote -v
+
+      - name: Test connection
+        run: |
+          echo "🔍 Testing GitLab connection..."
+          git ls-remote gitlab
+          echo "✅ Connection successful!"
+
+      - name: Mirror to GitLab (Dry Run)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: |
+          echo "🧪 DRY RUN MODE - No actual push will be performed"
+          echo "Branch to mirror: ${{ github.event.inputs.branch }}"
+          echo "GitLab URL: ${{ secrets.GITLAB_URL }}"
+          echo "Command that would run: git push gitlab ${{ github.event.inputs.branch }} --force"
+          echo "✅ Dry run completed - Configuration is valid!"
+
+      - name: Mirror to GitLab (Actual Push)
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        run: |
+          echo "🔄 Pushing ${{ github.event.inputs.branch }} to GitLab..."
+          git push gitlab ${{ github.event.inputs.branch }} --force
+          echo "✅ Successfully mirrored ${{ github.event.inputs.branch }} to GitLab!"
