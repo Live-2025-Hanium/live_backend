@@ -1,0 +1,89 @@
+name: Mirror to GitLab
+
+on:
+  push:
+    branches:
+      - develop # develop 브랜치에 PR 머지되면 자동으로 GitLab 동기화
+  workflow_dispatch: # 수동 트리거
+    inputs:
+      branch:
+        description: 'GitLab에 미러링할 Github 브랜치'
+        required: true
+        default: 'develop'
+        type: string
+      dry_run:
+        description: '테스트만 수행 (실제 푸시 안 함)'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  mirror:
+    name: Mirror to GitLab
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }} # 사용자가 입력한 브랜치가 있으면 ref에 그 브랜치 저장, 없다면 현재 트리거된 브랜치를 ref에 저장
+          fetch-depth: 0 # 전체 Git 히스토리 가져오기
+
+      - name: Setup GitLab remote
+        env:
+          GITLAB_URL: ${{ secrets.GITLAB_URL }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+        run: |
+          echo "🔧 Setting up GitLab remote..."
+          git remote add gitlab https://oauth2:${GITLAB_TOKEN}@${GITLAB_URL}
+          echo "✅ GitLab remote configured"
+          git remote -v
+
+      - name: Test connection
+        run: |
+          echo "🔍 Testing GitLab connection..."
+          if git ls-remote gitlab >/dev/null 2>&1; then
+            echo "✅ Connection test successful!"
+            git ls-remote gitlab | head -5 || echo "Repository might be empty"
+          else
+            echo "❌ Failed to connect to GitLab"
+            exit 1
+          fi
+
+      - name: Dry Run - Test Only
+        # 사용자가 수동 트리거를 하면서 동시에 dry_run 옵션을 체크했을 때만 실행된다.
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
+        run: |
+          echo "🧪 DRY RUN MODE - No actual push will be performed"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Branch: ${{ github.event.inputs.branch }}"
+          echo "GitLab URL: ${{ secrets.GITLAB_URL }}"
+          echo "Command: git push gitlab ${{ github.event.inputs.branch }} --force"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Dry run completed - Configuration is valid!"
+
+      - name: Push to GitLab
+        # 사용자가 develop 브랜치에 머지하는 경우나, 수동 트리거 + dry_run X 인 경우에 실행된다.
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false')
+        run: |
+          BRANCH_NAME=${{ github.event.inputs.branch || github.ref_name }}
+          echo "🚀 Pushing ${BRANCH_NAME} to GitLab..."
+          
+          if git push gitlab ${BRANCH_NAME} --force; then
+            echo "✅ Successfully mirrored ${BRANCH_NAME} to GitLab!"
+          else
+            echo "❌ Failed to push to GitLab"
+            exit 1
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Mirror Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Trigger: ${{ github.event_name }}"
+          echo "Branch: ${{ github.event.inputs.branch || github.ref_name }}"
+          echo "Dry Run: ${{ github.event.inputs.dry_run || 'auto-triggered)' }}"
+          echo "Status: ${{ job.status }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
