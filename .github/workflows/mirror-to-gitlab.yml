@@ -1,6 +1,9 @@
 name: Mirror to GitLab
 
 on:
+  push: # 임시 추가 - 테스트 후 제거
+    branches:
+      - chore/#105
   workflow_dispatch:
     inputs:
       branch:
