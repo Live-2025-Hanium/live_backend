@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.live_backend.domain.auth.controller.docs.DemoAuthControllerDocs;
 import com.example.live_backend.domain.auth.dto.AuthToken;
+import com.example.live_backend.domain.auth.dto.response.AuthUserDto;
 import com.example.live_backend.domain.auth.dto.response.LoginResponseDto;
 import com.example.live_backend.domain.auth.token.service.RefreshTokenService;
 import com.example.live_backend.domain.auth.util.AuthTokenGenerator;
@@ -46,17 +47,17 @@ public class DemoAuthController implements DemoAuthControllerDocs {
 
         refreshTokenService.saveRefreshToken(demoUser.getId(), tokens.refreshToken());
 
-        LoginResponseDto response = LoginResponseDto.builder()
+        AuthUserDto authUser = AuthUserDto.builder()
             .id(demoUser.getId())
             .oauthId(demoUser.getOauthId())
             .email(demoUser.getEmail())
             .nickname(demoUser.getProfile().getNickname())
             .profileImageUrl(demoUser.getProfile().getProfileImageUrl())
             .role(demoUser.getRole())
-            .accessToken(tokens.accessToken())
-            .refreshToken(tokens.refreshToken())
             .isNewUser(false)
             .build();
+
+        LoginResponseDto response = LoginResponseDto.from(authUser, tokens.accessToken(), tokens.refreshToken());
 
         log.info("테스트 로그인 성공: userId={}", demoUser.getId());
 

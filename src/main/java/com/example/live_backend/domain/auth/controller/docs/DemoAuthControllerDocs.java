@@ -30,15 +30,16 @@ public interface DemoAuthControllerDocs {
                     {
                         "success": true,
                         "data": {
-                            "id": 1,
-                            "oauthId": "DEMO_USER_001",
-                            "email": "demo@live-contest.com",
-                            "nickname": "심사위원",
-                            "profileImageUrl": null,
-                            "role": "USER",
+                            "user": {
+                                "id": 1,
+                                "email": "demo@live-contest.com",
+                                "nickname": "심사위원",
+                                "profileImageUrl": null,
+                                "role": "USER"
+                            },
+                            "isNewUser": false,
                             "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-                            "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
-                            "isNewUser": false
+                            "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
                         }
                     }
                     """)
