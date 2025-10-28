@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: live-backend
+  namespace: live-backend
+  labels:
+    app: live-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: live-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: live-backend
+    spec:
+      containers:
+        - name: live-backend
+          image: registry.cloud.kt.com/3stxgt9j/live-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+
+          # 환경 변수 (ConfigMap)
+          envFrom:
+            - configMapRef:
+                name: live-backend-config
+            - secretRef:
+                name: live-backend-secrets
+
+          # 개별 환경 변수 (Spring Boot 호환성)
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: live-backend-secrets
+                  key: DB_URL
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: live-backend-secrets
+                  key: DB_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: live-backend-secrets
+                  key: DB_PASSWORD
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Dspring.ai.vectorstore.qdrant.host=qdrant.vectordb.svc.cluster.local -Dspring.ai.vectorstore.qdrant.port=6334 -Dspring.ai.vectorstore.qdrant.collection-name=saeip-test -Dspring.ai.vectorstore.qdrant.initialize-schema=true"
+          # 리소스 제한
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+
+          # Liveness Probe (애플리케이션이 살아있는지 확인)
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Readiness Probe (트래픽을 받을 준비가 되었는지 확인)
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+      # imagePullSecret (Jenkinsfile에서 생성)
+      imagePullSecrets:
+        - name: kt-registry-secret
+
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
