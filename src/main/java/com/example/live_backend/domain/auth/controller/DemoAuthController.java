@@ -54,7 +54,7 @@ public class DemoAuthController implements DemoAuthControllerDocs {
             .nickname(demoUser.getProfile().getNickname())
             .profileImageUrl(demoUser.getProfile().getProfileImageUrl())
             .role(demoUser.getRole())
-            .isNewUser(false)
+            .isNewUser(true)
             .build();
 
         LoginResponseDto response = LoginResponseDto.from(authUser, tokens.accessToken(), tokens.refreshToken());
