@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: live-backend-service
+  namespace: live-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: live-backend
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  sessionAffinity: None

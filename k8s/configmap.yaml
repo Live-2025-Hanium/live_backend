@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: live-backend-config
+  namespace: live-backend
+data:
+  # Spring Boot 설정
+  SPRING_PROFILES_ACTIVE: "dev"
+  TZ: "Asia/Seoul"
+
+  QDRANT_HOST: "qdrant.vectordb.svc.cluster.local"
+  QDRANT_PORT: "6333"
+  QDRANT_GRPC_PORT: "6334"
