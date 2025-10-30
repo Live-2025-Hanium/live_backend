@@ -37,7 +37,10 @@ public class BoardController implements BoardControllerDocs {
 	public ResponseHandler<Long> createBoard(
 		@Valid @RequestBody BoardCreateRequestDto requestDto,
 		@AuthenticationPrincipal PrincipalDetails userDetails) {
-		Long boardId = boardService.createBoard(requestDto, userDetails.getMemberId());
+		Long memberId = Optional.ofNullable(userDetails)
+			.map(PrincipalDetails::getMemberId)
+			.orElse(null);
+		Long boardId = boardService.createBoard(requestDto, memberId);
 		return ResponseHandler.success(boardId);
 	}
 
