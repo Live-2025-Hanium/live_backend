@@ -5,3 +5,4 @@ INSERT INTO categories (name, created_at, modified_at) VALUES
 ('생활 습관', NOW(), NOW()),
 ('방문지 추천', NOW(), NOW())
 ON DUPLICATE KEY UPDATE name = VALUES(name);
+claude

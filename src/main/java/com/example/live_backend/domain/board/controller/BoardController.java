@@ -32,7 +32,7 @@ public class BoardController implements BoardControllerDocs {
 	private final BoardService boardService;
 
 	@Override
-	@AdminApi(reason = "게시글 작성은 관리자만 가능합니다")
+	@PublicApi(reason = "게시글 작성은 누구나 가능합니다")
 	@PostMapping
 	public ResponseHandler<Long> createBoard(
 		@Valid @RequestBody BoardCreateRequestDto requestDto,
