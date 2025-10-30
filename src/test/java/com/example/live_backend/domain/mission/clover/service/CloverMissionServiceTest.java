@@ -446,7 +446,6 @@ class CloverMissionServiceTest {
             // --- Then ---
             assertThat(result.getMissionStatus()).isEqualTo(CloverMissionStatus.STARTED);
         }
-
 /*
         @Test
         @DisplayName("실패 - 미션 상태 시작으로 변경(상태가 ASSIGNED, PAUSED 가 아님)")
