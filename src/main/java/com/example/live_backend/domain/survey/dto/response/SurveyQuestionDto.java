@@ -10,10 +10,11 @@ import java.util.stream.Collectors;
 @Getter
 @Builder
 public class SurveyQuestionDto {
-    
+
     private Long id;
     private Integer questionNumber;
     private String questionText;
+    private SurveyQuestion.QuestionType questionType;
     private boolean isRequired;
     private List<SurveyQuestionOptionDto> options;
     
@@ -22,6 +23,7 @@ public class SurveyQuestionDto {
                 .id(question.getId())
                 .questionNumber(question.getQuestionNumber())
                 .questionText(question.getQuestionText())
+                .questionType(question.getQuestionType())
                 .isRequired(question.isRequired())
                 .options(question.getOptions().stream()
                         .filter(option -> option.isActive())
