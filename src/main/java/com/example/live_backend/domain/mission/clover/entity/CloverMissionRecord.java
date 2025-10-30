@@ -143,9 +143,9 @@ public class CloverMissionRecord {
     }
 
     public void startMission() {
-        if (this.cloverMissionStatus != CloverMissionStatus.ASSIGNED && this.cloverMissionStatus != CloverMissionStatus.PAUSED) {
+        /*if (this.cloverMissionStatus != CloverMissionStatus.ASSIGNED && this.cloverMissionStatus != CloverMissionStatus.PAUSED) {
             throw new CustomException(ErrorCode.INVALID_MISSION_STATUS);
-        }
+        }*/
         this.cloverMissionStatus = CloverMissionStatus.STARTED;
     }
 
