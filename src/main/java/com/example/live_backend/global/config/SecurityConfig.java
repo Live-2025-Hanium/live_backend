@@ -42,7 +42,7 @@ public class SecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.formLogin(AbstractHttpConfigurer::disable)
 			.httpBasic(AbstractHttpConfigurer::disable)
-			.cors(AbstractHttpConfigurer::disable)
+			.cors(cors -> cors.configurationSource(request -> createCorsConfiguration()))
 			.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
 			.sessionManagement(mgmt ->
 				mgmt.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
@@ -82,9 +82,12 @@ public class SecurityConfig {
 
 		configuration.setAllowedOrigins(List.of(
 			"http://localhost:3000",
+			"http://localhost:8080",
 			"http://127.0.0.1:3000",
+			"http://127.0.0.1:8080",
 			"https://www.live-hanium.app",
-			"https://live-hanium.app"
+			"https://live-hanium.app",
+			"https://api3.live-hanium.app"
 		));
 
 		configuration.setAllowedMethods(List.of("*"));
