@@ -361,6 +361,9 @@ public class BoardService {
     }
 
     private String getAuthorNickname(Member author) {
+        if (author == null) {
+            return "Unknown";
+        }
         return author.getProfile() != null ? author.getProfile().getNickname() : "Unknown";
     }
 } 
