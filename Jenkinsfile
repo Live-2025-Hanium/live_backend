@@ -94,11 +94,25 @@ pipeline {
 
                         export GRADLE_OPTS="-Xmx2g -XX:MaxMetaspaceSize=512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 
-                        ./gradlew clean --no-daemon --console=plain
+						export GRADLE_USER_HOME="/var/jenkins_home/.gradle"
+                        mkdir -p $GRADLE_USER_HOME
 
-                        ./gradlew bootJar -x test -Pprofile=dev --no-daemon --console=plain \
-    						--no-parallel \
-    						--max-workers=2
+                        if git diff --name-only HEAD~1 HEAD | grep -q "build.gradle\|settings.gradle\|gradle"; then
+                            echo "⚠️ Gradle 설정 변경 감지 - Clean 실행"
+                            ./gradlew clean --console=plain
+                        else
+                            echo "✅ 증분 빌드 가능 - Clean 스킵"
+                        fi
+
+                        ./gradlew bootJar -x test -Pprofile=dev \
+                            --console=plain \
+                            --parallel \
+                            --max-workers=4 \
+                            --build-cache \
+                            --configuration-cache \
+                            -Dorg.gradle.caching=true \
+                            -Dorg.gradle.parallel=true \
+                            -Dorg.gradle.daemon=false
 
                         echo "✅ 빌드 완료!"
                         ls -lh build/libs/
