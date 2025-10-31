@@ -97,13 +97,6 @@ pipeline {
 						export GRADLE_USER_HOME="/var/jenkins_home/.gradle"
                         mkdir -p $GRADLE_USER_HOME
 
-                        if git diff --name-only HEAD~1 HEAD | grep -q "build.gradle\|settings.gradle\|gradle"; then
-                            echo "⚠️ Gradle 설정 변경 감지 - Clean 실행"
-                            ./gradlew clean --console=plain
-                        else
-                            echo "✅ 증분 빌드 가능 - Clean 스킵"
-                        fi
-
                         ./gradlew bootJar -x test -Pprofile=dev \
                             --console=plain \
                             --parallel \
