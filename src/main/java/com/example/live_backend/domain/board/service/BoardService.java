@@ -53,8 +53,11 @@ public class BoardService {
      */
     @Transactional
     public Long createBoard(BoardCreateRequestDto requestDto, Long authorId) {
-        Member author = memberRepository.findById(authorId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Member author = null;
+        if (authorId != null) {
+            author = memberRepository.findById(authorId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        }
 
         Category category = categoryRepository.findById(requestDto.getCategoryId())
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CATEGORY));

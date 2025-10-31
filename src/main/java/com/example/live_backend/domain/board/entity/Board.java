@@ -41,7 +41,7 @@ public class Board extends BaseEntity {
     private List<BoardImage> boardImages = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
+    @JoinColumn(name = "author_id")
     private Member author;
 
     @Column(nullable = false)
