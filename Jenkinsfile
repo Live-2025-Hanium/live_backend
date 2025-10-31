@@ -92,9 +92,13 @@ pipeline {
                         echo "사용 중인 Java 버전:"
                         java -version
 
-                        export GRADLE_OPTS="-Xmx1g -XX:MaxMetaspaceSize=256m -XX:+UseSerialGC"
+                        export GRADLE_OPTS="-Xmx2g -XX:MaxMetaspaceSize=512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 
-                        ./gradlew clean bootJar -x test -Pprofile=dev --no-daemon --console=plain
+                        ./gradlew clean --no-daemon --console=plain
+
+                        ./gradlew bootJar -x test -Pprofile=dev --no-daemon --console=plain \
+    						--no-parallel \
+    						--max-workers=2
 
                         echo "✅ 빌드 완료!"
                         ls -lh build/libs/
