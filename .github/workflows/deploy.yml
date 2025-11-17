@@ -15,7 +15,7 @@ on:
 env:
   PROJECT_NAME: live-backend
   AWS_REGION: ap-northeast-2
-  S3_BUCKET_NAME: bucket-bucket
+  S3_BUCKET_NAME: bucket-saeip
   CODE_DEPLOY_APPLICATION_NAME: saeip-codedeploy
   CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: saeip-codedeploy-group
 
