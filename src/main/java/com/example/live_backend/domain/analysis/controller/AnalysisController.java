@@ -37,6 +37,7 @@ public class AnalysisController implements AnalysisControllerDocs {
         YearMonth ym = YearMonth.parse(yearMonth, DateTimeFormatter.ofPattern("yyyy-MM"));
 
         return ResponseHandler.success(analysisService.getMonthlyParticipation(memberId, ym));
+
     }
 
     @Override
