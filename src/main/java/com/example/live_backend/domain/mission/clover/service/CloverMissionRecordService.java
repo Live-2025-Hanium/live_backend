@@ -36,8 +36,11 @@ public class CloverMissionRecordService {
             if (requestDto.getImageUrl() == null || requestDto.getImageUrl().trim().isEmpty()) {
                 throw new CustomException(ErrorCode.IMAGE_URL_REQUIRED);
             }
+        }
+
+        if (requestDto.getImageUrl() != null && !requestDto.getImageUrl().trim().isEmpty()) {
             missionRecord.addFeedbackWithImage(
-                    requestDto.getFeedbackComment(), 
+                    requestDto.getFeedbackComment(),
                     requestDto.getFeedbackDifficulty(),
                     requestDto.getImageUrl()
             );
@@ -67,15 +70,33 @@ public class CloverMissionRecordService {
         CloverMissionRecord missionRecord = missionRecordRepository.findByIdWithMember(requestDto.getUserMissionId())
                 .orElseThrow(() -> new CustomException(ErrorCode.MISSION_NOT_FOUND));
 
+        if (!(missionRecord.getId().equals(requestDto.getUserMissionId()))) {
+            throw new CustomException(ErrorCode.MISSION_FORBIDDEN);
+        }
+
         if (!missionRecord.getMember().getId().equals(memberId)) {
             throw new CustomException(ErrorCode.MISSION_FORBIDDEN);
         }
 
-        if (missionRecord.getCloverType() == CloverType.PHOTO && requestDto.getImageUrl() != null) {
-            if (requestDto.getImageUrl().trim().isEmpty()) {
+        if (missionRecord.getCloverType() == CloverType.PHOTO) {
+            if (requestDto.getImageUrl() == null || requestDto.getImageUrl().trim().isEmpty()) {
                 throw new CustomException(ErrorCode.IMAGE_URL_REQUIRED);
             }
+        }
 
+        if (requestDto.getImageUrl() != null && !requestDto.getImageUrl().trim().isEmpty()) {
+            missionRecord.addFeedbackWithImage(
+                    requestDto.getFeedbackComment(),
+                    requestDto.getFeedbackDifficulty(),
+                    requestDto.getImageUrl()
+            );
+        } else {
+            missionRecord.addFeedback(
+                    requestDto.getFeedbackComment(),
+                    requestDto.getFeedbackDifficulty());
+        }
+
+        if (requestDto.getImageUrl() != null && !requestDto.getImageUrl().trim().isEmpty()) {
             missionRecord.updateFeedbackWithImage(
                     requestDto.getFeedbackComment(),
                     requestDto.getFeedbackDifficulty(),
