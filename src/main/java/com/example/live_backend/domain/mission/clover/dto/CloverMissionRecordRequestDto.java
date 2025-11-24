@@ -19,6 +19,6 @@ public class CloverMissionRecordRequestDto {
     @Schema(description = "체감 난이도", example = "EASY")
     private MissionDifficulty feedbackDifficulty;
 
-    @Schema(description = "인증샷 이미지 URL (PHOTO 미션일 때 필수, AWS S3 access Url)", example = "https://s3.amazonaws.com/bucket/mission-certification/image.jpg")
+    @Schema(description = "인증샷 이미지 URL (AWS S3 access Url)", example = "https://s3.amazonaws.com/bucket/mission-certification/image.jpg")
     private String imageUrl;
 }
