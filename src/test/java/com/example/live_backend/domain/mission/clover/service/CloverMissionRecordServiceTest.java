@@ -130,6 +130,70 @@ class CloverMissionRecordServiceTest {
 			assertThat(response.getImageUrl()).isEqualTo("https://s3/url.jpg");
 		}
 
+        @Test
+        @DisplayName("성공 - 비포토 타입 미션에 이미지 포함 피드백 추가")
+        void addMissionRecord_success_nonPhotoWithImage() {
+            // Given
+            CloverMissionRecord record = createCompletedRecord(CloverType.TIMER);
+            given(missionRecordRepository.findByIdWithMember(TEST_USER_MISSION_ID)).willReturn(Optional.of(record));
+            CloverMissionRecordRequestDto request = buildRequest(
+                    TEST_USER_MISSION_ID,
+                    "이미지와 함께",
+                    MissionDifficulty.NORMAL,
+                    "https://s3/non-photo-image.jpg"
+            );
+
+            // When
+            CloverMissionRecordResponseDto response = cloverMissionRecordService.addMissionRecord(TEST_MEMBER_ID, request);
+
+            // Then
+            assertThat(response.getUserMissionId()).isEqualTo(TEST_USER_MISSION_ID);
+            assertThat(response.getFeedbackComment()).isEqualTo("이미지와 함께");
+            assertThat(response.getImageUrl()).isEqualTo("https://s3/non-photo-image.jpg");
+        }
+
+        @Test
+        @DisplayName("성공 - DISTANCE 타입 미션에 이미지 포함 피드백 추가")
+        void addMissionRecord_success_distanceWithImage() {
+            // Given
+            CloverMissionRecord record = createCompletedRecord(CloverType.DISTANCE);
+            given(missionRecordRepository.findByIdWithMember(TEST_USER_MISSION_ID)).willReturn(Optional.of(record));
+            CloverMissionRecordRequestDto request = buildRequest(
+                    TEST_USER_MISSION_ID,
+                    "거리 미션 인증샷",
+                    MissionDifficulty.HARD,
+                    "https://s3/distance-proof.jpg"
+            );
+
+            // When
+            CloverMissionRecordResponseDto response = cloverMissionRecordService.addMissionRecord(TEST_MEMBER_ID, request);
+
+            // Then
+            assertThat(response.getImageUrl()).isEqualTo("https://s3/distance-proof.jpg");
+            assertThat(response.getCloverType()).isEqualTo("DISTANCE");
+        }
+
+        @Test
+        @DisplayName("성공 - VISIT 타입 미션에 이미지 포함 피드백 추가")
+        void addMissionRecord_success_visitWithImage() {
+            // Given
+            CloverMissionRecord record = createCompletedRecord(CloverType.VISIT);
+            given(missionRecordRepository.findByIdWithMember(TEST_USER_MISSION_ID)).willReturn(Optional.of(record));
+            CloverMissionRecordRequestDto request = buildRequest(
+                    TEST_USER_MISSION_ID,
+                    "방문 인증",
+                    MissionDifficulty.EASY,
+                    "https://s3/visit-proof.jpg"
+            );
+
+            // When
+            CloverMissionRecordResponseDto response = cloverMissionRecordService.addMissionRecord(TEST_MEMBER_ID, request);
+
+            // Then
+            assertThat(response.getImageUrl()).isEqualTo("https://s3/visit-proof.jpg");
+            assertThat(response.getCloverType()).isEqualTo("VISIT");
+        }
+
 		@Test
 		@DisplayName("실패 - 존재하지 않는 미션 기록")
 		void addMissionRecord_notFound() {
@@ -277,6 +341,47 @@ class CloverMissionRecordServiceTest {
 			// Then
 			assertThat(dto.getImageUrl()).isEqualTo("https://s3/new_image_url.jpg");
 		}
+
+        @Test
+        @DisplayName("성공 - 비포토 타입 미션에 이미지 포함 수정")
+        void updateMissionRecord_success_nonPhotoWithImage() {
+            // Given
+            CloverMissionRecord record = createCompletedRecord(CloverType.TIMER);
+            given(missionRecordRepository.findByIdWithMember(TEST_USER_MISSION_ID)).willReturn(Optional.of(record));
+            CloverMissionRecordRequestDto request = buildRequest(
+                    TEST_USER_MISSION_ID,
+                    "타이머 미션 이미지 추가",
+                    MissionDifficulty.NORMAL,
+                    "https://s3/timer-image.jpg"
+            );
+
+            // When
+            CloverMissionRecordResponseDto response = cloverMissionRecordService.updateMissionRecord(TEST_MEMBER_ID, request);
+
+            // Then
+            assertThat(response.getImageUrl()).isEqualTo("https://s3/timer-image.jpg");
+            assertThat(response.getFeedbackComment()).isEqualTo("타이머 미션 이미지 추가");
+        }
+
+        @Test
+        @DisplayName("성공 - DISTANCE 타입 미션에 이미지 포함 수정")
+        void updateMissionRecord_success_distanceWithImage() {
+            // Given
+            CloverMissionRecord record = createCompletedRecord(CloverType.DISTANCE);
+            given(missionRecordRepository.findByIdWithMember(TEST_USER_MISSION_ID)).willReturn(Optional.of(record));
+            CloverMissionRecordRequestDto request = buildRequest(
+                    TEST_USER_MISSION_ID,
+                    "거리 미션 이미지 수정",
+                    MissionDifficulty.HARD,
+                    "https://s3/distance-updated.jpg"
+            );
+
+            // When
+            CloverMissionRecordResponseDto response = cloverMissionRecordService.updateMissionRecord(TEST_MEMBER_ID, request);
+
+            // Then
+            assertThat(response.getImageUrl()).isEqualTo("https://s3/distance-updated.jpg");
+        }
 
 		@Test
 		@DisplayName("실패 - 포토 타입 빈 이미지 문자열")
