@@ -4,7 +4,7 @@ import com.example.live_backend.domain.survey.entity.SurveyAnswer;
 import com.example.live_backend.domain.survey.entity.SurveyResponse;
 import com.example.live_backend.domain.survey.repository.SurveyResponseRepository;
 import com.example.live_backend.domain.survey.vitality.dto.VitalityResultDto;
-import com.example.live_backend.domain.survey.vitality.enums.IsolationType;
+import com.example.live_backend.domain.survey.vitality.enums.IsolationAndSeclusionType;
 import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
@@ -41,34 +41,50 @@ public class VitalityService {
         boolean isIsolated = (emotionalIsolation || physicalIsolation) && isDurationLongTerm(response, 9);
 
         // 4. 은둔 청년 판단: 복합 조건
-        boolean isSecluded = isSecludedYouth(response);
+        boolean isSecluded = isSecluded(response);
 
-        // 5. 활력 판단
         VitalityLevel vitalityLevel;
-        IsolationType isolationType;
-        String description;
+        IsolationAndSeclusionType isolationAndSeclusionType;
 
         if (!isIsolated) {
+            // 고립이 아니라면 -> 정상
             vitalityLevel = VitalityLevel.NORMAL;
-            isolationType = IsolationType.NORMAL;
-            description = "고립 또는 은둔 상태가 아닙니다.";
-        } else if (isIsolated && !isSecluded) {
-            vitalityLevel = VitalityLevel.HIGH_VITALITY;
-            isolationType = getIsolationTypeEnum(emotionalIsolation, physicalIsolation);
-            description = "고립 상태이지만 은둔 상태는 아니므로 고활력으로 판단됩니다.";
+            isolationAndSeclusionType = IsolationAndSeclusionType.NORMAL;
         } else {
-            vitalityLevel = VitalityLevel.LOW_VITALITY;
-            isolationType = IsolationType.ISOLATION_AND_SECLUSION;
-            description = "고립과 은둔 상태가 모두 해당되므로 저활력으로 판단됩니다.";
+            // 고립 상태일 때, 은둔 여부에 따라 활력 레벨 결정
+            vitalityLevel = isSecluded ? VitalityLevel.LOW_VITALITY : VitalityLevel.HIGH_VITALITY;
+
+            isolationAndSeclusionType = determineIsolationAndSeclusionType(emotionalIsolation, physicalIsolation, isSecluded);
         }
 
         return VitalityResultDto.builder()
-                .level(vitalityLevel)
-                .isolationType(isolationType)
+                .vitalityLevel(vitalityLevel)
+                .isolationAndSeclusionType(isolationAndSeclusionType)
                 .isIsolated(isIsolated)
                 .isSecluded(isSecluded)
-                .description(description)
+                .description(isolationAndSeclusionType.getDescription())
                 .build();
+    }
+
+    private IsolationAndSeclusionType determineIsolationAndSeclusionType(
+            boolean emotionalIsolation, boolean physicalIsolation, boolean isSecluded) {
+
+        if (emotionalIsolation && physicalIsolation) {
+            return isSecluded
+                    ? IsolationAndSeclusionType.EMOTIONAL_ISOLATION_AND_PHYSICAL_ISOLATION_AND_SECLUSION
+                    : IsolationAndSeclusionType.EMOTIONAL_AND_PHYSICAL_ISOLATION;
+        } else if (emotionalIsolation) {
+            return isSecluded
+                    ? IsolationAndSeclusionType.EMOTIONAL_ISOLATION_AND_SECLUSION
+                    : IsolationAndSeclusionType.EMOTIONAL_ISOLATION;
+        } else if (physicalIsolation) {
+            return isSecluded
+                    ? IsolationAndSeclusionType.PHYSICAL_ISOLATION_AND_SECLUSION
+                    : IsolationAndSeclusionType.PHYSICAL_ISOLATION;
+        }
+
+        // 여기에 도달하면 안 됨 (isIsolated가 true인 경우에만 호출되므로)
+        return IsolationAndSeclusionType.NORMAL;
     }
 
     // 정서적 고립: 1~4번 문항 중 하나라도 4번(없음)만 선택
@@ -97,7 +113,7 @@ public class VitalityService {
     }
 
     // 은둔 청년 판단: 10번(4~7번) + 11번(3~5번) + 12번(3번) + 13번(2번)
-    private boolean isSecludedYouth(SurveyResponse response) {
+    private boolean isSecluded(SurveyResponse response) {
         int answer10 = getAnswerNumber(response, 10);
         int answer11 = getAnswerNumber(response, 11);
         int answer12 = getAnswerNumber(response, 12);
@@ -107,18 +123,6 @@ public class VitalityService {
                 (answer11 >= 3 && answer11 <= 5) && // 11번: 3~5번
                 (answer12 == 3) &&                  // 12번: 3번
                 (answer13 == 2);                    // 13번: 2번
-    }
-
-    // 고립 유형 enum 반환
-    private IsolationType getIsolationTypeEnum(boolean emotional, boolean physical) {
-        if (emotional && physical) {
-            return IsolationType.EMOTIONAL_AND_PHYSICAL_ISOLATION;
-        } else if (emotional) {
-            return IsolationType.EMOTIONAL_ISOLATION;
-        } else if (physical) {
-            return IsolationType.PHYSICAL_ISOLATION;
-        }
-        return IsolationType.NORMAL;
     }
 
     // 필수 문항 존재 여부 확인 (1~13번)

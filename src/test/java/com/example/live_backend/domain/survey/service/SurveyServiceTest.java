@@ -1,7 +1,7 @@
 package com.example.live_backend.domain.survey.service;
 
 import com.example.live_backend.domain.survey.vitality.dto.VitalityResultDto;
-import com.example.live_backend.domain.survey.vitality.enums.IsolationType;
+import com.example.live_backend.domain.survey.vitality.enums.IsolationAndSeclusionType;
 import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
 import com.example.live_backend.domain.survey.vitality.service.VitalityService;
 import com.example.live_backend.global.error.exception.CustomException;
@@ -226,8 +226,8 @@ class SurveyServiceTest {
 			given(surveyResponseRepository.save(any(SurveyResponse.class))).willReturn(savedResponse);
 
 			VitalityResultDto mockResult = VitalityResultDto.builder()
-					.level(VitalityLevel.NORMAL)
-					.isolationType(IsolationType.NORMAL)
+					.vitalityLevel(VitalityLevel.NORMAL)
+					.isolationAndSeclusionType(IsolationAndSeclusionType.NORMAL)
 					.isIsolated(false)
 					.isSecluded(false)
 					.description("정상")
@@ -540,8 +540,8 @@ class SurveyServiceTest {
 				});
 
 			VitalityResultDto mockResult = VitalityResultDto.builder()
-					.level(VitalityLevel.NORMAL)
-					.isolationType(IsolationType.NORMAL)
+					.vitalityLevel(VitalityLevel.NORMAL)
+					.isolationAndSeclusionType(IsolationAndSeclusionType.NORMAL)
 					.isIsolated(false)
 					.isSecluded(false)
 					.description("정상")

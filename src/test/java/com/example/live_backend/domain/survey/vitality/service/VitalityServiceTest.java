@@ -4,7 +4,7 @@ import com.example.live_backend.domain.survey.entity.SurveyAnswer;
 import com.example.live_backend.domain.survey.entity.SurveyResponse;
 import com.example.live_backend.domain.survey.repository.SurveyResponseRepository;
 import com.example.live_backend.domain.survey.vitality.dto.VitalityResultDto;
-import com.example.live_backend.domain.survey.vitality.enums.IsolationType;
+import com.example.live_backend.domain.survey.vitality.enums.IsolationAndSeclusionType;
 import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
@@ -51,8 +51,8 @@ class VitalityServiceTest {
         VitalityResultDto result = vitalityService.analyzeVitality(responseId);
 
         // then
-        assertThat(result.getLevel()).isEqualTo(VitalityLevel.NORMAL);
-        assertThat(result.getIsolationType()).isEqualTo(IsolationType.NORMAL);
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.NORMAL);
+        assertThat(result.getIsolationAndSeclusionType()).isEqualTo(IsolationAndSeclusionType.NORMAL);
         assertThat(result.isIsolated()).isFalse();
         assertThat(result.isSecluded()).isFalse();
     }
@@ -73,8 +73,8 @@ class VitalityServiceTest {
         VitalityResultDto result = vitalityService.analyzeVitality(responseId);
 
         // then
-        assertThat(result.getLevel()).isEqualTo(VitalityLevel.HIGH_VITALITY);
-        assertThat(result.getIsolationType()).isEqualTo(IsolationType.EMOTIONAL_ISOLATION);
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.HIGH_VITALITY);
+        assertThat(result.getIsolationAndSeclusionType()).isEqualTo(IsolationAndSeclusionType.EMOTIONAL_ISOLATION);
         assertThat(result.isIsolated()).isTrue();
         assertThat(result.isSecluded()).isFalse();
     }
@@ -94,8 +94,8 @@ class VitalityServiceTest {
         VitalityResultDto result = vitalityService.analyzeVitality(responseId);
 
         // then
-        assertThat(result.getLevel()).isEqualTo(VitalityLevel.LOW_VITALITY);
-        assertThat(result.getIsolationType()).isEqualTo(IsolationType.ISOLATION_AND_SECLUSION);
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.LOW_VITALITY);
+        assertThat(result.getIsolationAndSeclusionType()).isEqualTo(IsolationAndSeclusionType.PHYSICAL_ISOLATION_AND_SECLUSION);
         assertThat(result.isIsolated()).isTrue();
         assertThat(result.isSecluded()).isTrue();
     }

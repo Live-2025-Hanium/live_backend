@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
+@Profile("!test")
 public class SurveyDataInitializer implements ApplicationRunner {
 
     private final SurveyQuestionRepository surveyQuestionRepository;
