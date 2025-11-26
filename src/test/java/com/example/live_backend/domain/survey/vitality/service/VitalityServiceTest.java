@@ -4,7 +4,7 @@ import com.example.live_backend.domain.survey.entity.SurveyAnswer;
 import com.example.live_backend.domain.survey.entity.SurveyResponse;
 import com.example.live_backend.domain.survey.repository.SurveyResponseRepository;
 import com.example.live_backend.domain.survey.vitality.dto.VitalityResultDto;
-import com.example.live_backend.domain.survey.vitality.enums.IsolationType;
+import com.example.live_backend.domain.survey.vitality.enums.IsolationAndSeclusionType;
 import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
 import com.example.live_backend.global.error.exception.CustomException;
 import com.example.live_backend.global.error.exception.ErrorCode;
@@ -36,6 +36,7 @@ class VitalityServiceTest {
 
     @Mock
     private SurveyResponseRepository surveyResponseRepository;
+    
 
     @Test
     @DisplayName("고립 또는 은둔이 아닐 경우 '정상'을 반환한다")
@@ -51,8 +52,8 @@ class VitalityServiceTest {
         VitalityResultDto result = vitalityService.analyzeVitality(responseId);
 
         // then
-        assertThat(result.getLevel()).isEqualTo(VitalityLevel.NORMAL);
-        assertThat(result.getIsolationType()).isEqualTo(IsolationType.NORMAL);
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.NORMAL);
+        assertThat(result.getIsolationAndSeclusionType()).isEqualTo(IsolationAndSeclusionType.NORMAL);
         assertThat(result.isIsolated()).isFalse();
         assertThat(result.isSecluded()).isFalse();
     }
@@ -73,8 +74,8 @@ class VitalityServiceTest {
         VitalityResultDto result = vitalityService.analyzeVitality(responseId);
 
         // then
-        assertThat(result.getLevel()).isEqualTo(VitalityLevel.HIGH_VITALITY);
-        assertThat(result.getIsolationType()).isEqualTo(IsolationType.EMOTIONAL_ISOLATION);
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.HIGH_VITALITY);
+        assertThat(result.getIsolationAndSeclusionType()).isEqualTo(IsolationAndSeclusionType.EMOTIONAL_ISOLATION);
         assertThat(result.isIsolated()).isTrue();
         assertThat(result.isSecluded()).isFalse();
     }
@@ -94,8 +95,8 @@ class VitalityServiceTest {
         VitalityResultDto result = vitalityService.analyzeVitality(responseId);
 
         // then
-        assertThat(result.getLevel()).isEqualTo(VitalityLevel.LOW_VITALITY);
-        assertThat(result.getIsolationType()).isEqualTo(IsolationType.ISOLATION_AND_SECLUSION);
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.LOW_VITALITY);
+        assertThat(result.getIsolationAndSeclusionType()).isEqualTo(IsolationAndSeclusionType.PHYSICAL_ISOLATION_AND_SECLUSION);
         assertThat(result.isIsolated()).isTrue();
         assertThat(result.isSecluded()).isTrue();
     }
@@ -126,6 +127,119 @@ class VitalityServiceTest {
         // when & then
         CustomException exception = assertThrows(CustomException.class, () -> vitalityService.analyzeVitality(responseId));
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.SURVEY_RESPONSE_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("물리적 고립만 해당될 경우 '고활력 + 물리적 고립'을 반환한다")
+    void analyzeVitality_PhysicalIsolationOnly_HighVitality() {
+        // given
+        Long responseId = 5L;
+        Map<Integer, Integer> answers = createAnswers(false, true, true, false);
+        SurveyResponse mockResponse = createMockResponse(answers);
+        when(surveyResponseRepository.findById(responseId)).thenReturn(Optional.of(mockResponse));
+
+        // when
+        VitalityResultDto result = vitalityService.analyzeVitality(responseId);
+
+        // then
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.HIGH_VITALITY);
+        assertThat(result.getIsolationAndSeclusionType()).isEqualTo(IsolationAndSeclusionType.PHYSICAL_ISOLATION);
+        assertThat(result.isIsolated()).isTrue();
+        assertThat(result.isSecluded()).isFalse();
+    }
+
+    @Test
+    @DisplayName("정서적 + 물리적 고립 모두 해당될 경우 '고활력 + 정서적/물리적 고립'을 반환한다")
+    void analyzeVitality_BothIsolation_HighVitality() {
+        // given
+        Long responseId = 6L;
+        Map<Integer, Integer> answers = createAnswers(true, true, true, false);
+        SurveyResponse mockResponse = createMockResponse(answers);
+        when(surveyResponseRepository.findById(responseId)).thenReturn(Optional.of(mockResponse));
+
+        // when
+        VitalityResultDto result = vitalityService.analyzeVitality(responseId);
+
+        // then
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.HIGH_VITALITY);
+        assertThat(result.getIsolationAndSeclusionType()).isEqualTo(IsolationAndSeclusionType.EMOTIONAL_AND_PHYSICAL_ISOLATION);
+        assertThat(result.isIsolated()).isTrue();
+        assertThat(result.isSecluded()).isFalse();
+    }
+
+    @Test
+    @DisplayName("정서적 고립 + 은둔일 경우 '저활력 + 정서적 고립/은둔'을 반환한다")
+    void analyzeVitality_EmotionalIsolationAndSeclusion_LowVitality() {
+        // given
+        Long responseId = 7L;
+        Map<Integer, Integer> answers = createAnswers(true, true, false, true);
+        SurveyResponse mockResponse = createMockResponse(answers);
+        when(surveyResponseRepository.findById(responseId)).thenReturn(Optional.of(mockResponse));
+
+        // when
+        VitalityResultDto result = vitalityService.analyzeVitality(responseId);
+
+        // then
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.LOW_VITALITY);
+        assertThat(result.getIsolationAndSeclusionType()).isEqualTo(IsolationAndSeclusionType.EMOTIONAL_ISOLATION_AND_SECLUSION);
+        assertThat(result.isIsolated()).isTrue();
+        assertThat(result.isSecluded()).isTrue();
+    }
+
+    @Test
+    @DisplayName("정서적 + 물리적 고립 + 은둔 모두 해당될 경우 '저활력'을 반환한다")
+    void analyzeVitality_AllConditions_LowVitality() {
+        // given
+        Long responseId = 8L;
+        Map<Integer, Integer> answers = createAnswers(true, true, true, true);
+        SurveyResponse mockResponse = createMockResponse(answers);
+        when(surveyResponseRepository.findById(responseId)).thenReturn(Optional.of(mockResponse));
+
+        // when
+        VitalityResultDto result = vitalityService.analyzeVitality(responseId);
+
+        // then
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.LOW_VITALITY);
+        assertThat(result.getIsolationAndSeclusionType())
+                .isEqualTo(IsolationAndSeclusionType.EMOTIONAL_ISOLATION_AND_PHYSICAL_ISOLATION_AND_SECLUSION);
+        assertThat(result.isIsolated()).isTrue();
+        assertThat(result.isSecluded()).isTrue();
+    }
+
+    @Test
+    @DisplayName("고립 조건이지만 장기화(6개월 이상)가 아니면 '정상'을 반환한다")
+    void analyzeVitality_IsolationWithoutLongTerm_ReturnsNormal() {
+        // given
+        Long responseId = 9L;
+        Map<Integer, Integer> answers = createAnswers(true, false, false, false);
+        SurveyResponse mockResponse = createMockResponse(answers);
+        when(surveyResponseRepository.findById(responseId)).thenReturn(Optional.of(mockResponse));
+
+        // when
+        VitalityResultDto result = vitalityService.analyzeVitality(responseId);
+
+        // then
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.NORMAL);
+        assertThat(result.getIsolationAndSeclusionType()).isEqualTo(IsolationAndSeclusionType.NORMAL);
+        assertThat(result.isIsolated()).isFalse();
+    }
+
+    @Test
+    @DisplayName("은둔 조건만 충족하고 고립이 아니면 '정상'을 반환한다")
+    void analyzeVitality_SeclusionOnlyWithoutIsolation_ReturnsNormal() {
+        // given
+        Long responseId = 10L;
+        Map<Integer, Integer> answers = createAnswers(false, false, false, true);
+        SurveyResponse mockResponse = createMockResponse(answers);
+        when(surveyResponseRepository.findById(responseId)).thenReturn(Optional.of(mockResponse));
+
+        // when
+        VitalityResultDto result = vitalityService.analyzeVitality(responseId);
+
+        // then
+        assertThat(result.getVitalityLevel()).isEqualTo(VitalityLevel.NORMAL);
+        assertThat(result.isIsolated()).isFalse();
+        assertThat(result.isSecluded()).isTrue();
     }
 
     private SurveyResponse createMockResponse(Map<Integer, Integer> answerMap) {

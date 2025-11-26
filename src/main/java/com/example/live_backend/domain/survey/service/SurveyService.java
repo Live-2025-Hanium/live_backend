@@ -89,9 +89,9 @@ public class SurveyService {
         log.info("설문 응답 제출 완료 - 응답 ID: {}, 사용자 ID: {}", saved.getId(), memberId);
 
         VitalityResultDto vitalityResult = vitalityService.analyzeVitality(saved.getId());
-        member.updateVitalityLevel(vitalityResult.getLevel());
+        member.updateVitalityLevel(vitalityResult.getVitalityLevel());
 
-        log.info("활력 분석 완료 - 응답 ID: {}, 활력 수준: {}", saved.getId(), vitalityResult.getLevel());
+        log.info("활력 분석 완료 - 응답 ID: {}, 활력 수준: {}", saved.getId(), vitalityResult.getVitalityLevel());
 
         return SurveySubmissionResponseDto.builder()
             .responseId(saved.getId())
