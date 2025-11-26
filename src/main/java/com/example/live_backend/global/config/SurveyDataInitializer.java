@@ -19,7 +19,7 @@ public class SurveyDataInitializer implements ApplicationRunner {
     @Override
     @Transactional
     @Profile({"dev", "local"}) // test 환경에서는 실행 안됨
-    public void run(ApplicationArguments args) throws Exception {
+    public void run(ApplicationArguments    args) throws Exception {
 
         if (surveyQuestionRepository.count() > 0) {
             return;
