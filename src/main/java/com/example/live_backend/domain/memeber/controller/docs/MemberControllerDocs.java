@@ -1,8 +1,6 @@
 package com.example.live_backend.domain.memeber.controller.docs;
 
-import com.example.live_backend.domain.memeber.dto.MemberProfileRequestDto;
-import com.example.live_backend.domain.memeber.dto.MemberResponseDto;
-import com.example.live_backend.domain.memeber.dto.NicknameCheckResponseDto;
+import com.example.live_backend.domain.memeber.dto.*;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -182,5 +180,54 @@ public interface MemberControllerDocs {
     })
     ResponseHandler<MemberResponseDto> getMyProfile(
         @AuthenticationPrincipal PrincipalDetails userDetails
+    );
+
+    @Operation(summary = "약관 동의 등록/수정", description = "사용자의 약관 동의 상태를 등록하거나 수정합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "약관 동의 등록/수정 성공"),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                    {
+                        "success": false,
+                        "error": {
+                            "code": "UNAUTHORIZED",
+                            "message": "인증이 필요합니다."
+                        }
+                    }
+                    """)
+                    )
+            )
+    })
+    ResponseHandler<TermsAgreementResponseDto> updateTermsAgreement(
+            @Valid @RequestBody TermsAgreementRequestDto dto,
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    );
+
+    @Operation(summary = "약관 동의 상태 조회", description = "현재 로그인한 사용자의 약관 동의 상태를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "약관 동의 상태 조회 성공"),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                    {
+                        "success": false,
+                        "error": {
+                            "code": "UNAUTHORIZED",
+                            "message": "인증이 필요합니다."
+                        }
+                    }
+                    """)
+                    )
+            )
+    })
+    ResponseHandler<TermsAgreementResponseDto> getTermsAgreement(
+            @AuthenticationPrincipal PrincipalDetails userDetails
     );
 } 

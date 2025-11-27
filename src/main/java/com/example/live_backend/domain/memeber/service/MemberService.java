@@ -1,6 +1,8 @@
 package com.example.live_backend.domain.memeber.service;
 
 
+import com.example.live_backend.domain.memeber.dto.*;
+import com.example.live_backend.domain.memeber.entity.vo.TermsAgreement;
 import com.example.live_backend.global.error.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -10,9 +12,6 @@ import com.example.live_backend.domain.auth.dto.response.AuthUserDto;
 import com.example.live_backend.domain.auth.dto.request.KakaoLoginRequestDto;
 import com.example.live_backend.domain.memeber.Gender;
 import com.example.live_backend.domain.memeber.Role;
-import com.example.live_backend.domain.memeber.dto.MemberProfileRequestDto;
-import com.example.live_backend.domain.memeber.dto.MemberResponseDto;
-import com.example.live_backend.domain.memeber.dto.NicknameCheckResponseDto;
 import com.example.live_backend.domain.memeber.entity.Member;
 import com.example.live_backend.domain.memeber.entity.Occupation;
 import com.example.live_backend.domain.memeber.entity.vo.BirthDate;
@@ -164,4 +163,27 @@ public class MemberService {
 		member.updateProfile(updatedProfile);
 	}
 
+    @Transactional
+    public TermsAgreementResponseDto updateTermsAgreement(TermsAgreementRequestDto dto, Long userId) {
+        Member member = memberRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        TermsAgreement termsAgreement = TermsAgreement.from(dto);
+        member.updateTermsAgreement(termsAgreement);
+
+        return TermsAgreementResponseDto.from(termsAgreement);
+    }
+
+    @Transactional(readOnly = true)
+    public TermsAgreementResponseDto getTermsAgreement(Long userId) {
+        Member member = memberRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        TermsAgreement terms = member.getTermsAgreement();
+        if (terms == null) {
+            return TermsAgreementResponseDto.from(new TermsAgreement(false, false, false));
+        }
+
+        return TermsAgreementResponseDto.from(terms);
+    }
 }

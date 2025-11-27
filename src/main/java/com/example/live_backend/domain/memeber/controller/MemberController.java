@@ -1,14 +1,12 @@
 package com.example.live_backend.domain.memeber.controller;
 
+import com.example.live_backend.domain.memeber.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.live_backend.domain.memeber.controller.docs.MemberControllerDocs;
-import com.example.live_backend.domain.memeber.dto.MemberProfileRequestDto;
-import com.example.live_backend.domain.memeber.dto.MemberResponseDto;
-import com.example.live_backend.domain.memeber.dto.NicknameCheckResponseDto;
 import com.example.live_backend.domain.memeber.service.MemberService;
 import com.example.live_backend.global.error.response.ResponseHandler;
 import com.example.live_backend.global.security.PrincipalDetails;
@@ -63,4 +61,27 @@ public class MemberController implements MemberControllerDocs {
 		MemberResponseDto response = memberService.getMemberById(userId);
 		return ResponseHandler.success(response);
 	}
+
+    @Override
+    @AuthenticatedApi(reason = "약관 동의는 로그인된 사용자만 가능")
+    @PostMapping("/terms")
+    public ResponseHandler<TermsAgreementResponseDto> updateTermsAgreement(
+            @Valid @RequestBody TermsAgreementRequestDto dto,
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ) {
+        Long userId = userDetails.getMemberId();
+        TermsAgreementResponseDto response = memberService.updateTermsAgreement(dto, userId);
+        return ResponseHandler.success(response);
+    }
+
+    @Override
+    @AuthenticatedApi(reason = "약관 동의 상태 조회는 로그인된 사용자만 가능")
+    @GetMapping("/terms")
+    public ResponseHandler<TermsAgreementResponseDto> getTermsAgreement(
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ) {
+        Long userId = userDetails.getMemberId();
+        TermsAgreementResponseDto response = memberService.getTermsAgreement(userId);
+        return ResponseHandler.success(response);
+    }
 }
