@@ -5,6 +5,7 @@ import com.example.live_backend.domain.memeber.Role;
 import com.example.live_backend.domain.memeber.entity.vo.BirthDate;
 import com.example.live_backend.domain.memeber.entity.vo.Profile;
 
+import com.example.live_backend.domain.memeber.entity.vo.TermsAgreement;
 import com.example.live_backend.domain.survey.vitality.enums.VitalityLevel;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -59,6 +60,9 @@ public class Member {
 	@Column(name = "clover_count", nullable = false)
 	private int cloverCount = 0;
 
+    @Embedded
+    private TermsAgreement termsAgreement;
+
 	@Builder
 	public Member(String oauthId,
 		String email,
@@ -77,6 +81,7 @@ public class Member {
 		this.occupation = occupation;
 		this.occupationDetail = occupationDetail;
 		this.cloverCount = 0;
+        this.termsAgreement = new TermsAgreement(false, false, false);
 	}
 
 	public void updateProfile(Profile newProfile) {
@@ -105,4 +110,8 @@ public class Member {
 	public int getCloverCount() {
 		return this.cloverCount;
 	}
+
+    public void updateTermsAgreement(TermsAgreement termsAgreement) {
+        this.termsAgreement = termsAgreement;
+    }
 }
